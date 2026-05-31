@@ -1,0 +1,3 @@
+- [User profile](user_profile.md) — Nithesh Ramachandran, 2nd-year B.Tech AI/DS student at CIET Coimbatore, building a cinematic 3D portfolio.
+- [Portfolio project](project_portfolio.md) — Single-page Next.js 14 + R3F portfolio, ref sites henryheffernan.com & david-hckh.com; emerald palette; lab metaphor.
+- [Asset locations](reference_assets.md) — Portrait and resume PDF locations in the working dir.

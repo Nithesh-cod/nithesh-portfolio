@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+  background: #07090c;
+  color: #e8e6e1;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Lenis recommends html.lenis to opt in to smooth scroll. */
+html.lenis {
+  height: auto;
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+html.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+html.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+html.lenis-stopped {
+  overflow: hidden;
+}
+
+/* WCAG: respect reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Hide the system cursor only on the canvas; UI chrome + links keep it. */
+.canvas-root,
+.canvas-root canvas {
+  cursor: none;
+}
+
+@media (pointer: coarse), (prefers-reduced-motion: reduce) {
+  .canvas-root,
+  .canvas-root canvas {
+    cursor: auto;
+  }
+}
+
+/* Subtle scrollbar dressing to match palette. */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #07090c;
+}
+::-webkit-scrollbar-thumb {
+  background: #14181d;
+  border-radius: 999px;
+  border: 1px solid #10b9813a;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2a3038;
+}
