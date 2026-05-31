@@ -29,6 +29,11 @@ type PortfolioStore = {
   openProject: (slug: Project['slug'], proxyId?: ProxyId) => void;
   closeProject: () => void;
   setCursorState: (s: CursorState) => void;
+
+  /** Certificate lightbox — null when closed; cert id when open. */
+  lightboxCertId: string | null;
+  openCertificate: (id: string) => void;
+  closeCertificate: () => void;
 };
 
 export const usePortfolioStore = create<PortfolioStore>((set) => ({
@@ -53,4 +58,8 @@ export const usePortfolioStore = create<PortfolioStore>((set) => ({
     set({ modalOpen: true, activeProject: slug, lastProxyFocus: proxyId ?? slug }),
   closeProject: () => set({ modalOpen: false, activeProject: null }),
   setCursorState: (s) => set({ cursorState: s }),
+
+  lightboxCertId: null,
+  openCertificate: (id) => set({ lightboxCertId: id }),
+  closeCertificate: () => set({ lightboxCertId: null }),
 }));

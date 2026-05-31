@@ -6,6 +6,7 @@ import { ProjectModal } from '@/components/ui/ProjectModal';
 import { AudioController } from '@/components/ui/AudioController';
 import { Intro } from '@/components/ui/Intro';
 import { Terminal } from '@/components/ui/Terminal';
+import { CertificateLightbox } from '@/components/ui/CertificateLightbox';
 import { content, waypoints } from '@/lib/content';
 
 const Scene = dynamic(() => import('@/components/canvas/Scene').then((m) => m.Scene), {
@@ -24,6 +25,7 @@ export default function Page() {
       <Hud />
       <Cursor />
       <ProjectModal />
+      <CertificateLightbox />
       <AudioController />
       <Terminal />
       <Intro />

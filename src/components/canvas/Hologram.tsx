@@ -1,7 +1,7 @@
 'use client';
 
 import { useFrame, useThree } from '@react-three/fiber';
-import { useTexture } from '@react-three/drei';
+import { Billboard, Text, useTexture } from '@react-three/drei';
 import { useMemo, useRef } from 'react';
 import {
   Color,
@@ -15,8 +15,9 @@ import {
 } from 'three';
 import vert from '@/shaders/hologram.vert';
 import frag from '@/shaders/hologram.frag';
-import { HOLOGRAM_POS } from '@/lib/content';
+import { HOLOGRAM_POS, content } from '@/lib/content';
 import { palette } from '@/lib/palette';
+import { noRaycast } from '@/lib/three-utils';
 
 const BOOT_DISTANCE = 3.2;
 const BOOT_HOLD = 4.2;
@@ -113,6 +114,36 @@ export function Hologram() {
         <circleGeometry args={[1.1, 32]} />
         <meshBasicMaterial color={palette.emeraldMid} transparent opacity={0.12} />
       </mesh>
+
+      {/* Tagline under the hologram, billboarded so it always faces the camera.
+          raycast={noRaycast} so the Text mesh can't intercept clicks targeted elsewhere. */}
+      <Billboard position={[0, -1.4, 0.2]}>
+        <Text
+          raycast={noRaycast}
+          fontSize={0.14}
+          color={palette.ivory}
+          anchorX="center"
+          anchorY="top"
+          maxWidth={3.2}
+          letterSpacing={0.05}
+          outlineWidth={0.003}
+          outlineColor={palette.void}
+        >
+          {content.hero.tagline + ' Engineering Student'}
+        </Text>
+        {/* Small "live at …" subtitle — palette.bone, raycast disabled. */}
+        <Text
+          raycast={noRaycast}
+          position={[0, -0.2, 0]}
+          fontSize={0.07}
+          color={palette.bone}
+          anchorX="center"
+          anchorY="top"
+          letterSpacing={0.06}
+        >
+          {`live at ${content.liveUrl.replace(/^https?:\/\//, '')}`}
+        </Text>
+      </Billboard>
     </group>
   );
 }

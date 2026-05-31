@@ -10,6 +10,7 @@ import { FogParticles } from '@/components/canvas/FogParticles';
 import { play } from '@/lib/audio';
 import { usePortfolioStore } from '@/lib/store';
 import { palette } from '@/lib/palette';
+import { noRaycast } from '@/lib/three-utils';
 
 export function Lab() {
   return (
@@ -209,9 +210,16 @@ function ContactTerminal() {
   };
   const handleClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
+    // eslint-disable-next-line no-console
+    console.log('[CONTACT-CLICK] handler fired — opening resume');
     play('click_primary');
     openResume();
   };
+
+  // Build multi-line URL list from content.contactLinks (label-padded, host-only).
+  const urlText = content.contactLinks
+    .map((l) => `${l.label.padEnd(13)} ${l.url.replace(/^(https?:\/\/|mailto:)/, '')}`)
+    .join('\n');
 
   return (
     <group
@@ -225,32 +233,36 @@ function ContactTerminal() {
         <boxGeometry args={[1.4, 1.8, 0.6]} />
         <meshStandardMaterial color={palette.graphite} roughness={0.4} metalness={0.85} />
       </mesh>
-      {/* Screen (slightly proud of chassis, on layer 1 for rim light) */}
+      {/* Screen (slightly proud of chassis, on layer 1 for rim light) — emissive
+          intensity dropped so the text on top reads clearly. */}
       <mesh position={[0, 0.2, 0.32]} ref={(m) => m?.layers.enable(1)}>
         <boxGeometry args={[1.1, 0.75, 0.02]} />
-        <meshStandardMaterial color={palette.void} emissive={palette.emeraldHot} emissiveIntensity={1.0} />
+        <meshStandardMaterial color={palette.void} emissive={palette.emeraldMid} emissiveIntensity={0.35} />
       </mesh>
-      {/* Contact text — teal-haze on the emerald screen, multi-line */}
+      {/* Six-line URL list on the screen, mono, raycast disabled. */}
       <Text
-        position={[0, 0.32, 0.34]}
-        fontSize={0.045}
-        color={palette.tealHaze}
+        raycast={noRaycast}
+        position={[0, 0.32, 0.341]}
+        fontSize={0.036}
+        color={palette.emeraldGlow}
         anchorX="center"
         anchorY="middle"
-        lineHeight={1.5}
-        letterSpacing={0.04}
+        lineHeight={1.55}
+        letterSpacing={0.02}
         maxWidth={1.0}
+        textAlign="left"
       >
-        {`EMAIL     ${content.contact.email}\nLINKEDIN  ${LINKEDIN_SHORT}`}
+        {urlText}
       </Text>
       {/* Divider rule */}
-      <mesh position={[0, 0.16, 0.341]}>
-        <planeGeometry args={[0.9, 0.004]} />
+      <mesh position={[0, 0.04, 0.341]}>
+        <planeGeometry args={[0.95, 0.004]} />
         <meshBasicMaterial color={palette.goldAccent} transparent opacity={0.7} />
       </mesh>
       {/* DOWNLOAD RESUME button row */}
       <Text
-        position={[0, 0.08, 0.34]}
+        raycast={noRaycast}
+        position={[0, -0.04, 0.341]}
         fontSize={0.05}
         color={palette.goldAccent}
         anchorX="center"

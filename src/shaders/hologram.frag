@@ -61,17 +61,16 @@ vec3 aces(vec3 x) {
 }
 
 void main() {
-  // Vertical jitter — at 0.00063 (M3.6's 0.0009 × 0.7) so even residual scanline
-  // displacement doesn't read on the brighter parts of the face (forehead, nose).
-  float jitter = sin(uTime * 14.0 + vUv.y * 90.0) * 0.00063;
+  // Vertical jitter — V1.6: halved again from 0.00063 → 0.000315 so the
+  // already-protected subject stays even more stable.
+  float jitter = sin(uTime * 14.0 + vUv.y * 90.0) * 0.000315;
   vec2 uv = vec2(vUv.x + jitter, vUv.y);
 
   vec3 src = texture2D(uMap, uv).rgb;
   float subjectMask = subjectMaskDilated(uv);
 
-  // Subject path: real colours, ACES tonemap. The warm push moves to the
-  // bottom of the shader (right before the luma cap) so it acts on the
-  // FULLY ACCUMULATED subject colour, not just the raw texture sample.
+  // Subject path: real colours, ACES tonemap. Warm push lives near the cap,
+  // not here, so it acts on the FULLY ACCUMULATED subject colour.
   vec3 subject = aces(src);
 
   // Background path: barely-there emerald haze.
@@ -79,26 +78,25 @@ void main() {
 
   vec3 col = mix(background, subject, subjectMask);
 
-  // Highlight-protection mask. Threshold lowered to 0.75 (from 0.85) so the
-  // protect band catches forehead specular highlights and pupil catchlights,
-  // not only the brightest 1% of pixels.
+  // Highlight-protection mask. 0.75..0.95 band catches forehead specular
+  // highlights and pupil catchlights before scanlines/fresnel touch them.
   float subjLuma = dot(subject, vec3(0.2126, 0.7152, 0.0722));
   float bright = smoothstep(0.75, 0.95, subjLuma);
   float protect = 1.0 - bright;
 
-  // Scanline overlay — softer modulation [0.85, 1.05] (was [0.72, 1.00]),
-  // scaled by protect so bright subject pixels stay alone.
-  float scan = mix(0.85, 1.05, 0.5 + 0.5 * sin(uv.y * 220.0 + uTime * 5.0));
+  // Scanline overlay — V1.6 narrowed from [0.85, 1.05] → [0.92, 1.04]. Visible
+  // but no longer punches subject contrast. protect-gated so bright subject
+  // pixels skip the scan entirely.
+  float scan = mix(0.92, 1.04, 0.5 + 0.5 * sin(uv.y * 220.0 + uTime * 5.0));
   col *= mix(1.0, scan, protect);
 
-  // RGB ghosting — also gated by protect; only adds to mid-tones.
-  float ghost = sin(uTime * 1.5 + uv.y * 6.0) * 0.0015;
-  col.r += texture2D(uMap, uv + vec2(ghost, 0.0)).r * 0.06 * subjectMask * protect;
-  col.b += texture2D(uMap, uv - vec2(ghost, 0.0)).b * 0.04 * subjectMask * protect;
+  // RGB ghosting REMOVED in V1.6 — that's the pass that originally caused the
+  // eye blowout. Scanlines + fresnel carry the hologram feel.
 
-  // Fresnel edge glow — emerald-hot, additive.
+  // Fresnel edge glow — emerald-hot, additive, capped at 0.4 contribution so
+  // it can't push the panel above Bloom's threshold.
   float fres = pow(1.0 - max(dot(vNormal, vViewDir), 0.0), 2.5);
-  col += uGlowColor * fres * 1.4;
+  col += uGlowColor * min(fres * 1.4, 0.4);
 
   // Boot-up reveal sweep: a moving horizontal threshold.
   float revealLine = 1.0 - vUv.y;

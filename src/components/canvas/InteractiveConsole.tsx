@@ -7,7 +7,8 @@ import { Color, FrontSide, MeshStandardMaterial, type IUniform } from 'three';
 import { play } from '@/lib/audio';
 import { usePortfolioStore } from '@/lib/store';
 import { palette } from '@/lib/palette';
-import type { Project, Station } from '@/lib/content';
+import { noRaycast } from '@/lib/three-utils';
+import { content, type Project, type Station } from '@/lib/content';
 
 type RimUniforms = {
   uHovered: { value: number };
@@ -35,6 +36,10 @@ export function InteractiveConsole({
   const [hovered, setHovered] = useState(false);
   const openProject = usePortfolioStore((s) => s.openProject);
   const setCursorState = usePortfolioStore((s) => s.setCursorState);
+  const caption = useMemo(
+    () => content.projects.find((p) => p.slug === slug)?.caption ?? '',
+    [slug],
+  );
   // Pointerover can re-fire as the cursor crosses child meshes within the group;
   // a 150ms throttle stops the hover sprite from re-triggering every few pixels
   // and exhausting Howler's HTML5 pool.
@@ -116,8 +121,24 @@ export function InteractiveConsole({
 
   const handleClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
-    play('click_primary');
-    openProject(slug);
+    // eslint-disable-next-line no-console
+    console.log('[CONSOLE-CLICK] 1. entered, slug=', slug);
+    try {
+      play('click_primary');
+      // eslint-disable-next-line no-console
+      console.log('[CONSOLE-CLICK] 2. audio.play returned');
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('[CONSOLE-CLICK] audio.play threw:', err);
+    }
+    try {
+      openProject(slug);
+      // eslint-disable-next-line no-console
+      console.log('[CONSOLE-CLICK] 3. openProject called');
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('[CONSOLE-CLICK] openProject threw:', err);
+    }
   };
 
   return (
@@ -134,48 +155,56 @@ export function InteractiveConsole({
         <boxGeometry args={[1.1, 0.5, 0.7]} />
       </mesh>
 
-      {/* Tilted screen sub-group: one plane (no box edges) + 4-slab gold bezel + etched label.
-          Wrapping in a group means the bezel slabs share the screen's tilt without per-slab maths. */}
+      {/* Tilted screen sub-group: dim emerald plane + 4-slab gold bezel + on-screen
+          title and caption. All Text inside has raycast={noRaycast} so it can't swallow
+          clicks intended for the screen mesh underneath. */}
       <group position={[0, 0.08, 0.18]} rotation={[-0.45, 0, 0]}>
         <mesh ref={(m) => m?.layers.enable(1)}>
           <planeGeometry args={[0.95, 0.55]} />
           <meshStandardMaterial
             color={palette.graphite}
-            emissive={palette.emeraldHot}
-            emissiveIntensity={hovered ? 1.2 : 0.85}
+            emissive={palette.emeraldMid}
+            // Reduced from 0.85 → 0.35 so on-screen text reads clearly against
+            // the panel instead of fighting the emerald glow.
+            emissiveIntensity={hovered ? 0.5 : 0.35}
             roughness={0.25}
             metalness={0.4}
             side={FrontSide}
           />
         </mesh>
         <BezelFrame />
-        <Text
-          position={[0, 0, 0.005]}
-          fontSize={0.075}
-          color={palette.void}
-          anchorX="center"
-          anchorY="middle"
-          letterSpacing={0.08}
-        >
-          {label.toUpperCase()}
-        </Text>
-      </group>
 
-      {/* Floating label above the console on hover. */}
-      {hovered ? (
+        {/* Title (large) — sits in the top half of the screen. */}
         <Text
-          position={[0, 0.85, 0]}
-          fontSize={0.13}
-          color={palette.ivory}
+          raycast={noRaycast}
+          position={[0, 0.12, 0.005]}
+          fontSize={0.105}
+          color={palette.emeraldGlow}
           anchorX="center"
           anchorY="middle"
-          letterSpacing={0.2}
-          outlineWidth={0.005}
+          letterSpacing={0.14}
+          outlineWidth={0.002}
           outlineColor={palette.void}
         >
           {label.toUpperCase()}
         </Text>
-      ) : null}
+
+        {/* Caption (small) — bottom half, wrapped to screen width minus padding. */}
+        <Text
+          raycast={noRaycast}
+          position={[0, -0.10, 0.005]}
+          fontSize={0.046}
+          color={palette.bone}
+          anchorX="center"
+          anchorY="middle"
+          maxWidth={0.8}
+          textAlign="center"
+          lineHeight={1.25}
+          letterSpacing={0.04}
+        >
+          {caption}
+        </Text>
+      </group>
     </group>
   );
 }

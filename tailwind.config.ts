@@ -32,6 +32,7 @@ const config: Config = {
         'emerald-hot': palette.emeraldHot,
         'emerald-mid': palette.emeraldMid,
         'emerald-dim': palette.emeraldDim,
+        'emerald-glow': palette.emeraldGlow,
 
         'violet-spark': palette.violetSpark,
 

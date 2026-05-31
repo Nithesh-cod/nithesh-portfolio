@@ -3,7 +3,7 @@
 import { Html } from '@react-three/drei';
 import { play } from '@/lib/audio';
 import { usePortfolioStore, type ProxyId } from '@/lib/store';
-import { stations, CRT_POS, CONTACT_POS, content, type Project } from '@/lib/content';
+import { stations, CRT_POS, CONTACT_POS, CERT_WALL_POS, content, waypoints, type Project } from '@/lib/content';
 
 /**
  * Invisible focusable buttons positioned at each interactive 3D object.
@@ -30,6 +30,19 @@ export function AccessibilityProxies() {
           }}
         />
       ))}
+
+      <Proxy
+        position={[CERT_WALL_POS[0], CERT_WALL_POS[1] + 0.6, CERT_WALL_POS[2]]}
+        label="View certifications"
+        onActivate={() => {
+          play('transition');
+          if (typeof window === 'undefined') return;
+          const idx = waypoints.findIndex((w) => w.id === 'certifications');
+          if (idx < 0) return;
+          const els = document.querySelectorAll<HTMLElement>('[data-waypoint]');
+          els[idx]?.scrollIntoView({ behavior: 'smooth' });
+        }}
+      />
 
       <Proxy
         position={[CRT_POS[0], CRT_POS[1] + 0.6, CRT_POS[2]]}

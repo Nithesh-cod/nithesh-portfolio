@@ -2,11 +2,12 @@
 
 import { Canvas } from '@react-three/fiber';
 import { AdaptiveDpr, AdaptiveEvents, PerformanceMonitor, Preload } from '@react-three/drei';
-import type { ComponentType } from 'react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { PointLight } from 'three';
 import { Lab } from '@/components/canvas/Lab';
 import { Hologram } from '@/components/canvas/Hologram';
+import { CertificateShelf } from '@/components/canvas/CertificateShelf';
+import { SkillPodiums } from '@/components/canvas/SkillPodiums';
 import { PostFX } from '@/components/canvas/PostFX';
 import { AccessibilityProxies } from '@/components/canvas/AccessibilityProxies';
 import { ScrollCamera } from '@/components/motion/ScrollCamera';
@@ -51,6 +52,8 @@ export function Scene() {
 
       <Lab />
       <Hologram />
+      <CertificateShelf />
+      <SkillPodiums />
       <AccessibilityProxies />
 
       <ScrollCamera />
@@ -59,8 +62,6 @@ export function Scene() {
       <AdaptiveDpr pixelated />
       <AdaptiveEvents />
       <Preload all />
-
-      <DevPerf />
     </Canvas>
   );
 }
@@ -108,26 +109,8 @@ function Lights() {
   );
 }
 
-/**
- * r3f-perf overlay, dev-only, gated behind ?debug=perf.
- * Dynamic-import the module so production builds drop it entirely — the
- * `process.env.NODE_ENV !== 'development'` guard makes the import() unreachable
- * under webpack's dead-code elimination at NODE_ENV=production.
- */
-type PerfComponent = ComponentType<{
-  position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
-}>;
-
-function DevPerf() {
-  const [Comp, setComp] = useState<PerfComponent | null>(null);
-  useEffect(() => {
-    if (process.env.NODE_ENV !== 'development') return;
-    if (typeof window === 'undefined') return;
-    if (new URLSearchParams(window.location.search).get('debug') !== 'perf') return;
-    void import('r3f-perf').then((m) => setComp(() => m.Perf as PerfComponent));
-  }, []);
-  return Comp ? <Comp position="top-left" /> : null;
-}
+// r3f-perf overlay removed in V1.5 — its "144 Hz / laptop" badge was leaking
+// into production renders. Re-add only behind an explicit dev-branch import.
 
 /**
  * Watches framerate via drei's PerformanceMonitor.

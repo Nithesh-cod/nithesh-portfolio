@@ -190,6 +190,79 @@ Third-party audio (added in M3) will be credited in this README with source + li
 
 ## Changelog
 
+### V1.7 — clicks unblocked, new scene zones
+
+The diagnostic from V1.6 was conclusive: `[CONSOLE-CLICK] 1. entered` never appeared, meaning the onClick handler on the console mesh was never invoked. Root cause: the Billboard `<Text>` captions added in V1.5 are raycastable meshes (drei `<Text>` is a real mesh via troika-three-text), and they sat directly in front of the consoles, swallowing every click. Fix landed plus four new scene zones.
+
+- **FIX 0 — Clicks.** Added [`src/lib/three-utils.ts`](src/lib/three-utils.ts) exporting `noRaycast` (a no-op function — TypeScript strict rejects `raycast={null}` since the prop type is `RaycastFunction | undefined`). Every `<Text>` inside a `<Billboard>` in `InteractiveConsole`, `Hologram`, `Lab.ContactTerminal`, `CertificateShelf`, and `SkillPodiums` now uses `raycast={noRaycast}`. Text is visible, raycaster runs against it, but never appends an intersection — so R3F never delivers a click to it. Debug `console.log` chain from V1.6 is **still in place** for one more deploy so you can confirm "1. entered" now appears in real Chrome.
+- **FIX 1 — Captions ON the screen.** `InteractiveConsole` no longer renders the floating Billboard caption below the chassis. Instead, the screen plane shows two lines of `<Text>` directly on it: title (large, `emerald-glow`, JetBrains-mono-ish stagger) in the top half, caption (small, `bone`, centred, max-width) in the bottom half. The screen's `emissiveIntensity` dropped from 0.85 → 0.35 so text reads cleanly against the panel instead of fighting the glow. Hover floating label removed (title now lives on the screen).
+- **FIX 2 — Resume button.** `Lab.ContactTerminal.handleClick` now logs `[CONTACT-CLICK] handler fired — opening resume` before calling `window.open(content.contact.resumeUrl, '_blank', 'noopener,noreferrer')`. Same diagnostic pattern as console clicks — will confirm in real Chrome.
+- **FIX 3 — Certificate side shelf + lightbox.** Tore out `CertificateWall.tsx`, replaced with:
+  - [`src/components/canvas/CertificateShelf.tsx`](src/components/canvas/CertificateShelf.tsx) — 12 "containers" on a left-side wall (mounted at `[-6.5, 1.6, -1.5]`, rotated 90° about Y so the face points into the room). Four rows: Front-End (4 cards), Generative AI (3 + 2), Programming (3). Each container is a graphite box with a gold-rim plane front showing the cert thumbnail (`MeshStandardMaterial` with the PNG as `map`), title + date overlaid below. Single warm amber `SpotLight` sweeping the wall. Group headings in gold above each row.
+  - [`src/components/ui/CertificateLightbox.tsx`](src/components/ui/CertificateLightbox.tsx) — Framer-Motion DOM modal triggered by container click. Reads `store.lightboxCertId`. Shows the full-resolution PNG via Next `<Image>`, title + issuer + date, Close button + Esc + backdrop click all close. Store extended with `lightboxCertId / openCertificate / closeCertificate`.
+  - Certifications waypoint repositioned to `CERT_VIEW_POS` (4.5 units in front of the shelf, looking centred).
+- **FIX 4 — Skill podiums.** [`src/components/canvas/SkillPodiums.tsx`](src/components/canvas/SkillPodiums.tsx) — 5 graphite cylinders with thin gold-torus rims in a shallow semicircular arc (`SKILL_ARC_POS = [0, 0.4, 2.4]`, 155° span, radius 2.6). Each podium maps to one key in `content.skills` (Languages / Front-End / AI · Gen AI / Platform / Tools). Above each, a Billboard with heading (`emerald-glow`, large) + items joined by ` · ` (`bone`, smaller). Hover pulses the gold rim emissive 0.22 → 0.55. New `skills` waypoint at `[0, 2.0, 5.4]` inserted between `console-3` and `server-rack`.
+- **FIX 5 — Live URL + project URLs visible in scene.**
+  - `content.ts` now exports `liveUrl` and `contactLinks` (Portfolio · CropAI · Smart Canteen · TestAI · LinkedIn · Email).
+  - Hologram tagline now includes a second `<Text>` line: `live at nithesh-portfolio-amber.vercel.app` (bone, smaller).
+  - Contact terminal screen renders the six-line URL list as `<Text>` directly on the screen, monospace, `emerald-glow` on dim emerald, with a gold divider and `DOWNLOAD RESUME →` row beneath.
+
+Bundle: 486 KB → 492 KB First Load (+6 KB for the lightbox, shelf, podiums, and Next/Image usage on the lightbox).
+
+Waypoint count: 9 → 10 (added `skills`).
+
+Issue dates as read from each PDF (kept from V1.6):
+
+| Group         | Cert                                              | Date           |
+| ------------- | ------------------------------------------------- | -------------- |
+| Front-End     | Front End Web Developer Certification             | Feb 6, 2026    |
+| Front-End     | HTML5 — The Language                              | Feb 6, 2026    |
+| Front-End     | CSS3                                              | Feb 6, 2026    |
+| Front-End     | JavaScript                                        | Feb 6, 2026    |
+| Generative AI | Applied Generative AI Certification               | Apr 8, 2026    |
+| Generative AI | AI-first Software Engineering                     | Apr 1, 2026    |
+| Generative AI | Introduction to OpenAI GPT Models                 | Apr 1, 2026    |
+| Generative AI | GPT-3 for Developers                              | Apr 1, 2026    |
+| Generative AI | Prompt Engineering                                | Apr 1, 2026    |
+| Programming   | Basics of Python                                  | Mar 12, 2025   |
+| Programming   | Programming Fundamentals using Python — Part 1    | Mar 31, 2025   |
+| Programming   | Programming Fundamentals using Python — Part 2    | Mar 31, 2025   |
+
+### V1.5 + V1.6 — merged ship
+
+Five fixes in one pass.
+
+- **1. 144Hz icon hunt.** `grep src/` returned no `144` / `laptop` matches in component code. The only plausible source was `r3f-perf`'s dev overlay leaking into prod (the lib renders a small monitor/refresh-rate badge). Removed `<DevPerf />` entirely from `Scene.tsx`, removed the lazy `import('r3f-perf')` path, and uninstalled the package from `dependencies`. No runtime path can mount r3f-perf now; if you want it back add it under a feature-branch.
+- **2. Console click instrumentation.** Added the spec'd labelled `console.log` chain to `InteractiveConsole.handleClick` (`1. entered`, `2. audio.play returned`, `3. openProject called`) and a `[MODAL-RENDER]` log at the top of `ProjectModal`. **Left in place for one deploy.** After clicking a console in production Chrome with DevTools open, paste the log sequence and I'll pick the matching fix path from the spec's a/b/c/d/e tree (most likely (b) Howler throwing — fix is in `audio.ts` to make `play()` no-op cleanly when sprite load fails; current code already guards `if (!uiSprite) return` so this should be safe, but the log will tell us). Logs will be removed once the diagnosis lands.
+- **3. Always-visible captions.** Added `caption` field to the `Project` type in `content.ts`. `InteractiveConsole` now renders a `drei <Billboard><Text>` below each console reading from `content.projects[].caption` (CropAI, Smart Canteen, TestAI). `Hologram` renders a Billboarded tagline below the panel using `content.hero.tagline`. Bone-coloured text with a void outline for readability against the floor grid.
+- **4. Hologram visual restoration.** In `hologram.frag`: scanline modulation tightened from `mix(0.85, 1.05)` to `mix(0.92, 1.04)` (visible but doesn't punch). Fresnel edge glow re-enabled, capped via `min(fres * 1.4, 0.4)` so it can't bloom. Jitter amplitude halved again (`0.00063 → 0.000315`). RGB ghosting deleted entirely — that was the M3.6 culprit for eye blowout. Warm push + 0.82 luma cap from V1 stay intact. The portrait now reads as a holographic display (scanlines + edge glow visible) while skin stays natural.
+- **5. Certificate wall.** Twelve certificates rendered as framed planes in three thematic groups on a back wall. New `certifications` waypoint inserted between `entrance` and `portrait`, positioned 5.5 units in front of the wall looking centred.
+  - **PDF → PNG pipeline.** Run-once script at `scripts/convert-certs.mjs` using `pdf-to-img` (page 1, 2× scale ≈ 150 DPI) → `sharp` (auto-trim near-white margins, resize longest edge to 1200 px, PNG compression level 9). Output 12 files at `public/certificates/png/<id>.png`, average ~205 KB each (~2.5 MB total). Re-run any time the source PDFs change.
+  - **Layout.** `CertificateWall.tsx` lays each group out per its `layout` enum: `grid-2x2` (Front-End), `three-plus-two` (Generative AI — top row 3 centred, bottom row 2 centred), `row-1x3` (Programming). 1.2 × 0.9 unit cards with a 4-slab gold bezel (same recipe as the hologram frame), the PNG as `MeshStandardMaterial.map`, plus a subtle emerald-mid emissive at 0.04 so cards aren't dead in low-light.
+  - **Lighting.** One warm amber `SpotLight` per group (angle 0.5, penumbra 0.6, intensity 0.9, decay 2), positioned above and slightly in front of the cards. Light only touches the wall area — the rest of the scene's lighting kit is untouched.
+  - **Labels.** Title + date under each card via `Billboard<Text>` so they always face the camera (ivory title, bone date). Group heading above each cluster in gold with a thin gold underline rule.
+  - **Accessibility.** New `View certifications` proxy in `AccessibilityProxies.tsx` — Tab to it, Enter scrolls the page to the certifications waypoint. HUD section counter auto-updates (already reads `waypoints.length`).
+  - **Cert dates** read from each PDF's page-1 "on …" line, not hardcoded.
+
+Issue dates as read from the PDFs:
+
+| Group         | Cert                                              | Date           |
+| ------------- | ------------------------------------------------- | -------------- |
+| Front-End     | Front End Web Developer Certification             | Feb 6, 2026    |
+| Front-End     | HTML5 — The Language                              | Feb 6, 2026    |
+| Front-End     | CSS3                                              | Feb 6, 2026    |
+| Front-End     | JavaScript                                        | Feb 6, 2026    |
+| Generative AI | Applied Generative AI Certification               | Apr 8, 2026    |
+| Generative AI | AI-first Software Engineering                     | Apr 1, 2026    |
+| Generative AI | Introduction to OpenAI GPT Models                 | Apr 1, 2026    |
+| Generative AI | GPT-3 for Developers                              | Apr 1, 2026    |
+| Generative AI | Prompt Engineering                                | Apr 1, 2026    |
+| Programming   | Basics of Python                                  | Mar 12, 2025   |
+| Programming   | Programming Fundamentals using Python — Part 1    | Mar 31, 2025   |
+| Programming   | Programming Fundamentals using Python — Part 2    | Mar 31, 2025   |
+
+Bundle: 484 KB → 486 KB First Load (+2 KB for cert geometry + Billboard usage).
+
 ### V1 — ship
 
 Four fixes from production screenshots, minimum to deploy.
