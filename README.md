@@ -190,6 +190,33 @@ Third-party audio (added in M3) will be credited in this README with source + li
 
 ## Changelog
 
+### V2.1 — root cause found · clicks finally work · debug logs stripped
+
+After 8 rounds of patching the wrong layer, the user found the actual blocker with the DevTools elements picker: the scroll-spine `<section>` spacers in `page.tsx`. Each was a `h-screen w-full` element at `z-10`, sitting on top of the canvas (`z-0`), with default `pointer-events: auto`. They absorbed every click before the canvas saw it.
+
+- **FIX 0 — `pointer-events-none` on the scroll spine.** Two-class change in [`src/app/page.tsx`](src/app/page.tsx):
+  ```diff
+  - <div className="relative z-10">
+  + <div className="pointer-events-none relative z-10">
+      {waypoints.map((w, i) => (
+        <section
+          key={w.id}
+          data-waypoint={i}
+  -       className="h-screen w-full"
+  +       className="pointer-events-none h-screen w-full"
+          aria-label={w.id}
+        />
+      ))}
+    </div>
+  ```
+  Scroll detection uses `window.scroll` events + `IntersectionObserver` (in reduced-motion mode), neither of which depend on pointer events on the spacers. Screen-reader access via `aria-label` is unaffected — `pointer-events` is independent of the accessibility tree. The canvas at `z-0` finally receives clicks.
+
+- **FIX 2 — all debug logs stripped.** Removed `[CANVAS-POINTER]` from `Scene.tsx`, the `[CONSOLE-CLICK] 1./2./3.` chain from `InteractiveConsole.tsx`, `[MODAL-RENDER]` from `ProjectModal.tsx`, and `[CONTACT-CLICK]` from `Lab.tsx`. Production console should be silent now (except for any browser-extension chatter like `enable_copy.js` and Next's `hot-reloader-client` in dev).
+
+- **FIX 1 audit (no orphan meshes found).** All 17 `boxGeometry` uses across `src/components/canvas/` were accounted for: 3 console plinths + their bezel slabs (4×3), Hologram outer bezel + GoldFrame slabs (4), CertificateRack chassis, 12 stripes, CRT desk + body + screen, Contact terminal chassis + screen. The "small TV cube" reported at waypoint 02 is most likely the **CRT body** (`0.8 × 0.65 × 0.7` at `[-4.2, 0.9, -2.6]`, rotated 72°) viewed from the portrait waypoint angle — at that distance the screen face appears as a small bright dot on a dark cube, which can read as "empty" without context. The CRT is intentional scene decor — V2.1.1 polish if you confirm the source pointing at a specific pixel.
+
+Bundle unchanged: 492 KB First Load.
+
 ### V2.0 — canvas smoke test, ref-based raycast, podium overhaul, resume viewer
 
 - **FIX 0 STEP 0.A — Canvas smoke test.** Added `onPointerDown` directly on `<Canvas>` in [`Scene.tsx`](src/components/canvas/Scene.tsx). It logs `[CANVAS-POINTER] hit at <x> <y>` with client coords from the DOM `PointerEvent`. After deploy: open DevTools, click on the 3D scene anywhere. If the line **doesn't** appear → a UI overlay is in front of the canvas (Intro / Cursor / Hud / Modal — inspect with the elements picker). If it **does** appear but `[CONSOLE-CLICK] 1. entered` still doesn't → the block is downstream (raycast / depth / R3F event).

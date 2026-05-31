@@ -121,24 +121,8 @@ export function InteractiveConsole({
 
   const handleClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
-    // eslint-disable-next-line no-console
-    console.log('[CONSOLE-CLICK] 1. entered, slug=', slug);
-    try {
-      play('click_primary');
-      // eslint-disable-next-line no-console
-      console.log('[CONSOLE-CLICK] 2. audio.play returned');
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('[CONSOLE-CLICK] audio.play threw:', err);
-    }
-    try {
-      openProject(slug);
-      // eslint-disable-next-line no-console
-      console.log('[CONSOLE-CLICK] 3. openProject called');
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('[CONSOLE-CLICK] openProject threw:', err);
-    }
+    play('click_primary');
+    openProject(slug);
   };
 
   // Per spec FIX 1 STEP 1.2 OUTCOME B: handlers belong on the actual mesh

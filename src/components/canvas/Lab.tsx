@@ -323,8 +323,6 @@ function ContactTerminal() {
   };
   const handleClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
-    // eslint-disable-next-line no-console
-    console.log('[CONTACT-CLICK] handler fired — opening resume viewer');
     play('click_primary');
     openResume();
   };

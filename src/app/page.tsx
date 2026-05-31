@@ -32,13 +32,18 @@ export default function Page() {
       <Terminal />
       <Intro />
 
-      {/* Scroll spine — one screen per camera waypoint; Lenis + GSAP map scrollY → curve t. */}
-      <div className="relative z-10">
+      {/* Scroll spine — one screen per camera waypoint; Lenis + GSAP map scrollY → curve t.
+          POINTER-EVENTS:NONE is the root-cause fix for 8 rounds of "clicks don't work":
+          these full-viewport <section> spacers sit at z-10 over the canvas (z-0) and
+          were absorbing every click before the canvas ever saw it. Scroll detection
+          uses window scroll + IntersectionObserver, not pointer events on these
+          elements — disabling pointer-events here has zero functional cost. */}
+      <div className="pointer-events-none relative z-10">
         {waypoints.map((w, i) => (
           <section
             key={w.id}
             data-waypoint={i}
-            className="h-screen w-full"
+            className="pointer-events-none h-screen w-full"
             aria-label={w.id}
           />
         ))}

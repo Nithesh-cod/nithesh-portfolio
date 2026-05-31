@@ -20,11 +20,8 @@ const CARD_VARIANTS = {
 
 export function ProjectModal() {
   const activeProject = usePortfolioStore((s) => s.activeProject);
-  const modalOpen = usePortfolioStore((s) => s.modalOpen);
   const close = usePortfolioStore((s) => s.closeProject);
   const lastProxyFocus = usePortfolioStore((s) => s.lastProxyFocus);
-  // eslint-disable-next-line no-console
-  console.log('[MODAL-RENDER] modalOpen=', modalOpen, 'activeProject=', activeProject);
 
   const project = useMemo<Project | null>(
     () => (activeProject ? (content.projects.find((p) => p.slug === activeProject) ?? null) : null),

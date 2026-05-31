@@ -37,16 +37,6 @@ export function Scene() {
       }}
       camera={{ position: [0, 1.7, 7], fov: 38, near: 0.1, far: 120 }}
       onCreated={({ gl }) => gl.setClearColor(palette.void, 1)}
-      // V2.0 FIX 0 STEP 0.A — smoke test. Canvas's onPointerDown delivers a
-      // DOM PointerEvent (not an R3F ThreeEvent), so we log client coords.
-      // If "[CANVAS-POINTER]" never logs in real Chrome, the canvas element
-      // itself isn't receiving events (a UI overlay is in the way). If it
-      // logs but "[CONSOLE-CLICK] 1. entered" does NOT log, the block is
-      // between Canvas and the console mesh (raycast / depth / R3F event).
-      onPointerDown={(e) => {
-        // eslint-disable-next-line no-console
-        console.log('[CANVAS-POINTER] hit at', e.clientX, e.clientY);
-      }}
     >
       <PerformanceTier
         onDowngrade={(m) => {
