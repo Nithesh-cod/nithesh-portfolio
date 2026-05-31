@@ -184,8 +184,9 @@ export const stations: readonly Station[] = [
 // Certifications now live ON THE RIGHT-SIDE RACK (RACK_POS) — see Lab.CertificateRack.
 // No separate cert-wall position; the rack IS the wall.
 
-// Skill podiums laid out in an arc around [0, 0.4, 2.4]; visitor stands back.
-export const SKILL_ARC_POS = [0, 0.4, 2.4] as const;
+// Skill podiums laid out in an arc around [0, 0.4, 1.8]; visitor stands ~5 units back.
+// Moved forward (was 2.4) so the waypoint camera at z=6.8 fits all 5 podiums in FOV.
+export const SKILL_ARC_POS = [0, 0.4, 1.8] as const;
 export type Certificate = {
   id: string;
   title: string;
@@ -243,7 +244,9 @@ export const waypoints = [
   { id: 'console-1', position: [-3.2, 1.05, 1.4] as const, lookAt: STATION_POS.cropai },
   { id: 'console-2', position: [0, 1.05, 1.0] as const, lookAt: STATION_POS['smart-canteen'] },
   { id: 'console-3', position: [3.2, 1.05, 1.4] as const, lookAt: STATION_POS.testai },
-  { id: 'skills', position: [0, 2.0, 5.4] as const, lookAt: SKILL_ARC_POS },
+  // Camera moved back from z=5.4 → z=6.8 so the ±77.5° arc-edge podiums
+  // (at ~±2.5 world-x, z≈2.35) fit comfortably inside the ~31° horizontal half-FOV.
+  { id: 'skills', position: [0, 2.0, 6.8] as const, lookAt: SKILL_ARC_POS },
   // Certifications waypoint — front of the right-side rack (was the old server-rack
   // position). Camera ~3.5 units in front of the rack face, looking straight at it.
   { id: 'certifications', position: [RACK_POS[0], RACK_POS[1] + 0.2, RACK_POS[2] + 3.6] as const, lookAt: RACK_POS },

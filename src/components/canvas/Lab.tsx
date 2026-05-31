@@ -103,142 +103,120 @@ function Floor() {
 }
 
 /* ─────────────────────────  Certificate rack  ──────────────────────
- * Right-side rack repurposed as the certifications shelf. 12 drawers in
- * 3 rows by category. Each drawer is a clickable mesh that opens the
- * full-resolution cert in the CertificateLightbox (via store).
+ * Server-rack visual restored per V1.9 spec: 12 vertical emerald stripes
+ * in a 2-row × 6-column layout, each stripe = one cert "drawer". Click a
+ * stripe → CertificateLightbox opens with the full-res cert.
  *
- * Decorative amber + violet side LEDs from the original ServerRack
- * survive — moved to the rack's right edge as status lights.
+ * Accent colours are MEANINGFUL now:
+ *   • AMBER  stripe = Applied Generative AI         (i = 4, top row)
+ *   • VIOLET stripe = AI-First Software Engineering (i = 5, top row)
+ *   • Every other stripe = emerald.
+ *
+ * A "CERTIFICATES" label sits above the rack in gold.
+ *
+ * Index → cert mapping (left→right, top→bottom):
+ *   Top row (y = +0.5):   html5, css3, javascript, front-end-web-dev,
+ *                         applied-gen-ai*, ai-first-software-engineering*
+ *   Bottom row (y = −0.5): openai-gpt-models, gpt-3-for-developers,
+ *                         prompt-engineering, basics-of-python,
+ *                         python-fundamentals-part1, python-fundamentals-part2
  * ─────────────────────────────────────────────────────────────────── */
 
-const RACK_W = 2.9;
-const RACK_H = 2.1;
-const RACK_D = 0.55;
-const DRAWER_W = 0.45;
-const DRAWER_H = 0.3;
-const DRAWER_D = 0.05;
-const DRAWER_GAP_X = 0.06;
-const HEADING_Y = 0.08;
-const ROW_GAP_Y = 0.14;
+const RACK_W = 1.6;
+const RACK_H = 2.6;
+const RACK_D = 0.9;
 
-type RackRow = { heading: string; ids: readonly string[] };
+type StripeSpec = { certId: string; accent: 'emerald' | 'amber' | 'violet' };
 
-const RACK_ROWS: readonly RackRow[] = [
-  { heading: 'FRONT-END',     ids: ['html5', 'css3', 'javascript', 'front-end-web-dev'] },
-  { heading: 'GENERATIVE AI', ids: ['applied-gen-ai', 'ai-first-software-engineering', 'openai-gpt-models', 'gpt-3-for-developers', 'prompt-engineering'] },
-  { heading: 'PROGRAMMING',   ids: ['basics-of-python', 'python-fundamentals-part1', 'python-fundamentals-part2'] },
+const STRIPE_ORDER: readonly StripeSpec[] = [
+  // Top row (i = 0..5)
+  { certId: 'html5',                          accent: 'emerald' },
+  { certId: 'css3',                           accent: 'emerald' },
+  { certId: 'javascript',                     accent: 'emerald' },
+  { certId: 'front-end-web-dev',              accent: 'emerald' },
+  { certId: 'applied-gen-ai',                 accent: 'amber'   },
+  { certId: 'ai-first-software-engineering',  accent: 'violet'  },
+  // Bottom row (i = 6..11)
+  { certId: 'openai-gpt-models',              accent: 'emerald' },
+  { certId: 'gpt-3-for-developers',           accent: 'emerald' },
+  { certId: 'prompt-engineering',             accent: 'emerald' },
+  { certId: 'basics-of-python',               accent: 'emerald' },
+  { certId: 'python-fundamentals-part1',      accent: 'emerald' },
+  { certId: 'python-fundamentals-part2',      accent: 'emerald' },
 ];
+
+const ACCENT_COLOUR: Record<StripeSpec['accent'], string> = {
+  emerald: palette.emeraldMid,
+  amber: palette.amberKey,
+  violet: palette.violetSpark,
+};
 
 const CERT_BY_ID: ReadonlyMap<string, Certificate> = new Map(
   certificateGroups.flatMap((g) => g.certs.map((c) => [c.id, c] as const)),
 );
 
 function CertificateRack() {
-  // Layout rows top → bottom on the rack face.
-  const rowStride = DRAWER_H + HEADING_Y + ROW_GAP_Y;
-  const totalH = RACK_ROWS.length * rowStride - ROW_GAP_Y;
-  const topY = totalH / 2;
-  const faceZ = RACK_D / 2 + 0.002;
-
   return (
     <group position={RACK_POS}>
-      {/* Rack chassis */}
+      {/* Rack chassis — graphite, metal */}
       <mesh castShadow receiveShadow>
         <boxGeometry args={[RACK_W, RACK_H, RACK_D]} />
-        <meshStandardMaterial color={palette.graphite} roughness={0.3} metalness={0.9} />
+        <meshStandardMaterial color={palette.graphite} roughness={0.5} metalness={0.85} />
       </mesh>
 
-      {/* Thin gold rim around the front face — 4 slabs */}
-      {(
-        [
-          [0, RACK_H / 2 - 0.01, faceZ],
-          [0, -RACK_H / 2 + 0.01, faceZ],
-        ] as const
-      ).map((p, i) => (
-        <mesh key={`h${i}`} position={[p[0], p[1], p[2]]}>
-          <boxGeometry args={[RACK_W, 0.018, 0.004]} />
-          <meshStandardMaterial color={palette.goldAccent} emissive={palette.goldAccent} emissiveIntensity={0.2} metalness={0.95} roughness={0.25} />
-        </mesh>
+      {/* CERTIFICATES label above the rack, raycast disabled. */}
+      <Text
+        raycast={noRaycast}
+        position={[0, RACK_H / 2 + 0.18, RACK_D / 2 + 0.001]}
+        fontSize={0.22}
+        color={palette.goldAccent}
+        anchorX="center"
+        anchorY="bottom"
+        letterSpacing={0.22}
+        outlineWidth={0.003}
+        outlineColor={palette.void}
+      >
+        CERTIFICATES
+      </Text>
+
+      {/* 12 stripes — 2 rows × 6 columns. */}
+      {STRIPE_ORDER.map((spec, i) => (
+        <Stripe key={spec.certId} index={i} spec={spec} />
       ))}
-      {(
-        [
-          [-RACK_W / 2 + 0.01, 0, faceZ],
-          [RACK_W / 2 - 0.01, 0, faceZ],
-        ] as const
-      ).map((p, i) => (
-        <mesh key={`v${i}`} position={[p[0], p[1], p[2]]}>
-          <boxGeometry args={[0.018, RACK_H, 0.004]} />
-          <meshStandardMaterial color={palette.goldAccent} emissive={palette.goldAccent} emissiveIntensity={0.2} metalness={0.95} roughness={0.25} />
-        </mesh>
-      ))}
-
-      {/* Three row groups: heading + drawers */}
-      {RACK_ROWS.map((row, ri) => {
-        const yCentre = topY - ri * rowStride - HEADING_Y - DRAWER_H / 2;
-        const rowWidth = row.ids.length * DRAWER_W + (row.ids.length - 1) * DRAWER_GAP_X;
-        const xStart = -rowWidth / 2 + DRAWER_W / 2;
-        return (
-          <group key={row.heading} position={[0, yCentre, faceZ]}>
-            <Text
-              raycast={noRaycast}
-              position={[0, DRAWER_H / 2 + 0.06, 0]}
-              fontSize={0.06}
-              color={palette.goldAccent}
-              anchorX="center"
-              anchorY="middle"
-              letterSpacing={0.18}
-              outlineWidth={0.001}
-              outlineColor={palette.void}
-            >
-              {row.heading}
-            </Text>
-            {row.ids.map((id, di) => (
-              <Drawer
-                key={id}
-                certId={id}
-                position={[xStart + di * (DRAWER_W + DRAWER_GAP_X), 0, 0]}
-              />
-            ))}
-          </group>
-        );
-      })}
-
-      {/* Side status LEDs — keepsakes from the original ServerRack. */}
-      <mesh position={[RACK_W / 2 + 0.03, 0.55, 0.12]} ref={(m) => m?.layers.enable(1)}>
-        <boxGeometry args={[0.04, 0.1, 0.02]} />
-        <meshStandardMaterial color={palette.void} emissive={palette.amberKey} emissiveIntensity={0.7} />
-      </mesh>
-      <mesh position={[RACK_W / 2 + 0.03, 0.35, 0.12]} ref={(m) => m?.layers.enable(1)}>
-        <boxGeometry args={[0.04, 0.1, 0.02]} />
-        <meshStandardMaterial color={palette.void} emissive={palette.violetSpark} emissiveIntensity={0.8} />
-      </mesh>
-      <mesh position={[RACK_W / 2 + 0.03, 0.15, 0.12]} ref={(m) => m?.layers.enable(1)}>
-        <boxGeometry args={[0.04, 0.1, 0.02]} />
-        <meshStandardMaterial color={palette.void} emissive={palette.emeraldMid} emissiveIntensity={0.7} />
-      </mesh>
     </group>
   );
 }
 
-function Drawer({ certId, position }: { certId: string; position: readonly [number, number, number] }) {
-  const cert = CERT_BY_ID.get(certId);
+const STRIPE_W = 0.16;
+const STRIPE_H = 0.7;
+const STRIPE_D = 0.02;
+
+function Stripe({ index, spec }: { index: number; spec: StripeSpec }) {
+  const cert = CERT_BY_ID.get(spec.certId);
   const meshRef = useRef<Mesh>(null);
   const [hovered, setHovered] = useState(false);
   const openCertificate = usePortfolioStore((s) => s.openCertificate);
   const setCursor = usePortfolioStore((s) => s.setCursorState);
   const lastHoverAt = useRef(0);
-  const baseZ = position[2];
-  // useTexture suspends; cert.image is the same PNG used by the lightbox.
-  const tex = useTexture(cert?.image ?? '/portrait.png') as Texture;
 
-  // Hover slide: drawer eases +0.1 z forward.
+  // Position formula: 6-wide rows, top row first (i 0..5), bottom row (i 6..11).
+  const row = Math.floor(index / 6);
+  const col = index % 6;
+  const x = -0.6 + col * 0.24;
+  const y = row === 0 ? 0.5 : -0.5; // top row +0.5, bottom row -0.5
+  const baseZ = RACK_D / 2 + 0.01;
+
+  // Hover slide: stripe eases +0.05 z forward.
   useFrame((_, dt) => {
     if (!meshRef.current) return;
-    const target = baseZ + (hovered ? 0.1 : 0);
-    meshRef.current.position.z += (target - meshRef.current.position.z) * Math.min(1, dt * 8);
+    const target = baseZ + (hovered ? 0.05 : 0);
+    meshRef.current.position.z += (target - meshRef.current.position.z) * Math.min(1, dt * 10);
   });
 
   if (!cert) return null;
+
+  const color = ACCENT_COLOUR[spec.accent];
+  const intensity = (hovered ? 1.4 : 0.95) + (spec.accent === 'amber' ? -0.2 : 0);
 
   const handleOver = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
@@ -257,43 +235,20 @@ function Drawer({ certId, position }: { certId: string; position: readonly [numb
   const handleClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
     play('click_primary');
-    openCertificate(certId);
+    openCertificate(spec.certId);
   };
 
   return (
-    <group>
-      {/* Drawer front — handlers DIRECTLY on the mesh (FIX 1 lesson). */}
-      <mesh
-        ref={meshRef}
-        position={[position[0], position[1], position[2]]}
-        onPointerOver={handleOver}
-        onPointerOut={handleOut}
-        onClick={handleClick}
-      >
-        <boxGeometry args={[DRAWER_W, DRAWER_H, DRAWER_D]} />
-        <meshStandardMaterial
-          map={tex}
-          color={palette.ivory}
-          emissive={palette.emeraldMid}
-          emissiveIntensity={hovered ? 0.18 : 0.05}
-          roughness={0.55}
-          metalness={0.1}
-        />
-      </mesh>
-      {/* Date below the drawer — Billboard-style fixed text, raycast disabled.
-          (Title is visible on the drawer thumbnail; date is the supplementary line.) */}
-      <Text
-        raycast={noRaycast}
-        position={[position[0], position[1] - DRAWER_H / 2 - 0.06, position[2] + DRAWER_D / 2 + 0.002]}
-        fontSize={0.035}
-        color={palette.bone}
-        anchorX="center"
-        anchorY="top"
-        letterSpacing={0.04}
-      >
-        {cert.date}
-      </Text>
-    </group>
+    <mesh
+      ref={meshRef}
+      position={[x, y, baseZ]}
+      onPointerOver={handleOver}
+      onPointerOut={handleOut}
+      onClick={handleClick}
+    >
+      <boxGeometry args={[STRIPE_W, STRIPE_H, STRIPE_D]} />
+      <meshStandardMaterial color={palette.void} emissive={color} emissiveIntensity={intensity} />
+    </mesh>
   );
 }
 

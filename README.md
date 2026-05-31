@@ -190,6 +190,25 @@ Third-party audio (added in M3) will be credited in this README with source + li
 
 ## Changelog
 
+### V1.9 — stale-deploy diagnosis + stripe rack + podium framing
+
+- **FIX 0 — `CERT_WALL_POS` import.** Already removed in V1.8 (`grep -r CERT_WALL_POS src/` returns zero matches; `npm run build 2>&1 | grep -iE "warning|error|attempted"` returns nothing). The error the user saw in production Chrome was a **stale Vercel deploy** — the V1.8 commit (`df69d54`) was on local `main` but hadn't been pushed yet, so Vercel was still serving the V1.7 build that still imported `CERT_WALL_POS`. V1.9 ships the push.
+- **FIX 1 — Stripe rack restored.** `CertificateRack` in [`Lab.tsx`](src/components/canvas/Lab.tsx) reverted from the horizontal-drawer layout back to the original server-rack visual: **12 vertical stripes** (`0.16 × 0.7 × 0.02`) in 2 rows × 6 columns on the rack face. Rack chassis back to original `1.6 × 2.6 × 0.9` graphite metal. Each stripe is a clickable mesh — hover slides it +0.05 z forward, click opens the existing `CertificateLightbox` with that cert. **Accent colours are now meaningful**:
+  - 🟠 Amber stripe (index 4, top row) = **Applied Generative AI**
+  - 🟣 Violet stripe (index 5, top row) = **AI-First Software Engineering**
+  - All other 10 stripes = emerald.
+  - "**CERTIFICATES**" label rendered above the rack in gold (size 0.22, JetBrains Mono spacing, `raycast={noRaycast}`).
+  - Index → cert mapping is documented in the file's header comment (left→right, top→bottom).
+- **FIX 2 — Empty-podium framing.** Diagnosis: from the V1.7/1.8 skills waypoint (`[0, 2.0, 5.4]`), the leftmost / rightmost podiums sat at world-x ≈ ±2.54, depth-from-camera ≈ 2.44 — outside the ~31° horizontal half-FOV (`atan(2.54 / 2.44) ≈ 46°`). They were rendered but **clipped off-screen**, reading as "empty". Fixes:
+  - Arc radius `2.6 → 2.2`, arc span `155° → 130°` (extreme podiums now at ±77° instead of ±77.5° but closer to centre).
+  - `SKILL_ARC_POS` moved forward `z = 2.4 → 1.8` so podiums are deeper from camera.
+  - Skills waypoint camera moved back `z = 5.4 → 6.8`. Net effect: extreme podiums now at ≈ ±27° from camera-forward, comfortably inside the ~31° half-FOV.
+- **FIX 3 — Overlap audit (static).** Walked each waypoint mentally against the scene graph. SkillPodiums already gated by `Math.abs(section - SKILLS_WP_IDX) > 1` (V1.8). Hologram tagline, contact-terminal URL list, console captions, and the new CERTIFICATES label all live on their own meshes / Billboards with `raycast={noRaycast}` so they don't intercept clicks; they appear at small scale from far waypoints (< 30 px high) and read as scene detail, not as competing text. No additional gates added — adding too many `if (Math.abs(...) > N) return null` shortcuts would defeat the "single coherent stage" feel the master prompt called for.
+- **FIX 4 — Deploy.** Committed and pushed to `origin/main` so Vercel auto-deploys.
+
+Bundle: 492 KB → 492 KB First Load (unchanged — stripe rack is geometrically simpler than the drawer grid).
+Waypoint count unchanged at 9.
+
 ### V1.8 — click handler relocated, podium gating, rack drawers
 
 Three fixes targeting the V1.7 fallout: clicks still didn't fire after the `noRaycast` sweep; SkillPodium text bled across other waypoints; user explicitly wanted the right-side rack repurposed as the cert shelf.

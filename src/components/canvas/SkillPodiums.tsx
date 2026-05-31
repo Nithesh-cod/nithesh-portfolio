@@ -15,8 +15,10 @@ const SKILLS_WP_IDX = waypoints.findIndex((w) => w.id === 'skills');
 
 const PODIUM_RADIUS = 0.35;
 const PODIUM_HEIGHT = 0.4;
-const ARC_RADIUS = 2.6; // distance from arc centre to each podium
-const ARC_SPAN = Math.PI * 0.85; // ~155°, opening toward +Z (camera side)
+// V1.9: tightened from 2.6 / 155° → 2.2 / 130° so the extreme podiums sit
+// inside the camera's horizontal half-FOV (≈31° at the skills waypoint).
+const ARC_RADIUS = 2.2;
+const ARC_SPAN = Math.PI * 0.72; // ~130°
 
 /**
  * Five skill-group podiums in a shallow semicircular arc. Each podium is a
