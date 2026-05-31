@@ -4,11 +4,14 @@ import { Billboard, Text } from '@react-three/drei';
 import { type ThreeEvent } from '@react-three/fiber';
 import { useRef, useState } from 'react';
 import { FrontSide } from 'three';
-import { content, SKILL_ARC_POS } from '@/lib/content';
+import { content, SKILL_ARC_POS, waypoints } from '@/lib/content';
 import { palette } from '@/lib/palette';
 import { play } from '@/lib/audio';
 import { noRaycast } from '@/lib/three-utils';
 import { usePortfolioStore } from '@/lib/store';
+
+// Pre-compute the skills waypoint index from the static waypoint list.
+const SKILLS_WP_IDX = waypoints.findIndex((w) => w.id === 'skills');
 
 const PODIUM_RADIUS = 0.35;
 const PODIUM_HEIGHT = 0.4;
@@ -21,6 +24,14 @@ const ARC_SPAN = Math.PI * 0.85; // ~155°, opening toward +Z (camera side)
  * via Billboard so they always face the camera. Hovering pulses the rim.
  */
 export function SkillPodiums() {
+  const section = usePortfolioStore((s) => s.section);
+
+  // Render the podiums ONLY when the visitor is near the skills waypoint.
+  // Otherwise the cylinder bodies (which are raycastable) AND the Billboard
+  // text could sit between the camera and the consoles at other waypoints,
+  // intercepting clicks and bleeding visually across other zones.
+  if (Math.abs(section - SKILLS_WP_IDX) > 1) return null;
+
   const groups = Object.entries(content.skills); // 5 ordered entries
   const n = groups.length;
 
@@ -95,11 +106,12 @@ function Podium({
         <meshStandardMaterial color={palette.void} roughness={0.7} metalness={0.4} />
       </mesh>
 
-      {/* Floating label: heading + items. Billboarded; both Text raycast={noRaycast}. */}
-      <Billboard position={[0, PODIUM_HEIGHT + 0.35, 0]}>
+      {/* Floating label: heading + items. Sizes per FIX 2a — heading 0.08,
+          items 0.05, maxWidth 1.2 (≈ podium width). Both Text raycast disabled. */}
+      <Billboard position={[0, PODIUM_HEIGHT + 0.25, 0]}>
         <Text
           raycast={noRaycast}
-          fontSize={0.13}
+          fontSize={0.08}
           color={palette.emeraldGlow}
           anchorX="center"
           anchorY="bottom"
@@ -111,14 +123,14 @@ function Podium({
         </Text>
         <Text
           raycast={noRaycast}
-          position={[0, -0.05, 0]}
-          fontSize={0.062}
+          position={[0, -0.04, 0]}
+          fontSize={0.05}
           color={palette.bone}
           anchorX="center"
           anchorY="top"
-          maxWidth={1.5}
+          maxWidth={1.2}
           textAlign="center"
-          lineHeight={1.3}
+          lineHeight={1.25}
           letterSpacing={0.02}
         >
           {items.join(' · ')}

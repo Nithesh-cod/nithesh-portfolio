@@ -1,10 +1,10 @@
 'use client';
 
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
-import { Text } from '@react-three/drei';
-import { useMemo, useRef } from 'react';
-import { BackSide, Color } from 'three';
-import { stations, RACK_POS, CRT_POS, CONTACT_POS, content } from '@/lib/content';
+import { Text, useTexture } from '@react-three/drei';
+import { useMemo, useRef, useState } from 'react';
+import { BackSide, Color, type Mesh, type Texture } from 'three';
+import { stations, RACK_POS, CRT_POS, CONTACT_POS, content, certificateGroups, type Certificate } from '@/lib/content';
 import { InteractiveConsole } from '@/components/canvas/InteractiveConsole';
 import { FogParticles } from '@/components/canvas/FogParticles';
 import { play } from '@/lib/audio';
@@ -20,7 +20,7 @@ export function Lab() {
       {stations.map((s) => (
         <InteractiveConsole key={s.slug} slug={s.slug} label={s.label} position={s.position} />
       ))}
-      <ServerRack />
+      <CertificateRack />
       <Crt />
       <ContactTerminal />
       <FogParticles />
@@ -102,35 +102,197 @@ function Floor() {
   );
 }
 
-/* ─────────────────────────  Server rack  ───────────────────────── */
-// 12 LEDs: 1 violet-spark (index 5) + 2 amber-key (indices 3, 9) + 9 emerald-mid.
+/* ─────────────────────────  Certificate rack  ──────────────────────
+ * Right-side rack repurposed as the certifications shelf. 12 drawers in
+ * 3 rows by category. Each drawer is a clickable mesh that opens the
+ * full-resolution cert in the CertificateLightbox (via store).
+ *
+ * Decorative amber + violet side LEDs from the original ServerRack
+ * survive — moved to the rack's right edge as status lights.
+ * ─────────────────────────────────────────────────────────────────── */
 
-type LedSpec = { color: string; intensity: number };
-const LED_SPECS: readonly LedSpec[] = Array.from({ length: 12 }, (_, i) =>
-  i === 5
-    ? { color: palette.violetSpark, intensity: 1.1 }
-    : i === 3 || i === 9
-      ? { color: palette.amberKey, intensity: 0.45 }
-      : { color: palette.emeraldMid, intensity: 0.9 },
+const RACK_W = 2.9;
+const RACK_H = 2.1;
+const RACK_D = 0.55;
+const DRAWER_W = 0.45;
+const DRAWER_H = 0.3;
+const DRAWER_D = 0.05;
+const DRAWER_GAP_X = 0.06;
+const HEADING_Y = 0.08;
+const ROW_GAP_Y = 0.14;
+
+type RackRow = { heading: string; ids: readonly string[] };
+
+const RACK_ROWS: readonly RackRow[] = [
+  { heading: 'FRONT-END',     ids: ['html5', 'css3', 'javascript', 'front-end-web-dev'] },
+  { heading: 'GENERATIVE AI', ids: ['applied-gen-ai', 'ai-first-software-engineering', 'openai-gpt-models', 'gpt-3-for-developers', 'prompt-engineering'] },
+  { heading: 'PROGRAMMING',   ids: ['basics-of-python', 'python-fundamentals-part1', 'python-fundamentals-part2'] },
+];
+
+const CERT_BY_ID: ReadonlyMap<string, Certificate> = new Map(
+  certificateGroups.flatMap((g) => g.certs.map((c) => [c.id, c] as const)),
 );
 
-function ServerRack() {
+function CertificateRack() {
+  // Layout rows top → bottom on the rack face.
+  const rowStride = DRAWER_H + HEADING_Y + ROW_GAP_Y;
+  const totalH = RACK_ROWS.length * rowStride - ROW_GAP_Y;
+  const topY = totalH / 2;
+  const faceZ = RACK_D / 2 + 0.002;
+
   return (
     <group position={RACK_POS}>
+      {/* Rack chassis */}
       <mesh castShadow receiveShadow>
-        <boxGeometry args={[1.6, 2.6, 0.9]} />
-        <meshStandardMaterial color={palette.graphite} roughness={0.25} metalness={0.9} />
+        <boxGeometry args={[RACK_W, RACK_H, RACK_D]} />
+        <meshStandardMaterial color={palette.graphite} roughness={0.3} metalness={0.9} />
       </mesh>
-      {LED_SPECS.map((spec, i) => (
-        <mesh
-          key={i}
-          position={[-0.6 + (i % 6) * 0.24, -1.0 + Math.floor(i / 6) * 1.0, 0.46]}
-          ref={(m) => m?.layers.enable(1)}
-        >
-          <boxGeometry args={[0.16, 0.7, 0.02]} />
-          <meshStandardMaterial color={palette.void} emissive={spec.color} emissiveIntensity={spec.intensity} />
+
+      {/* Thin gold rim around the front face — 4 slabs */}
+      {(
+        [
+          [0, RACK_H / 2 - 0.01, faceZ],
+          [0, -RACK_H / 2 + 0.01, faceZ],
+        ] as const
+      ).map((p, i) => (
+        <mesh key={`h${i}`} position={[p[0], p[1], p[2]]}>
+          <boxGeometry args={[RACK_W, 0.018, 0.004]} />
+          <meshStandardMaterial color={palette.goldAccent} emissive={palette.goldAccent} emissiveIntensity={0.2} metalness={0.95} roughness={0.25} />
         </mesh>
       ))}
+      {(
+        [
+          [-RACK_W / 2 + 0.01, 0, faceZ],
+          [RACK_W / 2 - 0.01, 0, faceZ],
+        ] as const
+      ).map((p, i) => (
+        <mesh key={`v${i}`} position={[p[0], p[1], p[2]]}>
+          <boxGeometry args={[0.018, RACK_H, 0.004]} />
+          <meshStandardMaterial color={palette.goldAccent} emissive={palette.goldAccent} emissiveIntensity={0.2} metalness={0.95} roughness={0.25} />
+        </mesh>
+      ))}
+
+      {/* Three row groups: heading + drawers */}
+      {RACK_ROWS.map((row, ri) => {
+        const yCentre = topY - ri * rowStride - HEADING_Y - DRAWER_H / 2;
+        const rowWidth = row.ids.length * DRAWER_W + (row.ids.length - 1) * DRAWER_GAP_X;
+        const xStart = -rowWidth / 2 + DRAWER_W / 2;
+        return (
+          <group key={row.heading} position={[0, yCentre, faceZ]}>
+            <Text
+              raycast={noRaycast}
+              position={[0, DRAWER_H / 2 + 0.06, 0]}
+              fontSize={0.06}
+              color={palette.goldAccent}
+              anchorX="center"
+              anchorY="middle"
+              letterSpacing={0.18}
+              outlineWidth={0.001}
+              outlineColor={palette.void}
+            >
+              {row.heading}
+            </Text>
+            {row.ids.map((id, di) => (
+              <Drawer
+                key={id}
+                certId={id}
+                position={[xStart + di * (DRAWER_W + DRAWER_GAP_X), 0, 0]}
+              />
+            ))}
+          </group>
+        );
+      })}
+
+      {/* Side status LEDs — keepsakes from the original ServerRack. */}
+      <mesh position={[RACK_W / 2 + 0.03, 0.55, 0.12]} ref={(m) => m?.layers.enable(1)}>
+        <boxGeometry args={[0.04, 0.1, 0.02]} />
+        <meshStandardMaterial color={palette.void} emissive={palette.amberKey} emissiveIntensity={0.7} />
+      </mesh>
+      <mesh position={[RACK_W / 2 + 0.03, 0.35, 0.12]} ref={(m) => m?.layers.enable(1)}>
+        <boxGeometry args={[0.04, 0.1, 0.02]} />
+        <meshStandardMaterial color={palette.void} emissive={palette.violetSpark} emissiveIntensity={0.8} />
+      </mesh>
+      <mesh position={[RACK_W / 2 + 0.03, 0.15, 0.12]} ref={(m) => m?.layers.enable(1)}>
+        <boxGeometry args={[0.04, 0.1, 0.02]} />
+        <meshStandardMaterial color={palette.void} emissive={palette.emeraldMid} emissiveIntensity={0.7} />
+      </mesh>
+    </group>
+  );
+}
+
+function Drawer({ certId, position }: { certId: string; position: readonly [number, number, number] }) {
+  const cert = CERT_BY_ID.get(certId);
+  const meshRef = useRef<Mesh>(null);
+  const [hovered, setHovered] = useState(false);
+  const openCertificate = usePortfolioStore((s) => s.openCertificate);
+  const setCursor = usePortfolioStore((s) => s.setCursorState);
+  const lastHoverAt = useRef(0);
+  const baseZ = position[2];
+  // useTexture suspends; cert.image is the same PNG used by the lightbox.
+  const tex = useTexture(cert?.image ?? '/portrait.png') as Texture;
+
+  // Hover slide: drawer eases +0.1 z forward.
+  useFrame((_, dt) => {
+    if (!meshRef.current) return;
+    const target = baseZ + (hovered ? 0.1 : 0);
+    meshRef.current.position.z += (target - meshRef.current.position.z) * Math.min(1, dt * 8);
+  });
+
+  if (!cert) return null;
+
+  const handleOver = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    setHovered(true);
+    setCursor('interactive');
+    const now = performance.now();
+    if (now - lastHoverAt.current < 150) return;
+    lastHoverAt.current = now;
+    play('hover');
+  };
+  const handleOut = (e: ThreeEvent<PointerEvent>) => {
+    e.stopPropagation();
+    setHovered(false);
+    setCursor('idle');
+  };
+  const handleClick = (e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation();
+    play('click_primary');
+    openCertificate(certId);
+  };
+
+  return (
+    <group>
+      {/* Drawer front — handlers DIRECTLY on the mesh (FIX 1 lesson). */}
+      <mesh
+        ref={meshRef}
+        position={[position[0], position[1], position[2]]}
+        onPointerOver={handleOver}
+        onPointerOut={handleOut}
+        onClick={handleClick}
+      >
+        <boxGeometry args={[DRAWER_W, DRAWER_H, DRAWER_D]} />
+        <meshStandardMaterial
+          map={tex}
+          color={palette.ivory}
+          emissive={palette.emeraldMid}
+          emissiveIntensity={hovered ? 0.18 : 0.05}
+          roughness={0.55}
+          metalness={0.1}
+        />
+      </mesh>
+      {/* Date below the drawer — Billboard-style fixed text, raycast disabled.
+          (Title is visible on the drawer thumbnail; date is the supplementary line.) */}
+      <Text
+        raycast={noRaycast}
+        position={[position[0], position[1] - DRAWER_H / 2 - 0.06, position[2] + DRAWER_D / 2 + 0.002]}
+        fontSize={0.035}
+        color={palette.bone}
+        anchorX="center"
+        anchorY="top"
+        letterSpacing={0.04}
+      >
+        {cert.date}
+      </Text>
     </group>
   );
 }

@@ -6,7 +6,6 @@ import { useState } from 'react';
 import type { PointLight } from 'three';
 import { Lab } from '@/components/canvas/Lab';
 import { Hologram } from '@/components/canvas/Hologram';
-import { CertificateShelf } from '@/components/canvas/CertificateShelf';
 import { SkillPodiums } from '@/components/canvas/SkillPodiums';
 import { PostFX } from '@/components/canvas/PostFX';
 import { AccessibilityProxies } from '@/components/canvas/AccessibilityProxies';
@@ -52,7 +51,6 @@ export function Scene() {
 
       <Lab />
       <Hologram />
-      <CertificateShelf />
       <SkillPodiums />
       <AccessibilityProxies />
 

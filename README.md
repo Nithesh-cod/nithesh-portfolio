@@ -190,6 +190,23 @@ Third-party audio (added in M3) will be credited in this README with source + li
 
 ## Changelog
 
+### V1.8 — click handler relocated, podium gating, rack drawers
+
+Three fixes targeting the V1.7 fallout: clicks still didn't fire after the `noRaycast` sweep; SkillPodium text bled across other waypoints; user explicitly wanted the right-side rack repurposed as the cert shelf.
+
+- **FIX 1 — Click handler on the mesh, not the group.** [`InteractiveConsole.tsx`](src/components/canvas/InteractiveConsole.tsx) used to mount `onPointerOver / onPointerOut / onPointerDown / onPointerUp / onClick` on the outer `<group>`, relying on R3F event bubbling from descendant meshes. The spec's STEP 1.2 OUTCOME B hint was the real cause: handlers belong on a mesh with geometry. Pointer handlers now mount on **both** the plinth `<mesh>` (boxGeometry) **and** the screen plane `<mesh>` (planeGeometry) via a spread `{...handlers}` — two raycastable surfaces feeding the same handler, no group-bubble dependency. The `[CONSOLE-CLICK]` debug logs from V1.7 are still in place for one more deploy so you can confirm "1. entered" finally appears.
+- **FIX 2 — Skill podiums gated + sized.** [`SkillPodiums.tsx`](src/components/canvas/SkillPodiums.tsx) now early-returns `null` when `Math.abs(section - SKILLS_WP_IDX) > 1` — the entire arc (cylinders + Billboards) is **literally absent from the scene graph** at other waypoints, so it cannot bleed visually or absorb raycasts. Text sized per spec: heading `0.14 → 0.08`, items `0.062 → 0.05`, maxWidth `1.5 → 1.2` (≈ podium width).
+- **FIX 3 — Right-side rack repurposed as `CertificateRack`.**
+  - [`CertificateShelf.tsx`](src/components/canvas/CertificateShelf.tsx) **deleted**.
+  - [`Lab.tsx`](src/components/canvas/Lab.tsx)'s `ServerRack` renamed and rewritten as `CertificateRack`. Rack now 2.9 × 2.1 × 0.55 (was 1.6 × 2.6 × 0.9). 12 LED stripes deleted. New layout on the front face: 3 rows of drawers (Front-End 4, Generative AI 5, Programming 3), each drawer a `0.45 × 0.3 × 0.05` box with the cert PNG as `MeshStandardMaterial.map`. Each drawer mounts handlers directly on its mesh (FIX 1 lesson applied). Hover slides the drawer +0.1 z via a `useFrame` lerp. Click opens the existing `CertificateLightbox` via `store.openCertificate(id)`.
+  - Gold rim added around the rack's front face (four thin slabs).
+  - Original amber + violet status LEDs survived — repositioned to the rack's right edge as decorative side lights, plus one emerald.
+  - Waypoints: `server-rack` removed; `certifications` repositioned to view the rack from `[RACK_POS.x, RACK_POS.y+0.2, RACK_POS.z+3.6]` looking at `RACK_POS`. `AccessibilityProxies` "View certifications" proxy now sits at `RACK_POS`. New "View skills" proxy at `SKILL_ARC_POS`.
+  - `CERT_WALL_POS` / `CERT_VIEW_POS` removed from [`content.ts`](src/lib/content.ts).
+
+Bundle: 492 KB → 492 KB First Load (unchanged — `CertificateShelf` chunk gone, `CertificateRack` + drawers compensate).
+Waypoint count: 10 → 9 (removed `server-rack`).
+
 ### V1.7 — clicks unblocked, new scene zones
 
 The diagnostic from V1.6 was conclusive: `[CONSOLE-CLICK] 1. entered` never appeared, meaning the onClick handler on the console mesh was never invoked. Root cause: the Billboard `<Text>` captions added in V1.5 are raycastable meshes (drei `<Text>` is a real mesh via troika-three-text), and they sat directly in front of the consoles, swallowing every click. Fix landed plus four new scene zones.

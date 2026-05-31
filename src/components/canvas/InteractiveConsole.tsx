@@ -141,25 +141,35 @@ export function InteractiveConsole({
     }
   };
 
+  // Per spec FIX 1 STEP 1.2 OUTCOME B: handlers belong on the actual mesh
+  // with geometry, NOT on the parent <group>. Bubbling-via-group was the
+  // most likely path missing after the noRaycast sweep.
+  const handlers = {
+    onPointerOver: handleOver,
+    onPointerOut: handleOut,
+    onPointerDown: handleDown,
+    onPointerUp: handleUp,
+    onClick: handleClick,
+  } as const;
+
   return (
-    <group
-      position={position}
-      onPointerOver={handleOver}
-      onPointerOut={handleOut}
-      onPointerDown={handleDown}
-      onPointerUp={handleUp}
-      onClick={handleClick}
-    >
-      {/* Plinth — graphite chassis, fresnel rim glow added via onBeforeCompile */}
-      <mesh castShadow receiveShadow position={[0, -0.25, 0]} material={plinthMaterial}>
+    <group position={position}>
+      {/* Plinth — graphite chassis, handlers bound directly on the mesh. */}
+      <mesh
+        castShadow
+        receiveShadow
+        position={[0, -0.25, 0]}
+        material={plinthMaterial}
+        {...handlers}
+      >
         <boxGeometry args={[1.1, 0.5, 0.7]} />
       </mesh>
 
       {/* Tilted screen sub-group: dim emerald plane + 4-slab gold bezel + on-screen
-          title and caption. All Text inside has raycast={noRaycast} so it can't swallow
-          clicks intended for the screen mesh underneath. */}
+          title and caption. Handlers ALSO bound on the screen plane mesh —
+          two raycastable surfaces, same handler, no group-bubble dependency. */}
       <group position={[0, 0.08, 0.18]} rotation={[-0.45, 0, 0]}>
-        <mesh ref={(m) => m?.layers.enable(1)}>
+        <mesh ref={(m) => m?.layers.enable(1)} {...handlers}>
           <planeGeometry args={[0.95, 0.55]} />
           <meshStandardMaterial
             color={palette.graphite}

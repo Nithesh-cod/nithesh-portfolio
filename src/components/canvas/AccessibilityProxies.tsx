@@ -3,7 +3,7 @@
 import { Html } from '@react-three/drei';
 import { play } from '@/lib/audio';
 import { usePortfolioStore, type ProxyId } from '@/lib/store';
-import { stations, CRT_POS, CONTACT_POS, CERT_WALL_POS, content, waypoints, type Project } from '@/lib/content';
+import { stations, CRT_POS, CONTACT_POS, RACK_POS, SKILL_ARC_POS, content, waypoints, type Project } from '@/lib/content';
 
 /**
  * Invisible focusable buttons positioned at each interactive 3D object.
@@ -14,6 +14,15 @@ import { stations, CRT_POS, CONTACT_POS, CERT_WALL_POS, content, waypoints, type
  * (the meshes themselves handle pointer events); the inner button re-enables it
  * for keyboard focus + activation.
  */
+function scrollToWaypoint(id: string) {
+  play('transition');
+  if (typeof window === 'undefined') return;
+  const idx = waypoints.findIndex((w) => w.id === id);
+  if (idx < 0) return;
+  const els = document.querySelectorAll<HTMLElement>('[data-waypoint]');
+  els[idx]?.scrollIntoView({ behavior: 'smooth' });
+}
+
 export function AccessibilityProxies() {
   const openProject = usePortfolioStore((s) => s.openProject);
 
@@ -32,16 +41,15 @@ export function AccessibilityProxies() {
       ))}
 
       <Proxy
-        position={[CERT_WALL_POS[0], CERT_WALL_POS[1] + 0.6, CERT_WALL_POS[2]]}
+        position={[RACK_POS[0], RACK_POS[1] + 0.6, RACK_POS[2]]}
         label="View certifications"
-        onActivate={() => {
-          play('transition');
-          if (typeof window === 'undefined') return;
-          const idx = waypoints.findIndex((w) => w.id === 'certifications');
-          if (idx < 0) return;
-          const els = document.querySelectorAll<HTMLElement>('[data-waypoint]');
-          els[idx]?.scrollIntoView({ behavior: 'smooth' });
-        }}
+        onActivate={() => scrollToWaypoint('certifications')}
+      />
+
+      <Proxy
+        position={[SKILL_ARC_POS[0], SKILL_ARC_POS[1] + 1.2, SKILL_ARC_POS[2]]}
+        label="View skills"
+        onActivate={() => scrollToWaypoint('skills')}
       />
 
       <Proxy

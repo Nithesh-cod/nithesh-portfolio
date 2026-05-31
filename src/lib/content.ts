@@ -179,12 +179,10 @@ export const stations: readonly Station[] = [
   { slug: 'testai', label: 'TestAI', position: STATION_POS.testai },
 ] as const;
 
-/* ────────────────────────  Certifications shelf + skills arc  ──────────────────────── */
+/* ────────────────────────  Skills arc  ──────────────────────── */
 
-// CertificateShelf is mounted at [-6.5, 1.6, -1.5] rotated 90° about Y, so its
-// face points toward +X. The viewing waypoint sits ~4.5 units in front (+X).
-export const CERT_WALL_POS = [-6.5, 1.6, -1.5] as const;
-export const CERT_VIEW_POS = [-2.0, 1.6, -1.5] as const;
+// Certifications now live ON THE RIGHT-SIDE RACK (RACK_POS) — see Lab.CertificateRack.
+// No separate cert-wall position; the rack IS the wall.
 
 // Skill podiums laid out in an arc around [0, 0.4, 2.4]; visitor stands back.
 export const SKILL_ARC_POS = [0, 0.4, 2.4] as const;
@@ -241,13 +239,14 @@ export const certificateGroups: readonly CertificateGroup[] = [
  *  entrance and portrait so the visitor sees the wall right away. */
 export const waypoints = [
   { id: 'entrance', position: [0, 1.7, 7] as const, lookAt: [0, 1.4, 0] as const },
-  { id: 'certifications', position: CERT_VIEW_POS, lookAt: CERT_WALL_POS },
   { id: 'portrait', position: [0, 1.55, 1.2] as const, lookAt: HOLOGRAM_POS },
   { id: 'console-1', position: [-3.2, 1.05, 1.4] as const, lookAt: STATION_POS.cropai },
   { id: 'console-2', position: [0, 1.05, 1.0] as const, lookAt: STATION_POS['smart-canteen'] },
   { id: 'console-3', position: [3.2, 1.05, 1.4] as const, lookAt: STATION_POS.testai },
   { id: 'skills', position: [0, 2.0, 5.4] as const, lookAt: SKILL_ARC_POS },
-  { id: 'server-rack', position: [3.4, 1.5, -1.8] as const, lookAt: RACK_POS },
+  // Certifications waypoint — front of the right-side rack (was the old server-rack
+  // position). Camera ~3.5 units in front of the rack face, looking straight at it.
+  { id: 'certifications', position: [RACK_POS[0], RACK_POS[1] + 0.2, RACK_POS[2] + 3.6] as const, lookAt: RACK_POS },
   { id: 'crt', position: [-3.0, 1.1, -1.4] as const, lookAt: CRT_POS },
   { id: 'contact', position: [0, 1.4, -5.4] as const, lookAt: CONTACT_POS },
 ] as const;
