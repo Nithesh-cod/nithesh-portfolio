@@ -1,7 +1,7 @@
 'use client';
 
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
-import { Text, useTexture } from '@react-three/drei';
+import { Billboard, Text, useTexture } from '@react-three/drei';
 import { useMemo, useRef, useState } from 'react';
 import { BackSide, Color, type Mesh, type Texture } from 'three';
 import { stations, RACK_POS, CRT_POS, CONTACT_POS, content, certificateGroups, type Certificate } from '@/lib/content';
@@ -257,11 +257,14 @@ function Stripe({ index, spec }: { index: number; spec: StripeSpec }) {
 
 function Crt() {
   const setCursorState = usePortfolioStore((s) => s.setCursorState);
+  const openTerminal = usePortfolioStore((s) => s.openTerminal);
+  const [hovered, setHovered] = useState(false);
   // 150 ms throttle to keep hover from spamming the audio pool on re-entry.
   const lastHoverAt = useRef(0);
 
   const handleOver = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
+    setHovered(true);
     setCursorState('interactive');
     const now = performance.now();
     if (now - lastHoverAt.current < 150) return;
@@ -270,17 +273,36 @@ function Crt() {
   };
   const handleOut = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
+    setHovered(false);
     setCursorState('idle');
   };
   const handleClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
     play('startup');
-    // eslint-disable-next-line no-console
-    console.info('[crt] activated — terminal overlay lands in M4');
+    openTerminal();
   };
 
   return (
     <group position={CRT_POS} rotation={[0, Math.PI / 2.5, 0]} onPointerOver={handleOver} onPointerOut={handleOut} onClick={handleClick}>
+      {/* Hover hint — Billboarded so it always faces camera. */}
+      {hovered ? (
+        <Billboard position={[0, 0.75, 0]}>
+          <Text
+            raycast={noRaycast}
+            ref={disableRaycast}
+            fontSize={0.09}
+            color={palette.emeraldGlow}
+            anchorX="center"
+            anchorY="middle"
+            letterSpacing={0.2}
+            outlineWidth={0.003}
+            outlineColor={palette.void}
+          >
+            CLICK TO OPEN TERMINAL
+          </Text>
+        </Billboard>
+      ) : null}
+
       <mesh position={[0, -0.45, 0]} receiveShadow>
         <boxGeometry args={[1.6, 0.08, 0.9]} />
         <meshStandardMaterial color={palette.graphite} roughness={0.55} metalness={0.6} />

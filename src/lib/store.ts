@@ -39,6 +39,12 @@ type PortfolioStore = {
   resumeOpen: boolean;
   openResume: () => void;
   closeResume: () => void;
+
+  /** CRT terminal easter-egg overlay. Also toggled via Backquote globally. */
+  terminalOpen: boolean;
+  openTerminal: () => void;
+  closeTerminal: () => void;
+  toggleTerminal: () => void;
 };
 
 export const usePortfolioStore = create<PortfolioStore>((set) => ({
@@ -71,4 +77,9 @@ export const usePortfolioStore = create<PortfolioStore>((set) => ({
   resumeOpen: false,
   openResume: () => set({ resumeOpen: true }),
   closeResume: () => set({ resumeOpen: false }),
+
+  terminalOpen: false,
+  openTerminal: () => set({ terminalOpen: true }),
+  closeTerminal: () => set({ terminalOpen: false }),
+  toggleTerminal: () => set((s) => ({ terminalOpen: !s.terminalOpen })),
 }));

@@ -190,6 +190,23 @@ Third-party audio (added in M3) will be credited in this README with source + li
 
 ## Changelog
 
+### V2.2 — FINAL V1 polish
+
+- **Console screen — name only, stylish typography.**
+  - Caption text deleted from the screen plane.
+  - Project name centred (`y=0.04`), `fontSize=0.17`, `letterSpacing=0.08`, `maxWidth=0.85` so "SMART CANTEEN" wraps to 2 lines cleanly and "CROPAI" / "TESTAI" stay single-line.
+  - Colour: `palette.emeraldGlow` with `outlineWidth=0.004` and `outlineColor=palette.goldAccent` — subtle gold edge for premium feel.
+  - Thin gold underline below the name (`0.57 × 0.008` plane, gold-accent emissive 0.6) — the "premium signal".
+  - Caption migrated to the project modal: rendered as a gold-accent uppercase line between project name and summary in [`ProjectModal.tsx`](src/components/ui/ProjectModal.tsx).
+- **CRT now opens the Terminal.**
+  - Store extended with `terminalOpen / openTerminal / closeTerminal / toggleTerminal`.
+  - [`Terminal.tsx`](src/components/ui/Terminal.tsx) refactored to read open state from the store (previously local `useState`). Backquote key still toggles via `toggleTerminal()`; Esc calls `closeTerminal()`.
+  - [`Lab.tsx`](src/components/canvas/Lab.tsx) CRT click handler now calls `openTerminal()` instead of the stubbed `console.info`.
+  - Hover hint above the CRT: "**CLICK TO OPEN TERMINAL**" rendered in `palette.emeraldGlow` via a `Billboard` that only appears while hovered. `raycast={noRaycast}` + `ref={disableRaycast}` so it never absorbs clicks.
+- **Text overlap audit.** Walked all 9 waypoints against the scene graph. Console screens reduced text to a single centred name + gold underline (no caption residue). SkillPodiums already gated to ±1 of the skills waypoint (V1.8). Hologram tagline, CERTIFICATES label, and contact-terminal URL list all use `raycast={noRaycast}` + `disableRaycast` and stay within their respective mesh bounds. No additional sizing changes needed.
+
+Bundle unchanged: 492 KB First Load. This is the **final V1 ship**; V2 (Workstation / OS concept) starts in a fresh repo.
+
 ### V2.1 — root cause found · clicks finally work · debug logs stripped
 
 After 8 rounds of patching the wrong layer, the user found the actual blocker with the DevTools elements picker: the scroll-spine `<section>` spacers in `page.tsx`. Each was a `h-screen w-full` element at `z-10`, sitting on top of the canvas (`z-0`), with default `pointer-events: auto`. They absorbed every click before the canvas saw it.

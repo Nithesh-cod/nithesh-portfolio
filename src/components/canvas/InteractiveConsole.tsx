@@ -8,7 +8,7 @@ import { play } from '@/lib/audio';
 import { usePortfolioStore } from '@/lib/store';
 import { palette } from '@/lib/palette';
 import { disableRaycast, noRaycast } from '@/lib/three-utils';
-import { content, type Project, type Station } from '@/lib/content';
+import type { Project, Station } from '@/lib/content';
 
 type RimUniforms = {
   uHovered: { value: number };
@@ -36,10 +36,6 @@ export function InteractiveConsole({
   const [hovered, setHovered] = useState(false);
   const openProject = usePortfolioStore((s) => s.openProject);
   const setCursorState = usePortfolioStore((s) => s.setCursorState);
-  const caption = useMemo(
-    () => content.projects.find((p) => p.slug === slug)?.caption ?? '',
-    [slug],
-  );
   // Pointerover can re-fire as the cursor crosses child meshes within the group;
   // a 150ms throttle stops the hover sprite from re-triggering every few pixels
   // and exhausting Howler's HTML5 pool.
@@ -149,18 +145,16 @@ export function InteractiveConsole({
         <boxGeometry args={[1.1, 0.5, 0.7]} />
       </mesh>
 
-      {/* Tilted screen sub-group: dim emerald plane + 4-slab gold bezel + on-screen
-          title and caption. Handlers ALSO bound on the screen plane mesh —
-          two raycastable surfaces, same handler, no group-bubble dependency. */}
+      {/* Tilted screen sub-group: dim emerald plane + 4-slab gold bezel + the
+          project name (centred, large, stylized). The caption is no longer
+          rendered on the screen — it lives in the project modal instead. */}
       <group position={[0, 0.08, 0.18]} rotation={[-0.45, 0, 0]}>
         <mesh ref={(m) => m?.layers.enable(1)} {...handlers}>
           <planeGeometry args={[0.95, 0.55]} />
           <meshStandardMaterial
             color={palette.graphite}
             emissive={palette.emeraldMid}
-            // Reduced from 0.85 → 0.35 so on-screen text reads clearly against
-            // the panel instead of fighting the emerald glow.
-            emissiveIntensity={hovered ? 0.5 : 0.35}
+            emissiveIntensity={hovered ? 0.5 : 0.3}
             roughness={0.25}
             metalness={0.4}
             side={FrontSide}
@@ -168,40 +162,38 @@ export function InteractiveConsole({
         </mesh>
         <BezelFrame />
 
-        {/* Title (large) — sits in the top half of the screen. */}
+        {/* Project name — centred, large, emerald-glow with subtle gold edge.
+            maxWidth=0.85 forces "SMART CANTEEN" to wrap to 2 lines; the
+            shorter names (CROPAI, TESTAI) stay single-line. */}
         <Text
           raycast={noRaycast}
           ref={disableRaycast}
-          position={[0, 0.12, 0.005]}
-          fontSize={0.105}
+          position={[0, 0.04, 0.006]}
+          fontSize={0.17}
           color={palette.emeraldGlow}
           anchorX="center"
           anchorY="middle"
-          letterSpacing={0.14}
-          outlineWidth={0.002}
-          outlineColor={palette.void}
+          maxWidth={0.85}
+          textAlign="center"
+          lineHeight={1.0}
+          letterSpacing={0.08}
+          outlineWidth={0.004}
+          outlineColor={palette.goldAccent}
         >
           {label.toUpperCase()}
         </Text>
 
-        {/* Caption (small) — bottom half, wrapped to ~95% of screen width.
-            V2.0: size 0.046→0.04, maxWidth 0.8→0.88, allows 2-line wrap so
-            "AI crop-health classifier · React + ML" no longer clips. */}
-        <Text
-          raycast={noRaycast}
-          ref={disableRaycast}
-          position={[0, -0.11, 0.005]}
-          fontSize={0.04}
-          color={palette.bone}
-          anchorX="center"
-          anchorY="middle"
-          maxWidth={0.88}
-          textAlign="center"
-          lineHeight={1.18}
-          letterSpacing={0.03}
-        >
-          {caption}
-        </Text>
+        {/* Thin gold underline rule below the name — the "premium signal". */}
+        <mesh position={[0, -0.15, 0.006]}>
+          <planeGeometry args={[0.57, 0.008]} />
+          <meshStandardMaterial
+            color={palette.goldAccent}
+            emissive={palette.goldAccent}
+            emissiveIntensity={0.6}
+            metalness={0.95}
+            roughness={0.25}
+          />
+        </mesh>
       </group>
     </group>
   );

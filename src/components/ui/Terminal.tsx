@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { content } from '@/lib/content';
 import { play } from '@/lib/audio';
+import { usePortfolioStore } from '@/lib/store';
 
 type Line = { id: number; text: string; kind: 'in' | 'out' | 'err' };
 
@@ -26,7 +27,11 @@ const HELP = [
  * Commands are pure data — easy to extend in MM_COMMANDS below.
  */
 export function Terminal() {
-  const [open, setOpen] = useState(false);
+  // Store-driven: CRT click + Backquote both go through openTerminal/toggleTerminal.
+  const open = usePortfolioStore((s) => s.terminalOpen);
+  const setOpen = usePortfolioStore((s) => s.toggleTerminal);
+  const closeStore = usePortfolioStore((s) => s.closeTerminal);
+
   const [lines, setLines] = useState<Line[]>([
     {
       id: 0,
@@ -71,21 +76,20 @@ export function Terminal() {
     const onKey = (e: KeyboardEvent) => {
       if (e.code === 'Backquote' && !e.repeat) {
         e.preventDefault();
-        setOpen((v) => {
-          if (!v) {
-            restoreFocusRef.current = (document.activeElement as HTMLElement) ?? null;
-            play('transition');
-          }
-          return !v;
-        });
+        // If we're about to OPEN, capture focus to restore later.
+        if (!open) {
+          restoreFocusRef.current = (document.activeElement as HTMLElement) ?? null;
+          play('transition');
+        }
+        setOpen();
       } else if (e.key === 'Escape' && open) {
         e.preventDefault();
-        setOpen(false);
+        closeStore();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open]);
+  }, [open, setOpen, closeStore]);
 
   useEffect(() => {
     if (open) {

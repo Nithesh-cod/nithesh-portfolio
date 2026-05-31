@@ -126,7 +126,10 @@ function ModalShell({ project, onClose }: { project: Project; onClose: () => voi
         <h2 id="project-modal-title" className="mt-2 font-display text-3xl text-ivory">
           {project.name}
         </h2>
-        <p className="mt-4 text-bone">{project.summary}</p>
+        <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.2em] text-gold-accent">
+          {project.caption}
+        </p>
+        <p className="mt-5 text-bone">{project.summary}</p>
 
         <div className="mt-8 flex items-center justify-between gap-4">
           <a
