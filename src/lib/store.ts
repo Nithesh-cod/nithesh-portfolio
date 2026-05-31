@@ -34,6 +34,11 @@ type PortfolioStore = {
   lightboxCertId: string | null;
   openCertificate: (id: string) => void;
   closeCertificate: () => void;
+
+  /** Resume viewer overlay — PDF iframe + download button. */
+  resumeOpen: boolean;
+  openResume: () => void;
+  closeResume: () => void;
 };
 
 export const usePortfolioStore = create<PortfolioStore>((set) => ({
@@ -62,4 +67,8 @@ export const usePortfolioStore = create<PortfolioStore>((set) => ({
   lightboxCertId: null,
   openCertificate: (id) => set({ lightboxCertId: id }),
   closeCertificate: () => set({ lightboxCertId: null }),
+
+  resumeOpen: false,
+  openResume: () => set({ resumeOpen: true }),
+  closeResume: () => set({ resumeOpen: false }),
 }));

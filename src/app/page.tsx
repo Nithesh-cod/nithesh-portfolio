@@ -7,6 +7,7 @@ import { AudioController } from '@/components/ui/AudioController';
 import { Intro } from '@/components/ui/Intro';
 import { Terminal } from '@/components/ui/Terminal';
 import { CertificateLightbox } from '@/components/ui/CertificateLightbox';
+import { ResumeViewer } from '@/components/ui/ResumeViewer';
 import { content, waypoints } from '@/lib/content';
 
 const Scene = dynamic(() => import('@/components/canvas/Scene').then((m) => m.Scene), {
@@ -26,6 +27,7 @@ export default function Page() {
       <Cursor />
       <ProjectModal />
       <CertificateLightbox />
+      <ResumeViewer />
       <AudioController />
       <Terminal />
       <Intro />

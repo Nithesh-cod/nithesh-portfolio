@@ -10,7 +10,7 @@ import { FogParticles } from '@/components/canvas/FogParticles';
 import { play } from '@/lib/audio';
 import { usePortfolioStore } from '@/lib/store';
 import { palette } from '@/lib/palette';
-import { noRaycast } from '@/lib/three-utils';
+import { disableRaycast, noRaycast } from '@/lib/three-utils';
 
 export function Lab() {
   return (
@@ -167,6 +167,7 @@ function CertificateRack() {
       {/* CERTIFICATES label above the rack, raycast disabled. */}
       <Text
         raycast={noRaycast}
+        ref={disableRaycast}
         position={[0, RACK_H / 2 + 0.18, RACK_D / 2 + 0.001]}
         fontSize={0.22}
         color={palette.goldAccent}
@@ -302,15 +303,10 @@ function Crt() {
 // is the visual affordance. Keyboard parity lives in AccessibilityProxies.
 
 const LINKEDIN_SHORT = content.contact.linkedin.replace(/^https?:\/\/(www\.)?/, '');
-const RESUME_URL = content.contact.resumeUrl;
-
-function openResume() {
-  if (typeof window === 'undefined') return;
-  window.open(RESUME_URL, '_blank', 'noopener,noreferrer');
-}
 
 function ContactTerminal() {
   const setCursorState = usePortfolioStore((s) => s.setCursorState);
+  const openResume = usePortfolioStore((s) => s.openResume);
   const lastHoverAt = useRef(0);
 
   const handleOver = (e: ThreeEvent<PointerEvent>) => {
@@ -328,7 +324,7 @@ function ContactTerminal() {
   const handleClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
     // eslint-disable-next-line no-console
-    console.log('[CONTACT-CLICK] handler fired — opening resume');
+    console.log('[CONTACT-CLICK] handler fired — opening resume viewer');
     play('click_primary');
     openResume();
   };
@@ -359,6 +355,7 @@ function ContactTerminal() {
       {/* Six-line URL list on the screen, mono, raycast disabled. */}
       <Text
         raycast={noRaycast}
+        ref={disableRaycast}
         position={[0, 0.32, 0.341]}
         fontSize={0.036}
         color={palette.emeraldGlow}
@@ -379,6 +376,7 @@ function ContactTerminal() {
       {/* DOWNLOAD RESUME button row */}
       <Text
         raycast={noRaycast}
+        ref={disableRaycast}
         position={[0, -0.04, 0.341]}
         fontSize={0.05}
         color={palette.goldAccent}

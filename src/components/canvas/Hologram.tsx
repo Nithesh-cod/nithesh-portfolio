@@ -17,7 +17,7 @@ import vert from '@/shaders/hologram.vert';
 import frag from '@/shaders/hologram.frag';
 import { HOLOGRAM_POS, content } from '@/lib/content';
 import { palette } from '@/lib/palette';
-import { noRaycast } from '@/lib/three-utils';
+import { disableRaycast, noRaycast } from '@/lib/three-utils';
 
 const BOOT_DISTANCE = 3.2;
 const BOOT_HOLD = 4.2;
@@ -116,10 +116,12 @@ export function Hologram() {
       </mesh>
 
       {/* Tagline under the hologram, billboarded so it always faces the camera.
-          raycast={noRaycast} so the Text mesh can't intercept clicks targeted elsewhere. */}
+          raycast={noRaycast}
+          ref={disableRaycast} so the Text mesh can't intercept clicks targeted elsewhere. */}
       <Billboard position={[0, -1.4, 0.2]}>
         <Text
           raycast={noRaycast}
+          ref={disableRaycast}
           fontSize={0.14}
           color={palette.ivory}
           anchorX="center"
@@ -134,6 +136,7 @@ export function Hologram() {
         {/* Small "live at …" subtitle — palette.bone, raycast disabled. */}
         <Text
           raycast={noRaycast}
+          ref={disableRaycast}
           position={[0, -0.2, 0]}
           fontSize={0.07}
           color={palette.bone}

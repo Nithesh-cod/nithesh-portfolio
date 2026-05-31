@@ -7,7 +7,7 @@ import { Color, FrontSide, MeshStandardMaterial, type IUniform } from 'three';
 import { play } from '@/lib/audio';
 import { usePortfolioStore } from '@/lib/store';
 import { palette } from '@/lib/palette';
-import { noRaycast } from '@/lib/three-utils';
+import { disableRaycast, noRaycast } from '@/lib/three-utils';
 import { content, type Project, type Station } from '@/lib/content';
 
 type RimUniforms = {
@@ -187,6 +187,7 @@ export function InteractiveConsole({
         {/* Title (large) — sits in the top half of the screen. */}
         <Text
           raycast={noRaycast}
+          ref={disableRaycast}
           position={[0, 0.12, 0.005]}
           fontSize={0.105}
           color={palette.emeraldGlow}
@@ -199,18 +200,21 @@ export function InteractiveConsole({
           {label.toUpperCase()}
         </Text>
 
-        {/* Caption (small) — bottom half, wrapped to screen width minus padding. */}
+        {/* Caption (small) — bottom half, wrapped to ~95% of screen width.
+            V2.0: size 0.046→0.04, maxWidth 0.8→0.88, allows 2-line wrap so
+            "AI crop-health classifier · React + ML" no longer clips. */}
         <Text
           raycast={noRaycast}
-          position={[0, -0.10, 0.005]}
-          fontSize={0.046}
+          ref={disableRaycast}
+          position={[0, -0.11, 0.005]}
+          fontSize={0.04}
           color={palette.bone}
           anchorX="center"
           anchorY="middle"
-          maxWidth={0.8}
+          maxWidth={0.88}
           textAlign="center"
-          lineHeight={1.25}
-          letterSpacing={0.04}
+          lineHeight={1.18}
+          letterSpacing={0.03}
         >
           {caption}
         </Text>

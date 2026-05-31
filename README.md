@@ -190,6 +190,32 @@ Third-party audio (added in M3) will be credited in this README with source + li
 
 ## Changelog
 
+### V2.0 — canvas smoke test, ref-based raycast, podium overhaul, resume viewer
+
+- **FIX 0 STEP 0.A — Canvas smoke test.** Added `onPointerDown` directly on `<Canvas>` in [`Scene.tsx`](src/components/canvas/Scene.tsx). It logs `[CANVAS-POINTER] hit at <x> <y>` with client coords from the DOM `PointerEvent`. After deploy: open DevTools, click on the 3D scene anywhere. If the line **doesn't** appear → a UI overlay is in front of the canvas (Intro / Cursor / Hud / Modal — inspect with the elements picker). If it **does** appear but `[CONSOLE-CLICK] 1. entered` still doesn't → the block is downstream (raycast / depth / R3F event).
+- **FIX 0 STEP 0.B — Ref-based raycast disable (belt and suspenders).** New helper `disableRaycast` in [`three-utils.ts`](src/lib/three-utils.ts) — a ref callback that sets `obj.raycast = noRaycast` directly on the underlying three.js instance. Applied alongside `raycast={noRaycast}` on every Text inside a Billboard or screen sub-group (InteractiveConsole, Hologram, Lab.ContactTerminal, SkillPodiums). If drei's `<Text>` doesn't honour the `raycast` prop in this version of `troika-three-text`, the ref callback still wins because it mutates the instance directly after mount.
+- **FIX 1 — Console caption overflow.** [`InteractiveConsole.tsx`](src/components/canvas/InteractiveConsole.tsx): caption `fontSize 0.046 → 0.04`, `maxWidth 0.8 → 0.88` (95% of screen width), tighter letter spacing. "AI crop-health classifier · React + ML" now wraps cleanly inside the screen bounds.
+- **FIX 2 + 3 — SkillPodiums rebuilt.** [`SkillPodiums.tsx`](src/components/canvas/SkillPodiums.tsx) replaces `Object.entries(content.skills)` iteration with five hand-curated podium definitions:
+  - **FRONT-END** · React · Next.js · Tailwind
+  - **AI / GEN AI** · LLM APIs · Embeddings · RAG
+  - **LANGUAGES** · JavaScript · TypeScript · Python
+  - **DEPLOY** · Git · Vercel · Netlify
+  - **CONTACT** — three clickable lines: LinkedIn → opens profile in new tab, Email → mailto:, **OPEN RESUME** → opens the `ResumeViewer` modal.
+  Heading size 0.10, items size 0.06 (or 0.058 for contact lines), maxWidth 1.0. The CONTACT podium's lines are interactive Text meshes — raycast LEFT ENABLED on these — with hover state, sound, and a click handler.
+- **FIX 5 — Resume viewer modal.** New [`ResumeViewer.tsx`](src/components/ui/ResumeViewer.tsx): full-screen Framer-Motion modal with the PDF rendered in an `<iframe>` (80vw × 85vh), top-bar with `✕ Close` (left) + `Download ↓` (right, gold pill — triggers an anchor `download="Nithesh_Ramachandran_Resume.pdf"` click), `Esc` and backdrop click close. Store extended with `resumeOpen / openResume / closeResume`. Mounted in [`page.tsx`](src/app/page.tsx). The contact terminal (in `Lab.tsx`) now opens this modal instead of `window.open`-ing the PDF in a new tab.
+
+Bundle: 492 KB → 492 KB (unchanged — the ResumeViewer + podium rework offset by removed `window.open` helpers and tighter podium logic).
+
+**Verification path after this deploy:**
+1. Open the live URL in real Chrome.
+2. Open DevTools → Console.
+3. Click anywhere on the 3D scene. Expect to see `[CANVAS-POINTER] hit at <x> <y>`.
+4. Click a project console screen. Expect `[CONSOLE-CLICK] 1. entered` immediately after.
+
+If step 3 is silent → UI overlay block (use elements picker to find the culprit).
+If step 3 logs but step 4 doesn't → R3F event / raycast issue downstream.
+Paste the result and I'll do the next fix accordingly.
+
 ### V1.9 — stale-deploy diagnosis + stripe rack + podium framing
 
 - **FIX 0 — `CERT_WALL_POS` import.** Already removed in V1.8 (`grep -r CERT_WALL_POS src/` returns zero matches; `npm run build 2>&1 | grep -iE "warning|error|attempted"` returns nothing). The error the user saw in production Chrome was a **stale Vercel deploy** — the V1.8 commit (`df69d54`) was on local `main` but hadn't been pushed yet, so Vercel was still serving the V1.7 build that still imported `CERT_WALL_POS`. V1.9 ships the push.
