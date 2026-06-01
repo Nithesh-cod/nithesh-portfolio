@@ -2,12 +2,20 @@
 
 import { useEffect, useState } from 'react';
 
+const HARD_TIMEOUT_MS = 8000;
+
 /**
- * M1: fake 0→100% progress so the loader shape, type, and timing are locked in.
- * M2: swap to drei's useProgress() to read real asset-load progress from the Canvas.
+ * Loader: fake 0→100% progress, dismisses itself after 8 s no matter what.
+ *
+ * V2.3.1 — added the hard timeout. Loader is mounted by next/dynamic as
+ * `loading={() => <Loader />}` for the canvas chunk; if that chunk fails
+ * to resolve or the Canvas suspends on a bad asset, the loader could
+ * hang indefinitely. Returning `null` after the timeout leaves an empty
+ * fallback area so any other UI (HUD, etc.) keeps working.
  */
 export function Loader() {
   const [pct, setPct] = useState(0);
+  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     let id = 0;
@@ -22,6 +30,17 @@ export function Loader() {
     tick();
     return () => window.clearTimeout(id);
   }, []);
+
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      // eslint-disable-next-line no-console
+      console.warn('[Loader] 8 s hard timeout reached — dismissing loader.');
+      setDismissed(true);
+    }, HARD_TIMEOUT_MS);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  if (dismissed) return null;
 
   return (
     <div

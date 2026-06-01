@@ -168,7 +168,12 @@ export function InteractiveConsole({
         <Text
           raycast={noRaycast}
           ref={disableRaycast}
-          font="/fonts/Orbitron-Black.ttf"
+          // V2.3.1 — switched from the local TTF (which arrived corrupted from
+          // the github raw mirror — troika-three-text couldn't parse it and the
+          // canvas hung at the loader) to the Google Fonts gstatic CDN URL.
+          // gstatic always returns valid binary; drei <Text> falls back to its
+          // default sans-serif if the URL fails for any reason.
+          font="https://fonts.gstatic.com/s/orbitron/v34/yMJMMIlzdpvBhQQL_QIaePuvA.ttf"
           position={[0, 0.04, 0.006]}
           fontSize={0.21}
           color={palette.emeraldGlow}
