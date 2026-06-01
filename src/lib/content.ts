@@ -207,7 +207,9 @@ export const skillCategories: readonly SkillCategory[] = [
 // Order left → right (from camera view): CRT, Languages, Front-End, AI, Platform, Tools, Contact.
 
 export const ARC_CENTER = HOLOGRAM_POS;
-export const ARC_RADIUS = 5.0;
+// V2.7: radius reduced 5.0 → 3.2 — podiums now sit closer to the hologram so
+// the orbit camera (radius ~4.5) comfortably frames the full arc.
+export const ARC_RADIUS = 3.2;
 const ARC_SPAN_DEG = 160;
 const ARC_BASE_DEG = 180; // straight behind hologram (in -Z direction)
 
@@ -353,12 +355,14 @@ export const waypoints = [
   { id: 'console-testai',  label: 'CONSOLE_3 [ TESTAI ]',      position: [2.0, 1.0, 1.5] as const, lookAt: STATION_POS.testai },
   // 05 — PORTRAIT: hero shot of the hologram.
   { id: 'portrait',        label: 'PORTRAIT',                  position: [0, 1.5, 1.5] as const,  lookAt: HOLOGRAM_POS },
-  // 06 — ORBIT_LEFT: start arcing around to the left, CRT + leftmost skills visible.
-  { id: 'orbit-left',      label: 'TERMINAL  ARC_LEFT',        position: [-4.5, 1.5, 0] as const, lookAt: HOLOGRAM_POS },
-  // 07 — ORBIT_BACK: directly behind hologram, full arc of podiums in view.
-  { id: 'orbit-back',      label: 'SKILLS  ARC_BACK',          position: [0, 1.5, -5.5] as const, lookAt: HOLOGRAM_POS },
-  // 08 — ORBIT_RIGHT: camera-right side, contact + rightmost skills visible.
-  { id: 'orbit-right',     label: 'CONTACT  ARC_RIGHT',        position: [4.5, 1.5, 0] as const,  lookAt: HOLOGRAM_POS },
+  // 06 — ORBIT_LEFT: arc around to the left side — lookAt aims at the LEFT
+  // half of the podium arc, not the hologram, so CRT + leftmost skills frame.
+  { id: 'orbit-left',      label: 'TERMINAL  ARC_LEFT',        position: [-5.5, 1.8, 0.5] as const, lookAt: [-3.0, 1.0, -3.0] as const },
+  // 07 — ORBIT_BACK: pulled back to z=-5.5 looking at centre-back of arc,
+  // putting the full horseshoe of podiums in frame for the first time.
+  { id: 'orbit-back',      label: 'SKILLS  ARC_BACK',          position: [0, 2.0, -5.5] as const,   lookAt: [0, 1.0, -4.0] as const },
+  // 08 — ORBIT_RIGHT: mirror of ORBIT_LEFT — frames Contact + rightmost skills.
+  { id: 'orbit-right',     label: 'CONTACT  ARC_RIGHT',        position: [5.5, 1.8, 0.5] as const,  lookAt: [3.0, 1.0, -3.0] as const },
   // 09 — CERTIFICATIONS: pull out to see the rack head-on.
   { id: 'certifications',  label: 'CERTIFICATIONS',            position: [4.0, 1.5, 4.0] as const, lookAt: RACK_POS },
   // 10 — FINALE: dramatic high pullback.

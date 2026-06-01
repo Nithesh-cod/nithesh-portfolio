@@ -3,8 +3,8 @@
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
 import { useMemo, useRef, useState } from 'react';
-import { AdditiveBlending, BackSide, Color, type Mesh, type MeshBasicMaterial, type MeshStandardMaterial } from 'three';
-import { stations, RACK_POS, certificateGroups, type Certificate } from '@/lib/content';
+import { AdditiveBlending, BackSide, Color, type Group, type Mesh, type MeshBasicMaterial, type MeshStandardMaterial } from 'three';
+import { stations, RACK_POS, certificateGroups, waypoints, type Certificate } from '@/lib/content';
 import { InteractiveConsole } from '@/components/canvas/InteractiveConsole';
 import { FogParticles } from '@/components/canvas/FogParticles';
 import { play } from '@/lib/audio';
@@ -165,33 +165,77 @@ const CERT_BY_ID: ReadonlyMap<string, Certificate> = new Map(
 );
 
 function CertificateRack() {
+  // V2.7 — opening animation. openAmount is a shared ref that lerps toward 1
+  // when the camera is at/near the certifications waypoint and toward 0
+  // otherwise. Stripes, body emissive, and label scale all read from it each
+  // frame, so the rack visibly "unfolds" as the visitor arrives.
+  const openAmount = useRef(0);
+  const lastOpen = useRef(0);
+  const section = usePortfolioStore((s) => s.section);
+  const certWpIndex = useMemo(() => waypoints.findIndex((w) => w.id === 'certifications'), []);
+  const bodyMatRef = useRef<MeshStandardMaterial | null>(null);
+  const labelGroupRef = useRef<Group | null>(null);
+
+  useFrame(() => {
+    // Open while the camera is at the cert waypoint or one stop before.
+    const target =
+      certWpIndex >= 0 && section >= certWpIndex - 1 && section <= certWpIndex ? 1 : 0;
+    openAmount.current += (target - openAmount.current) * 0.05;
+    const open = openAmount.current;
+
+    // "Activation" sound — fires once when crossing the 0.3 → 0.5 threshold.
+    if (lastOpen.current <= 0.3 && open > 0.5) {
+      play('startup');
+    }
+    lastOpen.current = open;
+
+    if (bodyMatRef.current) {
+      bodyMatRef.current.emissiveIntensity = 0.05 + open * 0.20;
+    }
+    if (labelGroupRef.current) {
+      const s = 1 + open * 0.1;
+      labelGroupRef.current.scale.setScalar(s);
+    }
+  });
+
   return (
     <group position={RACK_POS}>
-      {/* Rack chassis — graphite, metal */}
+      {/* Rack chassis — graphite, metal. V2.7: emissive emerald-glow modulated
+          by openAmount so the rack visibly brightens as the camera arrives. */}
       <mesh castShadow receiveShadow>
         <boxGeometry args={[RACK_W, RACK_H, RACK_D]} />
-        <meshStandardMaterial color={palette.graphite} roughness={0.5} metalness={0.85} />
+        <meshStandardMaterial
+          ref={bodyMatRef}
+          color={palette.graphite}
+          emissive={palette.emeraldGlow}
+          emissiveIntensity={0.05}
+          roughness={0.5}
+          metalness={0.85}
+        />
       </mesh>
 
-      {/* CERTIFICATES label above the rack, raycast disabled. */}
-      <Text
-        raycast={noRaycast}
-        ref={disableRaycast}
-        position={[0, RACK_H / 2 + 0.18, RACK_D / 2 + 0.001]}
-        fontSize={0.22}
-        color={palette.goldAccent}
-        anchorX="center"
-        anchorY="bottom"
-        letterSpacing={0.22}
-        outlineWidth={0.003}
-        outlineColor={palette.void}
-      >
-        CERTIFICATES
-      </Text>
+      {/* CERTIFICATES label — wrapped in a group so we can scale it without
+          rebuilding the troika text geometry every frame. */}
+      <group ref={labelGroupRef} position={[0, RACK_H / 2 + 0.18, RACK_D / 2 + 0.001]}>
+        <Text
+          raycast={noRaycast}
+          ref={disableRaycast}
+          fontSize={0.22}
+          color={palette.goldAccent}
+          anchorX="center"
+          anchorY="bottom"
+          letterSpacing={0.22}
+          outlineWidth={0.003}
+          outlineColor={palette.void}
+        >
+          CERTIFICATES
+        </Text>
+      </group>
 
-      {/* 12 stripes — 2 rows × 6 columns. */}
+      {/* 12 stripes — 2 rows × 6 columns. openAmount passed via ref so each
+          stripe can lerp its own position toward the open pose. */}
       {STRIPE_ORDER.map((spec, i) => (
-        <Stripe key={spec.certId} index={i} spec={spec} />
+        <Stripe key={spec.certId} index={i} spec={spec} openAmountRef={openAmount} />
       ))}
 
       {/* V2.6 details — bolts at the 4 corners (front face), status LED at top,
@@ -309,7 +353,15 @@ const STRIPE_W = 0.16;
 const STRIPE_H = 0.7;
 const STRIPE_D = 0.02;
 
-function Stripe({ index, spec }: { index: number; spec: StripeSpec }) {
+function Stripe({
+  index,
+  spec,
+  openAmountRef,
+}: {
+  index: number;
+  spec: StripeSpec;
+  openAmountRef: React.MutableRefObject<number>;
+}) {
   const cert = CERT_BY_ID.get(spec.certId);
   const meshRef = useRef<Mesh>(null);
   const matRef = useRef<MeshStandardMaterial | null>(null);
@@ -325,21 +377,29 @@ function Stripe({ index, spec }: { index: number; spec: StripeSpec }) {
   const x = -0.6 + col * 0.24;
   const y = row === 0 ? 0.5 : -0.5; // top row +0.5, bottom row -0.5
   const baseZ = RACK_D / 2 + 0.01;
+  // Row 0 (odd in spec wording) fans LEFT, row 1 fans RIGHT — "drawer fan".
+  const fanDir = row === 0 ? -1 : 1;
 
   // Hover slide + per-stripe breathing brightness (~10% modulation, 6s period,
   // offset by index so the rack reads as alive instead of strobing in unison).
+  // V2.7: also lerps toward an "open" pose driven by the parent's openAmountRef.
   useFrame((_, dt) => {
     timeRef.current += dt;
+    const open = openAmountRef.current;
     if (meshRef.current) {
-      const target = baseZ + (hovered ? 0.05 : 0);
-      meshRef.current.position.z += (target - meshRef.current.position.z) * Math.min(1, dt * 10);
+      const targetZ = baseZ + (hovered ? 0.05 : 0) + open * 0.15;
+      const targetX = x + fanDir * open * 0.05;
+      meshRef.current.position.z += (targetZ - meshRef.current.position.z) * Math.min(1, dt * 10);
+      meshRef.current.position.x += (targetX - meshRef.current.position.x) * Math.min(1, dt * 10);
+      meshRef.current.rotation.x = open * 0.05;
     }
     if (matRef.current) {
       const phase = (timeRef.current / 6) * Math.PI * 2 + index * 0.55;
       const base = hovered ? 1.4 : 0.95;
       const breathe = 1 + Math.sin(phase) * 0.1;
       const accentBias = spec.accent === 'amber' ? -0.2 : 0;
-      matRef.current.emissiveIntensity = (base + accentBias) * breathe;
+      // Add an "opening boost" so stripes brighten when the rack activates.
+      matRef.current.emissiveIntensity = (base + accentBias) * breathe + open * 0.6;
     }
   });
 

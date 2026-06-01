@@ -25,14 +25,15 @@ function isArcZone(section: number): boolean {
   return ORBIT_INDICES.some((i) => Math.abs(section - i) <= 1);
 }
 
-const PLINTH_W = 0.5;
-const PLINTH_H = 0.25;
-const PLINTH_D = 0.4;
-const BODY_W = 0.55;
-const BODY_H = 0.4;
-const BODY_D = 0.45;
-const SCREEN_W = 0.42;
-const SCREEN_H = 0.28;
+// V2.7: 2× scale — podiums must read at distance during the orbit waypoints.
+const PLINTH_W = 1.0;
+const PLINTH_H = 0.5;
+const PLINTH_D = 0.8;
+const BODY_W = 1.1;
+const BODY_H = 0.8;
+const BODY_D = 0.9;
+const SCREEN_W = 0.84;
+const SCREEN_H = 0.56;
 
 export function AllTerminalsArc() {
   const section = usePortfolioStore((s) => s.section);
@@ -107,7 +108,7 @@ function TerminalPodium({ podium }: { podium: ArcPodium }) {
             stay on this mesh so the V2.1 click pattern continues to work. */}
         <RoundedBox
           args={[BODY_W, BODY_H, BODY_D]}
-          radius={0.035}
+          radius={0.07}
           smoothness={3}
           castShadow
           position={[0, PLINTH_H + BODY_H / 2, 0]}
@@ -119,23 +120,23 @@ function TerminalPodium({ podium }: { podium: ArcPodium }) {
         </RoundedBox>
 
         {/* Two steel knob cylinders on the lower front face of the body. */}
-        {[-0.16, 0.16].map((x) => (
+        {[-0.32, 0.32].map((x) => (
           <mesh
             key={`knob-${x}`}
-            position={[x, PLINTH_H + 0.045, BODY_D / 2 + 0.0005]}
+            position={[x, PLINTH_H + 0.09, BODY_D / 2 + 0.001]}
             rotation={[Math.PI / 2, 0, 0]}
           >
-            <cylinderGeometry args={[0.015, 0.015, 0.02, 16]} />
+            <cylinderGeometry args={[0.030, 0.030, 0.04, 16]} />
             <meshStandardMaterial color={palette.steel} metalness={0.9} roughness={0.3} />
           </mesh>
         ))}
 
         {/* Power LED — bottom-right of the body, emissive emerald. */}
         <mesh
-          position={[BODY_W / 2 - 0.05, PLINTH_H + 0.045, BODY_D / 2 + 0.0008]}
+          position={[BODY_W / 2 - 0.10, PLINTH_H + 0.09, BODY_D / 2 + 0.0016]}
           rotation={[Math.PI / 2, 0, 0]}
         >
-          <cylinderGeometry args={[0.009, 0.009, 0.005, 12]} />
+          <cylinderGeometry args={[0.018, 0.018, 0.010, 12]} />
           <meshStandardMaterial
             color={palette.emeraldHot}
             emissive={palette.emeraldHot}
@@ -156,13 +157,13 @@ function TerminalPodium({ podium }: { podium: ArcPodium }) {
           />
         </mesh>
 
-        {/* Screen text */}
-        <group position={[0, PLINTH_H + BODY_H / 2, BODY_D / 2 + 0.003]}>
+        {/* Screen text — all offsets scaled 2× to match 2× screen size. */}
+        <group position={[0, PLINTH_H + BODY_H / 2, BODY_D / 2 + 0.006]}>
           <Text
             raycast={noRaycast}
             ref={disableRaycast}
-            position={[-SCREEN_W / 2 + 0.02, SCREEN_H / 2 - 0.03, 0]}
-            fontSize={0.024}
+            position={[-SCREEN_W / 2 + 0.04, SCREEN_H / 2 - 0.06, 0]}
+            fontSize={0.048}
             color={headerColor}
             anchorX="left"
             anchorY="top"
@@ -175,13 +176,13 @@ function TerminalPodium({ podium }: { podium: ArcPodium }) {
               key={`${podium.id}-${i}`}
               raycast={noRaycast}
               ref={disableRaycast}
-              position={[-SCREEN_W / 2 + 0.02, SCREEN_H / 2 - 0.075 - i * 0.038, 0]}
-              fontSize={0.022}
+              position={[-SCREEN_W / 2 + 0.04, SCREEN_H / 2 - 0.15 - i * 0.076, 0]}
+              fontSize={0.044}
               color={podium.kind === 'contact' ? palette.bone : palette.terminalGrn}
               anchorX="left"
               anchorY="top"
               letterSpacing={0.04}
-              maxWidth={SCREEN_W - 0.05}
+              maxWidth={SCREEN_W - 0.1}
             >
               {`> ${item}`}
             </Text>
@@ -204,8 +205,9 @@ function ScreenCornerBrackets({
 }) {
   const W = SCREEN_W;
   const H = SCREEN_H;
-  const L = 0.05;
-  const T = 0.008;
+  // V2.7 — 2× bracket length + thickness to match the bigger screen.
+  const L = 0.10;
+  const T = 0.016;
   const mat = (
     <meshStandardMaterial
       color={palette.goldAccent}
