@@ -17,10 +17,11 @@ import { palette } from '@/lib/palette';
  * Each panel gets its own seed offset so the columns never line up between
  * panels — that would give the illusion away.
  */
-const PANEL_COUNT = 6;
-const PANEL_W = 4.0;
+// V2.6: 3 walls (down from 6), pulled further back, spaced wider.
+const PANEL_COUNT = 3;
+const PANEL_W = 4.5;
 const PANEL_H = 7.0;
-const PANEL_Z = -17.5;
+const PANEL_Z = -22;
 
 const VERT = /* glsl */ `varying vec2 vUv;
 void main(){
@@ -49,7 +50,8 @@ void main(){
   vec2 frac = fract(g);
 
   // Each column scrolls down at a slightly different speed.
-  float colSpeed = 0.4 + hash(vec2(cell.x, uSeed)) * 1.4;
+  // V2.6: reduced 30% — ambient, not chaotic.
+  float colSpeed = (0.4 + hash(vec2(cell.x, uSeed)) * 1.4) * 0.7;
   float scrolled = cell.y + uTime * colSpeed;
   float row = floor(scrolled);
 
@@ -64,7 +66,11 @@ void main(){
   float trail = exp(-dist * 0.18);
 
   vec3 col = mix(uColor, uHot, smoothstep(0.7, 1.0, trail));
-  float alpha = mask * trail * 0.85;
+  // V2.6: cut peak alpha from 0.85 → 0.18 (~3× less) and apply a vertical
+  // gradient so the top of the panel is faintly visible (0.06) and the bottom
+  // fades to almost nothing (0.01) — reads ambient, not dominant.
+  float vGrad = mix(0.06, 0.01, 1.0 - vUv.y);
+  float alpha = mask * trail * vGrad;
 
   // Vertical fade — top + bottom 12% feather toward 0 so the panel reads as
   // a shaft, not a hard rectangle.
@@ -79,9 +85,10 @@ export function DataStreamWalls() {
   return (
     <group position={[0, PANEL_H / 2 - 0.2, PANEL_Z]}>
       {Array.from({ length: PANEL_COUNT }, (_, i) => {
+        // 3 panels: centre + two flanks with a wide gap between them.
         const t = i / (PANEL_COUNT - 1) - 0.5;
-        const x = t * (PANEL_W * PANEL_COUNT * 0.45);
-        const z = Math.abs(t) * 2.4; // mild curtain curve toward camera at edges
+        const x = t * 14;
+        const z = Math.abs(t) * 3.0; // mild curtain curve toward camera at edges
         return <Panel key={i} position={[x, 0, z]} seed={i * 7.13 + 1.4} />;
       })}
     </group>

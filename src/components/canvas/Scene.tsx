@@ -1,7 +1,7 @@
 'use client';
 
 import { Canvas } from '@react-three/fiber';
-import { AdaptiveDpr, AdaptiveEvents, PerformanceMonitor, Preload } from '@react-three/drei';
+import { AdaptiveDpr, AdaptiveEvents, Environment, PerformanceMonitor, Preload } from '@react-three/drei';
 import { useState } from 'react';
 import type { PointLight } from 'three';
 import { Lab } from '@/components/canvas/Lab';
@@ -50,6 +50,10 @@ export function Scene() {
       />
 
       <fog attach="fog" args={[palette.void, 4, 22]} />
+
+      {/* V2.6 — night-preset env map so metal chassis materials have something
+          to reflect. background={false} keeps our custom Sky in place. */}
+      <Environment preset="night" background={false} environmentIntensity={0.35} />
 
       <Lights />
 

@@ -334,28 +334,35 @@ export const certificateGroups: readonly CertificateGroup[] = [
   },
 ] as const;
 
-/** Camera waypoints — Catmull-Rom path (tension 0.3 in ScrollCamera).
- *  Order = scroll order = narrative order. Certifications inserted between
- *  entrance and portrait so the visitor sees the wall right away. */
-// V2.5: skills / crt / contact waypoints now look at different sections of
-// the same horseshoe arc behind the hologram.
+/** Camera waypoints — Catmull-Rom path (tension 0.4 in ScrollCamera).
+ *  V2.6 redesign: 11-stop ORBIT path that actually circles the hologram,
+ *  putting the 7 arc-podiums into view at waypoints 6 / 7 / 8 (left → back →
+ *  right). Each project console gets its own close-up. Final shot pulls back
+ *  for a hero overview. */
 const ARC_CRT_POS = arcPodiums[0]?.position ?? ([-3.2, 0, -1.5] as const);
 const ARC_CONTACT_POS = arcPodiums[arcPodiums.length - 1]?.position ?? ([3.2, 0, -1.5] as const);
-const ARC_CENTRE_LOOK = [ARC_CENTER[0], 0.5, ARC_CENTER[2] - ARC_RADIUS + 1.0] as const;
 
 export const waypoints = [
-  { id: 'entrance',       label: 'ENTRANCE',                position: [0, 1.7, 7] as const, lookAt: [0, 1.4, 0] as const },
-  { id: 'portrait',       label: 'PORTRAIT',                position: [0, 1.55, 1.2] as const, lookAt: HOLOGRAM_POS },
-  { id: 'console-1',      label: 'CONSOLE_1 [ CROPAI ]',    position: [-3.2, 1.05, 1.4] as const, lookAt: STATION_POS.cropai },
-  { id: 'console-2',      label: 'CONSOLE_2 [ SMART_CANTEEN ]', position: [0, 1.05, 1.0] as const, lookAt: STATION_POS['smart-canteen'] },
-  { id: 'console-3',      label: 'CONSOLE_3 [ TESTAI ]',    position: [3.2, 1.05, 1.4] as const, lookAt: STATION_POS.testai },
-  // High vantage above hologram looking at arc centre — sees all 5 middle podiums.
-  { id: 'skills',         label: 'SKILLS',                  position: [0, 4.2, 1.5] as const, lookAt: ARC_CENTRE_LOOK },
-  { id: 'certifications', label: 'CERTIFICATIONS',          position: [RACK_POS[0], RACK_POS[1] + 0.2, RACK_POS[2] + 3.6] as const, lookAt: RACK_POS },
-  // Dolly to the left end of the arc (CRT podium).
-  { id: 'crt',            label: 'TERMINAL',                position: [ARC_CRT_POS[0] + 1.6, 1.1, ARC_CRT_POS[2] + 1.6] as const, lookAt: ARC_CRT_POS },
-  // Dolly to the right end of the arc (Contact podium).
-  { id: 'contact',        label: 'CONTACT',                 position: [ARC_CONTACT_POS[0] - 1.6, 1.1, ARC_CONTACT_POS[2] + 1.6] as const, lookAt: ARC_CONTACT_POS },
+  // 00 — ENTRANCE: wide overview, take in the whole scene.
+  { id: 'entrance',        label: 'ENTRANCE',                  position: [0, 1.8, 5.5] as const,  lookAt: [0, 1.3, -1] as const },
+  // 01 — PROJECTS_FRONT: pulled closer to the row of project consoles.
+  { id: 'projects-front',  label: 'PROJECTS',                  position: [0, 1.5, 3.0] as const,  lookAt: [0, 0.6, 0] as const },
+  // 02-04 — Close-ups on each project console.
+  { id: 'console-cropai',  label: 'CONSOLE_1 [ CROPAI ]',      position: [-2.0, 1.0, 1.5] as const, lookAt: STATION_POS.cropai },
+  { id: 'console-canteen', label: 'CONSOLE_2 [ SMART_CANTEEN ]', position: [0, 1.0, 1.5] as const, lookAt: STATION_POS['smart-canteen'] },
+  { id: 'console-testai',  label: 'CONSOLE_3 [ TESTAI ]',      position: [2.0, 1.0, 1.5] as const, lookAt: STATION_POS.testai },
+  // 05 — PORTRAIT: hero shot of the hologram.
+  { id: 'portrait',        label: 'PORTRAIT',                  position: [0, 1.5, 1.5] as const,  lookAt: HOLOGRAM_POS },
+  // 06 — ORBIT_LEFT: start arcing around to the left, CRT + leftmost skills visible.
+  { id: 'orbit-left',      label: 'TERMINAL  ARC_LEFT',        position: [-4.5, 1.5, 0] as const, lookAt: HOLOGRAM_POS },
+  // 07 — ORBIT_BACK: directly behind hologram, full arc of podiums in view.
+  { id: 'orbit-back',      label: 'SKILLS  ARC_BACK',          position: [0, 1.5, -5.5] as const, lookAt: HOLOGRAM_POS },
+  // 08 — ORBIT_RIGHT: camera-right side, contact + rightmost skills visible.
+  { id: 'orbit-right',     label: 'CONTACT  ARC_RIGHT',        position: [4.5, 1.5, 0] as const,  lookAt: HOLOGRAM_POS },
+  // 09 — CERTIFICATIONS: pull out to see the rack head-on.
+  { id: 'certifications',  label: 'CERTIFICATIONS',            position: [4.0, 1.5, 4.0] as const, lookAt: RACK_POS },
+  // 10 — FINALE: dramatic high pullback.
+  { id: 'finale',          label: 'FINALE',                    position: [0, 3.0, 7.0] as const,  lookAt: [0, 1, 0] as const },
 ] as const;
 
 export type Waypoint = (typeof waypoints)[number];

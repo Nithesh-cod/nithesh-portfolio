@@ -194,10 +194,79 @@ function CertificateRack() {
         <Stripe key={spec.certId} index={i} spec={spec} />
       ))}
 
+      {/* V2.6 details — bolts at the 4 corners (front face), status LED at top,
+          and cable ties on the back chassis. */}
+      <RackBolts />
+      <RackStatusLed />
+      <RackCableTies />
+
       {/* Sweeping scanline — horizontal emerald bar that travels top→bottom
           across the rack chassis face every 4s. Pure visual drama. */}
       <RackScanline />
     </group>
+  );
+}
+
+function RackBolts() {
+  // 4 small dark spheres at the front-face corners, slightly recessed.
+  const ix = RACK_W / 2 - 0.05;
+  const iy = RACK_H / 2 - 0.05;
+  const z = RACK_D / 2 - 0.005;
+  const corners: readonly [number, number][] = [
+    [-ix, iy],
+    [ix, iy],
+    [-ix, -iy],
+    [ix, -iy],
+  ];
+  return (
+    <>
+      {corners.map(([x, y], i) => (
+        <mesh key={i} position={[x, y, z]}>
+          <sphereGeometry args={[0.02, 12, 8]} />
+          <meshStandardMaterial color={palette.steel} metalness={0.9} roughness={0.35} />
+        </mesh>
+      ))}
+    </>
+  );
+}
+
+function RackStatusLed() {
+  const matRef = useRef<MeshStandardMaterial | null>(null);
+  const t = useRef(0);
+  useFrame((_, dt) => {
+    t.current += dt;
+    if (matRef.current) {
+      // Slow amber pulse 1.6s period — reads as "system online".
+      matRef.current.emissiveIntensity = 1.2 + 0.5 * Math.sin(t.current * 3.9);
+    }
+  });
+  return (
+    <group position={[0, RACK_H / 2 - 0.07, RACK_D / 2 + 0.001]}>
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.018, 0.018, 0.006, 14]} />
+        <meshStandardMaterial
+          ref={matRef}
+          color={palette.amberKey}
+          emissive={palette.amberKey}
+          emissiveIntensity={1.4}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+function RackCableTies() {
+  // 3 thin dark cylinders crossing the back of the rack, visible from orbit-back.
+  const ys = [0.7, 0.0, -0.7];
+  return (
+    <>
+      {ys.map((y, i) => (
+        <mesh key={i} position={[0, y, -(RACK_D / 2 + 0.012)]} rotation={[0, 0, Math.PI / 2]}>
+          <cylinderGeometry args={[0.015, 0.015, RACK_W * 0.95, 12]} />
+          <meshStandardMaterial color={palette.void} metalness={0.6} roughness={0.7} />
+        </mesh>
+      ))}
+    </>
   );
 }
 

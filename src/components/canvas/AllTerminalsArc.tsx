@@ -1,6 +1,6 @@
 'use client';
 
-import { Text } from '@react-three/drei';
+import { RoundedBox, Text } from '@react-three/drei';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import { useRef, useState } from 'react';
 import { FrontSide, type Group } from 'three';
@@ -15,16 +15,14 @@ import { play } from '@/lib/audio';
 import { disableRaycast, noRaycast } from '@/lib/three-utils';
 import { usePortfolioStore } from '@/lib/store';
 
-const SKILLS_WP_IDX = waypoints.findIndex((w) => w.id === 'skills');
-const CRT_WP_IDX = waypoints.findIndex((w) => w.id === 'crt');
-const CONTACT_WP_IDX = waypoints.findIndex((w) => w.id === 'contact');
+// V2.6: arc zone covers portrait → orbit-left → orbit-back → orbit-right.
+// We render all 7 podiums while the camera is anywhere in that band so the
+// CatmullRom orbit always sees a continuous ring of meshes — no popping.
+const ORBIT_IDS = ['portrait', 'orbit-left', 'orbit-back', 'orbit-right'] as const;
+const ORBIT_INDICES = ORBIT_IDS.map((id) => waypoints.findIndex((w) => w.id === id)).filter((i) => i >= 0);
 
-// All 7 podiums are visible when section is at/near the skills, crt, or
-// contact waypoints — i.e. when the visitor is "in the arc zone".
 function isArcZone(section: number): boolean {
-  return [SKILLS_WP_IDX, CRT_WP_IDX, CONTACT_WP_IDX].some(
-    (i) => Math.abs(section - i) <= 1,
-  );
+  return ORBIT_INDICES.some((i) => Math.abs(section - i) <= 1);
 }
 
 const PLINTH_W = 0.5;
@@ -105,16 +103,44 @@ function TerminalPodium({ podium }: { podium: ArcPodium }) {
           <meshStandardMaterial color={palette.graphite} metalness={0.7} roughness={0.5} side={FrontSide} />
         </mesh>
 
-        {/* Monitor body — handlers on this mesh. */}
-        <mesh
+        {/* Monitor body — RoundedBox gives the chassis a soft bevel. Handlers
+            stay on this mesh so the V2.1 click pattern continues to work. */}
+        <RoundedBox
+          args={[BODY_W, BODY_H, BODY_D]}
+          radius={0.035}
+          smoothness={3}
           castShadow
           position={[0, PLINTH_H + BODY_H / 2, 0]}
           onPointerOver={handleOver}
           onPointerOut={handleOut}
           onClick={handleClick}
         >
-          <boxGeometry args={[BODY_W, BODY_H, BODY_D]} />
           <meshStandardMaterial color={palette.graphite} metalness={0.75} roughness={0.4} />
+        </RoundedBox>
+
+        {/* Two steel knob cylinders on the lower front face of the body. */}
+        {[-0.16, 0.16].map((x) => (
+          <mesh
+            key={`knob-${x}`}
+            position={[x, PLINTH_H + 0.045, BODY_D / 2 + 0.0005]}
+            rotation={[Math.PI / 2, 0, 0]}
+          >
+            <cylinderGeometry args={[0.015, 0.015, 0.02, 16]} />
+            <meshStandardMaterial color={palette.steel} metalness={0.9} roughness={0.3} />
+          </mesh>
+        ))}
+
+        {/* Power LED — bottom-right of the body, emissive emerald. */}
+        <mesh
+          position={[BODY_W / 2 - 0.05, PLINTH_H + 0.045, BODY_D / 2 + 0.0008]}
+          rotation={[Math.PI / 2, 0, 0]}
+        >
+          <cylinderGeometry args={[0.009, 0.009, 0.005, 12]} />
+          <meshStandardMaterial
+            color={palette.emeraldHot}
+            emissive={palette.emeraldHot}
+            emissiveIntensity={1.4}
+          />
         </mesh>
 
         {/* Screen plane */}
@@ -184,9 +210,9 @@ function ScreenCornerBrackets({
     <meshStandardMaterial
       color={palette.goldAccent}
       emissive={palette.goldAccent}
-      emissiveIntensity={0.8}
+      emissiveIntensity={1.3}
       metalness={0.95}
-      roughness={0.25}
+      roughness={0.2}
     />
   );
   const corners: readonly [number, number][] = [

@@ -7,39 +7,21 @@ import { type Group } from 'three';
 import { palette } from '@/lib/palette';
 import { disableRaycast, noRaycast } from '@/lib/three-utils';
 
-// 30 short technical strings — they drift upward, fade in, fade out, and respawn.
+// V2.6: 12 short technical strings (down from 30) — ambient atmosphere only.
 // Pure ambience; raycast disabled so they can never block clicks.
 const GLYPHS = [
   'fn()',
   'async',
   '0xFF',
-  'await',
-  'React',
-  'tsx',
   'GET /',
   '200 OK',
-  'POST',
   'JWT',
-  'edge',
   'LLM',
   'RAG',
-  'pnpm',
   'next',
-  'esm',
-  'css',
-  'rgba',
   'glsl',
-  'hsl()',
-  'mat4',
   'vec3',
-  'arr[]',
-  'NaN',
-  '<svg/>',
-  'flex',
-  'grid',
-  'idx',
-  'env',
-  'hash',
+  'mat4',
 ] as const;
 
 const COUNT = GLYPHS.length;
@@ -62,18 +44,18 @@ export function FloatingGlyphs() {
   const groupRef = useRef<Group>(null);
   const refs = useRef<(Group | null)[]>([]);
 
-  // Pre-randomise positions / motion so the layout is stable across re-renders
-  // but feels lively across the whole 20×8 volume around the scene.
+  // V2.6: y range 1 → 6 (was 0 → 4), wider X spread so glyphs stay clear of
+  // the central objects. Pre-randomised so layout is stable across re-renders.
   const states = useMemo<GlyphState[]>(
     () =>
       Array.from({ length: COUNT }, () => ({
-        base: [rand(-9, 9), rand(0, 0.6), rand(-14, -2)],
+        base: [rand(-10, 10), 0, rand(-16, -3)],
         amp: rand(0.1, 0.5),
         phase: rand(0, Math.PI * 2),
         speed: rand(0.3, 0.9),
-        yStart: rand(-0.5, 0.5),
-        yEnd: rand(4.5, 6.5),
-        cycle: rand(7, 14),
+        yStart: rand(1.0, 1.5),
+        yEnd: rand(5.5, 6.0),
+        cycle: rand(8, 16),
       })),
     [],
   );
@@ -103,7 +85,8 @@ export function FloatingGlyphs() {
       // group's child[0] material if present.
       const mat = (g.children[0] as { material?: { opacity?: number; transparent?: boolean } } | undefined)?.material;
       if (mat) {
-        mat.opacity = alpha * 0.55;
+        // V2.6: cap opacity at 0.15 (was 0.55) for ambient atmosphere.
+        mat.opacity = alpha * 0.15;
         mat.transparent = true;
       }
     }

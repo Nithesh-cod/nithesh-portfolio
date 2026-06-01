@@ -8,7 +8,7 @@ import {
   DoubleSide,
   FrontSide,
   type Mesh,
-  type MeshStandardMaterial,
+  MeshStandardMaterial,
   NormalBlending,
   SRGBColorSpace,
   Vector2,
@@ -99,6 +99,10 @@ export function Hologram() {
       {/* Rectangular gold frame — four thin slabs hugging the 3:4 portrait. NO ring. */}
       <GoldFrame />
 
+      {/* V2.6 — four POWER LEDs at the bezel corners. Their emissive
+          intensity is driven by the same rim-pulse phase as the bezel mat. */}
+      <CornerLeds matRef={bezelMat} />
+
       {/* The hologram itself.
           NormalBlending (was AdditiveBlending): additive was summing the
           shader output onto the bezel's emissive contribution, so subject
@@ -159,6 +163,48 @@ export function Hologram() {
         </Text>
       </Billboard>
     </group>
+  );
+}
+
+/**
+ * 4 emerald-glow LEDs at the bezel corners. Pulses in step with the bezel
+ * rim — phase tied to material.emissiveIntensity so they read as the same
+ * "power system".
+ */
+function CornerLeds({ matRef }: { matRef: React.MutableRefObject<MeshStandardMaterial | null> }) {
+  // One shared material instance for all 4 LEDs — single point to update.
+  const ledMaterial = useMemo(
+    () =>
+      new MeshStandardMaterial({
+        color: new Color(palette.emeraldGlow),
+        emissive: new Color(palette.emeraldGlow),
+        emissiveIntensity: 1.2,
+      }),
+    [],
+  );
+  useFrame(() => {
+    if (!matRef.current) return;
+    // Bezel intensity ranges 0.05..0.20. Map → LED 0.8..1.6.
+    const e = matRef.current.emissiveIntensity;
+    ledMaterial.emissiveIntensity = 0.8 + ((e - 0.05) / 0.15) * 0.8;
+  });
+  const W = 1.56;
+  const H = 2.06;
+  const Z = 0.005;
+  const corners: readonly [number, number][] = [
+    [-W / 2 + 0.04, H / 2 - 0.04],
+    [W / 2 - 0.04, H / 2 - 0.04],
+    [-W / 2 + 0.04, -H / 2 + 0.04],
+    [W / 2 - 0.04, -H / 2 + 0.04],
+  ];
+  return (
+    <>
+      {corners.map(([x, y], i) => (
+        <mesh key={i} position={[x, y, Z]} rotation={[Math.PI / 2, 0, 0]} material={ledMaterial}>
+          <cylinderGeometry args={[0.012, 0.012, 0.005, 16]} />
+        </mesh>
+      ))}
+    </>
   );
 }
 

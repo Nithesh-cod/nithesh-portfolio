@@ -134,21 +134,40 @@ export function InteractiveConsole({
 
   return (
     <group position={position}>
-      {/* Plinth — graphite chassis, handlers bound directly on the mesh. */}
+      {/* V2.6: STEPPED plinth — narrower body + slightly wider top "lid" that
+          overhangs by ~5%. Reads as furniture, not a single block.
+          Body (bottom): 1.0 × 0.42 × 0.62
+          Lid  (top):    1.10 × 0.04 × 0.72   ← overhang on all sides
+          Lid top surface ends at y = -0.07; the screen sits well above it. */}
       <mesh
         castShadow
         receiveShadow
-        position={[0, -0.25, 0]}
+        position={[0, -0.30, 0]}
         material={plinthMaterial}
         {...handlers}
       >
-        <boxGeometry args={[1.1, 0.5, 0.7]} />
+        <boxGeometry args={[1.0, 0.42, 0.62]} />
+      </mesh>
+      <mesh
+        castShadow
+        receiveShadow
+        position={[0, -0.07, 0]}
+        {...handlers}
+      >
+        <boxGeometry args={[1.10, 0.04, 0.72]} />
+        <meshStandardMaterial color={palette.steel} metalness={0.9} roughness={0.35} />
       </mesh>
 
+      {/* Front-face LED row — 4 emerald dots near the top of the body. */}
+      <PlinthLedRow z={0.62 / 2 + 0.001} />
+      {/* Rear-face LED row — same colour, visible from the orbit-back waypoint. */}
+      <PlinthLedRow z={-(0.62 / 2 + 0.001)} />
+
       {/* Tilted screen sub-group: dim emerald plane + 4-slab gold bezel + the
-          project name (centred, large, stylized). The caption is no longer
-          rendered on the screen — it lives in the project modal instead. */}
-      <group position={[0, 0.08, 0.18]} rotation={[-0.45, 0, 0]}>
+          project name (centred, large, stylized).
+          V2.6 fix: tilt -0.7 rad (~ -40°, up from -0.45) and lift to y=0.30 so
+          the screen's bottom edge clears the plinth lid (which sits at -0.05). */}
+      <group position={[0, 0.30, 0.20]} rotation={[-0.7, 0, 0]}>
         <mesh ref={(m) => m?.layers.enable(1)} {...handlers}>
           <planeGeometry args={[0.95, 0.55]} />
           <meshStandardMaterial
@@ -191,6 +210,28 @@ export function InteractiveConsole({
         {/* Targeting-reticle corner brackets — 4 gold L-shapes at each screen corner. */}
         <ScreenCornerBrackets />
       </group>
+    </group>
+  );
+}
+
+/** 4 small emissive LED dots in a row across one face of the plinth body. */
+function PlinthLedRow({ z }: { z: number }) {
+  // Four positions across X, centred about 0. y is just below the lid line.
+  const xs = [-0.27, -0.09, 0.09, 0.27];
+  return (
+    <group position={[0, -0.13, z]}>
+      {xs.map((x, i) => (
+        <mesh key={i} position={[x, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.008, 0.008, 0.005, 12]} />
+          <meshStandardMaterial
+            color={palette.emeraldMid}
+            emissive={palette.emeraldMid}
+            emissiveIntensity={1.0}
+            metalness={0.2}
+            roughness={0.4}
+          />
+        </mesh>
+      ))}
     </group>
   );
 }

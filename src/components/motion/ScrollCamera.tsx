@@ -47,7 +47,7 @@ export function ScrollCamera() {
         waypoints.map((w) => new Vector3(...w.position)),
         false,
         'catmullrom',
-        0.3,
+        0.4,
       ),
     [],
   );
@@ -58,7 +58,7 @@ export function ScrollCamera() {
         waypoints.map((w) => new Vector3(...w.lookAt)),
         false,
         'catmullrom',
-        0.3,
+        0.4,
       ),
     [],
   );
