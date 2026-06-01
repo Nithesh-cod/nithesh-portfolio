@@ -162,18 +162,16 @@ export function InteractiveConsole({
         </mesh>
         <BezelFrame />
 
-        {/* Project name — Orbitron 900, sci-fi/HUD feel.
-            maxWidth=0.85 forces "SMART CANTEEN" to wrap to 2 lines; the
-            shorter names (CROPAI, TESTAI) stay single-line. */}
+        {/* Project name — DEFAULT troika font (no `font` prop). The earlier
+            attempts to load Orbitron failed: local TTF was corrupted, and
+            gstatic serves WOFF2 to modern UAs via content-negotiation which
+            troika-three-text can't parse. The default sans is fine — we lean
+            on aggressive styling (wide tracking, thick gold outline, gold
+            corner brackets, gold underline) to carry the sci-fi feel.
+            Orbitron still ships for DOM use via next/font in layout.tsx. */}
         <Text
           raycast={noRaycast}
           ref={disableRaycast}
-          // V2.3.1 — switched from the local TTF (which arrived corrupted from
-          // the github raw mirror — troika-three-text couldn't parse it and the
-          // canvas hung at the loader) to the Google Fonts gstatic CDN URL.
-          // gstatic always returns valid binary; drei <Text> falls back to its
-          // default sans-serif if the URL fails for any reason.
-          font="https://fonts.gstatic.com/s/orbitron/v34/yMJMMIlzdpvBhQQL_QIaePuvA.ttf"
           position={[0, 0.04, 0.006]}
           fontSize={0.21}
           color={palette.emeraldGlow}
@@ -182,8 +180,8 @@ export function InteractiveConsole({
           maxWidth={0.85}
           textAlign="center"
           lineHeight={1.0}
-          letterSpacing={0.18}
-          outlineWidth={0.006}
+          letterSpacing={0.22}
+          outlineWidth={0.008}
           outlineColor={palette.goldAccent}
         >
           {label.toUpperCase()}
