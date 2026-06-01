@@ -8,7 +8,7 @@ import { Intro } from '@/components/ui/Intro';
 import { Terminal } from '@/components/ui/Terminal';
 import { CertificateLightbox } from '@/components/ui/CertificateLightbox';
 import { ResumeViewer } from '@/components/ui/ResumeViewer';
-import { HudPanels } from '@/components/ui/HudPanels';
+import { CategoryDetailModal } from '@/components/ui/CategoryDetailModal';
 import { content, waypoints } from '@/lib/content';
 
 const Scene = dynamic(() => import('@/components/canvas/Scene').then((m) => m.Scene), {
@@ -25,11 +25,11 @@ export default function Page() {
       </div>
 
       <Hud />
-      <HudPanels />
       <Cursor />
       <ProjectModal />
       <CertificateLightbox />
       <ResumeViewer />
+      <CategoryDetailModal />
       <AudioController />
       <Terminal />
       <Intro />

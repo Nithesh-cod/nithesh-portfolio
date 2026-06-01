@@ -6,6 +6,8 @@ import { useState } from 'react';
 import type { PointLight } from 'three';
 import { Lab } from '@/components/canvas/Lab';
 import { Hologram } from '@/components/canvas/Hologram';
+import { SkillTerminals } from '@/components/canvas/SkillTerminals';
+import { VolumetricShafts } from '@/components/canvas/VolumetricShafts';
 import { PostFX } from '@/components/canvas/PostFX';
 import { AccessibilityProxies } from '@/components/canvas/AccessibilityProxies';
 import { ScrollCamera } from '@/components/motion/ScrollCamera';
@@ -44,12 +46,14 @@ export function Scene() {
         }}
       />
 
-      <fog attach="fog" args={[palette.void, 6, 26]} />
+      <fog attach="fog" args={[palette.void, 4, 22]} />
 
       <Lights />
 
       <Lab />
       <Hologram />
+      <VolumetricShafts />
+      <SkillTerminals />
       <AccessibilityProxies />
 
       <ScrollCamera />

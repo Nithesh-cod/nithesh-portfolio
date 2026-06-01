@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Project } from '@/lib/content';
+import type { Project, SkillCategoryId } from '@/lib/content';
 
 export type PerfMode = 'low' | 'medium' | 'cinematic';
 export type CursorState = 'idle' | 'interactive' | 'pressed';
@@ -45,6 +45,11 @@ type PortfolioStore = {
   openTerminal: () => void;
   closeTerminal: () => void;
   toggleTerminal: () => void;
+
+  /** Skill-category detail modal — null when closed; category id when open. */
+  activeSkillCategory: SkillCategoryId | null;
+  openSkillCategory: (id: SkillCategoryId) => void;
+  closeSkillCategory: () => void;
 };
 
 export const usePortfolioStore = create<PortfolioStore>((set) => ({
@@ -82,4 +87,8 @@ export const usePortfolioStore = create<PortfolioStore>((set) => ({
   openTerminal: () => set({ terminalOpen: true }),
   closeTerminal: () => set({ terminalOpen: false }),
   toggleTerminal: () => set((s) => ({ terminalOpen: !s.terminalOpen })),
+
+  activeSkillCategory: null,
+  openSkillCategory: (id) => set({ activeSkillCategory: id }),
+  closeSkillCategory: () => set({ activeSkillCategory: null }),
 }));

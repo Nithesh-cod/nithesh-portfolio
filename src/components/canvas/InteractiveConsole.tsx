@@ -173,15 +173,15 @@ export function InteractiveConsole({
           raycast={noRaycast}
           ref={disableRaycast}
           position={[0, 0.04, 0.006]}
-          fontSize={0.21}
+          fontSize={0.13}
           color={palette.emeraldGlow}
           anchorX="center"
           anchorY="middle"
           maxWidth={0.85}
           textAlign="center"
           lineHeight={1.0}
-          letterSpacing={0.22}
-          outlineWidth={0.008}
+          letterSpacing={0.16}
+          outlineWidth={0.004}
           outlineColor={palette.goldAccent}
         >
           {label.toUpperCase()}

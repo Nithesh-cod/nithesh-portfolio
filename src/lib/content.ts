@@ -179,14 +179,60 @@ export const stations: readonly Station[] = [
   { slug: 'testai', label: 'TestAI', position: STATION_POS.testai },
 ] as const;
 
-/* ────────────────────────  Skills arc  ──────────────────────── */
+/* ────────────────────────  Skills arc + terminal podiums  ──────────────────────── */
 
-// Certifications now live ON THE RIGHT-SIDE RACK (RACK_POS) — see Lab.CertificateRack.
-// No separate cert-wall position; the rack IS the wall.
+// Certifications live ON THE RIGHT-SIDE RACK (RACK_POS) — see Lab.CertificateRack.
 
-// Skill podiums laid out in an arc around [0, 0.4, 1.8]; visitor stands ~5 units back.
-// Moved forward (was 2.4) so the waypoint camera at z=6.8 fits all 5 podiums in FOV.
+// Terminal podiums laid out in an arc around [0, 0.4, 1.8]; visitor stands back.
 export const SKILL_ARC_POS = [0, 0.4, 1.8] as const;
+
+export type SkillCategoryId = 'languages' | 'frontend' | 'ai' | 'platform' | 'tools';
+export type SkillCategory = {
+  id: SkillCategoryId;
+  title: string;
+  items: readonly string[];
+};
+
+export const skillCategories: readonly SkillCategory[] = [
+  { id: 'languages', title: 'LANGUAGES',  items: ['JavaScript', 'TypeScript', 'Python', 'HTML5', 'CSS3'] },
+  { id: 'frontend',  title: 'FRONT-END',  items: ['React', 'Next.js', 'Tailwind CSS', 'Responsive UI', 'A11y'] },
+  { id: 'ai',        title: 'AI / GEN AI', items: ['LLM APIs', 'Prompt Eng.', 'Embeddings', 'RAG', 'scikit-learn'] },
+  { id: 'platform',  title: 'PLATFORM',   items: ['Git', 'GitHub', 'Vercel', 'Netlify', 'REST APIs'] },
+  { id: 'tools',     title: 'TOOLS',      items: ['VS Code', 'DevTools', 'Postman', 'Blender'] },
+] as const;
+
+/** One-line context per skill item — shown in CategoryDetailModal. */
+export const skillDescriptions: Readonly<Record<string, string>> = {
+  // Languages
+  JavaScript: 'Primary front-end language across every shipped project.',
+  TypeScript: 'Strict mode on Next.js work; default for any new module.',
+  Python: 'ML coursework + model training (scikit-learn, light PyTorch).',
+  HTML5: 'Semantic markup foundation, accessibility first.',
+  CSS3: 'Tailwind-utility-first, occasional bespoke keyframes.',
+  // Front-End
+  React: 'Primary front-end framework across all 3 shipped projects.',
+  'Next.js': 'App Router on Smart Canteen + TestAI; this site too.',
+  'Tailwind CSS': 'Design-token-first styling; matches the palette layer.',
+  'Responsive UI': 'Mobile-first; tested across phone / tablet / desktop.',
+  A11y: 'Keyboard parity, focus traps, semantic landmarks, sr-only fallbacks.',
+  // AI / Gen AI
+  'LLM APIs': 'OpenAI / Anthropic; iterated prompts in TestAI to stable graders.',
+  'Prompt Eng.': 'Prompt-engineering certification + production use in TestAI.',
+  Embeddings: 'Vector encodings for similarity + lightweight retrieval.',
+  RAG: 'Retrieval-augmented generation patterns from Infosys cert + reading.',
+  'scikit-learn': 'Classical ML pipeline for CropAI leaf-health classifier.',
+  // Platform
+  Git: 'Feature branches, conventional commits, clean history.',
+  GitHub: 'CI on Vercel, deploys via push, private projects hosted.',
+  Vercel: 'Smart Canteen + TestAI + this portfolio. Auto-deploys from main.',
+  Netlify: 'CropAI deployment — single-page client-side ML inference.',
+  'REST APIs': 'Standard CRUD + auth-gated endpoints (TestAI dashboard).',
+  // Tools
+  'VS Code': 'Primary IDE; extensions tuned for TS / Tailwind / Three.',
+  DevTools: 'Network / performance profiling; React DevTools.',
+  Postman: 'API exploration + request collections for back-end debug.',
+  Blender: '3D asset prep (procedural fallback here; learning glTF export).',
+};
 export type Certificate = {
   id: string;
   title: string;

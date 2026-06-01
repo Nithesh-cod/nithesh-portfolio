@@ -3,7 +3,7 @@
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import { Billboard, Text, useTexture } from '@react-three/drei';
 import { useMemo, useRef, useState } from 'react';
-import { BackSide, Color, type Mesh, type Texture } from 'three';
+import { BackSide, Color, type Mesh, type MeshStandardMaterial, type Texture } from 'three';
 import { stations, RACK_POS, CRT_POS, CONTACT_POS, content, certificateGroups, type Certificate } from '@/lib/content';
 import { InteractiveConsole } from '@/components/canvas/InteractiveConsole';
 import { FogParticles } from '@/components/canvas/FogParticles';
@@ -64,8 +64,8 @@ function Sky() {
 const FLOOR_VERT = /* glsl */ `varying vec2 vUv;
 void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`;
 
-// Halved line width (×1.8 fwidth divisor), emerald-dim colour, ~30% pulse contribution
-// (was 1.0), strong radial vignette to black at the horizon.
+// V2.4 floor shader: existing radial pulse PLUS a slow expanding ring every
+// 8s. The ring is a thin bright band around r = (uTime mod 8) / 8 * 0.6.
 const FLOOR_FRAG = /* glsl */ `precision highp float;
 varying vec2 vUv;
 uniform float uTime;
@@ -78,6 +78,16 @@ void main(){
   float r = length(c);
   float pulse = 0.5 + 0.5 * sin(uTime * 0.6 - r * 14.0);
   vec3 col = mix(uBase, uLine, line * 0.30 * (0.6 + 0.4 * pulse));
+
+  // Expanding ring pulse — bright band sweeps outward over 8s, fades at the
+  // horizon. The exp(-x²) gives a soft band, sin(...) only contributes the
+  // emerald-line colour so chassis areas aren't affected.
+  float ringT = mod(uTime, 8.0) / 8.0;
+  float ringR = ringT * 0.65;
+  float ringBand = exp(-pow((r - ringR) * 40.0, 2.0));
+  float ringFade = 1.0 - smoothstep(0.5, 0.65, r);
+  col += uLine * ringBand * ringFade * 0.55 * (1.0 - ringT);
+
   col *= 1.0 - smoothstep(0.25, 0.62, r);
   gl_FragColor = vec4(col, 1.0);
 }`;
@@ -195,10 +205,12 @@ const STRIPE_D = 0.02;
 function Stripe({ index, spec }: { index: number; spec: StripeSpec }) {
   const cert = CERT_BY_ID.get(spec.certId);
   const meshRef = useRef<Mesh>(null);
+  const matRef = useRef<MeshStandardMaterial | null>(null);
   const [hovered, setHovered] = useState(false);
   const openCertificate = usePortfolioStore((s) => s.openCertificate);
   const setCursor = usePortfolioStore((s) => s.setCursorState);
   const lastHoverAt = useRef(0);
+  const timeRef = useRef(0);
 
   // Position formula: 6-wide rows, top row first (i 0..5), bottom row (i 6..11).
   const row = Math.floor(index / 6);
@@ -207,17 +219,26 @@ function Stripe({ index, spec }: { index: number; spec: StripeSpec }) {
   const y = row === 0 ? 0.5 : -0.5; // top row +0.5, bottom row -0.5
   const baseZ = RACK_D / 2 + 0.01;
 
-  // Hover slide: stripe eases +0.05 z forward.
+  // Hover slide + per-stripe breathing brightness (~10% modulation, 6s period,
+  // offset by index so the rack reads as alive instead of strobing in unison).
   useFrame((_, dt) => {
-    if (!meshRef.current) return;
-    const target = baseZ + (hovered ? 0.05 : 0);
-    meshRef.current.position.z += (target - meshRef.current.position.z) * Math.min(1, dt * 10);
+    timeRef.current += dt;
+    if (meshRef.current) {
+      const target = baseZ + (hovered ? 0.05 : 0);
+      meshRef.current.position.z += (target - meshRef.current.position.z) * Math.min(1, dt * 10);
+    }
+    if (matRef.current) {
+      const phase = (timeRef.current / 6) * Math.PI * 2 + index * 0.55;
+      const base = hovered ? 1.4 : 0.95;
+      const breathe = 1 + Math.sin(phase) * 0.1;
+      const accentBias = spec.accent === 'amber' ? -0.2 : 0;
+      matRef.current.emissiveIntensity = (base + accentBias) * breathe;
+    }
   });
 
   if (!cert) return null;
 
   const color = ACCENT_COLOUR[spec.accent];
-  const intensity = (hovered ? 1.4 : 0.95) + (spec.accent === 'amber' ? -0.2 : 0);
 
   const handleOver = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
@@ -248,7 +269,7 @@ function Stripe({ index, spec }: { index: number; spec: StripeSpec }) {
       onClick={handleClick}
     >
       <boxGeometry args={[STRIPE_W, STRIPE_H, STRIPE_D]} />
-      <meshStandardMaterial color={palette.void} emissive={color} emissiveIntensity={intensity} />
+      <meshStandardMaterial ref={matRef} color={palette.void} emissive={color} emissiveIntensity={0.95} />
     </mesh>
   );
 }

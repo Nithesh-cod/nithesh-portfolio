@@ -32,6 +32,7 @@ export const palette = {
   emeraldMid: '#10B981',
   emeraldDim: '#1A4D3A',
   emeraldGlow: '#A8FFD8',
+  terminalGrn: '#00FF9C',
 
   // Spot violet — one tiny pop
   violetSpark: '#9D7FE8',
