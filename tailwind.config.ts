@@ -50,6 +50,7 @@ const config: Config = {
         display: ['var(--font-display)', 'sans-serif'],
         sans: ['var(--font-sans)', 'sans-serif'],
         mono: ['var(--font-mono)', 'monospace'],
+        sci: ['var(--font-display-sci)', 'sans-serif'],
       },
       animation: {
         'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',

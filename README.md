@@ -190,6 +190,30 @@ Third-party audio (added in M3) will be credited in this README with source + li
 
 ## Changelog
 
+### V2.3 — tier upgrade · glass-HUD overlays · Orbitron typography
+
+The "god-tier" polish pass. 3D Billboard skill / contact text deleted in favour of cinematic DOM-overlay panels; consoles get Orbitron 900 + corner brackets; global HUD chrome added; modal + resume viewer redesigned to match the HUD aesthetic.
+
+- **Orbitron font.** `public/fonts/Orbitron-Black.ttf` (306 KB) downloaded from Google Fonts. Wired up in two layers: `next/font/google` `Orbitron` 700/900 exposed as the CSS variable `--font-display-sci` (Tailwind family `font-sci`), and the TTF served at `/fonts/Orbitron-Black.ttf` for drei `<Text>` to use as its `font` prop in 3D.
+- **FIX 1 — Console screen, sci-fi tier.** [`InteractiveConsole.tsx`](src/components/canvas/InteractiveConsole.tsx) project name now: Orbitron Black, `fontSize=0.21`, `letterSpacing=0.18`, `emerald-glow` fill with `outlineWidth=0.006` `outlineColor=goldAccent`. New `<ScreenCornerBrackets>` sub-component renders 4 L-shaped gold reticle brackets at each screen corner (`emissiveIntensity=1.2`). The thin gold underline below the name stays from V2.2.
+- **FIX 2 — `SkillPodiums.tsx` DELETED.** No more floating 3D Billboard skill text. Import removed from `Scene.tsx`. The 3D scene at the skills waypoint is now clean — the HUD panel carries the content.
+- **FIX 3 + 4 — `HudPanels.tsx` (new).** Three section-gated, glass-blur DOM overlays:
+  - **SkillsPanel** — right side at `top-1/4`, 380 px wide. Header `>> SYS::CAPABILITIES` in mono emerald-glow with a gold rule. Iterates `content.skills` — each group label in Orbitron 700 gold, items as bordered inline pills. Slides in from `x: +40` with opacity fade.
+  - **ContactPanel** — right side at `bottom-[18%]`. Header `>> CONNECT::CHANNELS`. Three clickable rows: LinkedIn (inline LinkedIn SVG icon → `window.open`), Email (mail icon → `mailto:`), Open Résumé (file icon → `openResume()`). Hover: row background `emerald-mid/10`, bottom gold rule appears, `↗` shifts right. Status footer with pulsing emerald dot: "Available for Summer 2026".
+  - **CrtHintPanel** — bottom centre at the CRT waypoint. Compact instruction + "Open Terminal" pill (calls `openTerminal()`).
+  - All three use a shared `<PanelFrame>` with corner brackets + emerald border + saturate-blurred glass background.
+- **FIX 5 — Global HUD chrome.** [`Hud.tsx`](src/components/ui/Hud.tsx) rebuilt:
+  - 4 viewport corner brackets at `inset-6` (gold, 32 px arms).
+  - Top-centre status bar: `NITHESH.OS // v1.0 // ONLINE` with a pulsing emerald dot.
+  - Top-right cluster: live UTC clock (`HH:MM:SS UTC`, updates every second) + the audio toggle.
+  - Bottom-left section indicator: `WAYPOINT NN // SECTION_NAME [ NN / 09 ]` — pulls the waypoint's display label from `content.ts` (each waypoint now carries a `label` field like `CONSOLE_2 [ SMART_CANTEEN ]`).
+  - Ambient scanline: single 1 px emerald line at `8%` opacity, CSS-animated `top: -2% → 102%` over 8 s on the `hudScan` keyframe in `globals.css`.
+- **FIX 6 — `ProjectModal` redesign.** Now a 2-column glass card (40% / 60% on `md`+). Top bar with mono header `>> PROJECT::DETAIL` and bracketed `[ ✕ Close ]` button. Left column is an in-house decorative plate (no external screenshot asset) with the project's first word as huge watermark Orbitron text plus a CSS-only scanline overlay. Right column: stack joined string, Orbitron Black `28 px` project name with gold text-stroke, gold-accent caption subtitle (V2.2 carry-over), stack pills, summary, gold-arrow `Visit live ↗` pill CTA. Gold corner brackets at all four corners.
+- **FIX 7 — `ResumeViewer` bracketed top bar.** 40 px top bar with `>> RESUME::VIEW` (left, emerald-glow), filename `Nithesh_Ramachandran.pdf` (centre, mono on `sm+`), and two action pills (right): `Download ↓` (gold border) + `Close ✕` (emerald border). Gold rule below the top bar; corner brackets on the modal frame.
+- **Waypoint labels.** `content.ts` waypoints array gains a `label` field per entry: `ENTRANCE / PORTRAIT / CONSOLE_1 [ CROPAI ] / CONSOLE_2 [ SMART_CANTEEN ] / CONSOLE_3 [ TESTAI ] / SKILLS / CERTIFICATIONS / TERMINAL / CONTACT`.
+
+Bundle: 492 KB → 494 KB First Load (**+2 KB**, well under the +30 KB budget). The 306 KB `Orbitron-Black.ttf` is served from `public/fonts/` as a static asset, not bundled.
+
 ### V2.2 — FINAL V1 polish
 
 - **Console screen — name only, stylish typography.**

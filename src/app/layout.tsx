@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Space_Grotesk, Inter, JetBrains_Mono } from 'next/font/google';
+import { Space_Grotesk, Inter, JetBrains_Mono, Orbitron } from 'next/font/google';
 import '@/styles/globals.css';
 import { content } from '@/lib/content';
 
@@ -21,6 +21,13 @@ const mono = JetBrains_Mono({
   subsets: ['latin'],
   weight: ['400', '500'],
   variable: '--font-mono',
+  display: 'swap',
+});
+
+const sci = Orbitron({
+  subsets: ['latin'],
+  weight: ['700', '900'],
+  variable: '--font-display-sci',
   display: 'swap',
 });
 
@@ -75,7 +82,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${display.variable} ${sans.variable} ${mono.variable}`}
+      className={`${display.variable} ${sans.variable} ${mono.variable} ${sci.variable}`}
       suppressHydrationWarning
     >
       <body>{children}</body>

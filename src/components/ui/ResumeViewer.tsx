@@ -75,38 +75,50 @@ export function ResumeViewer() {
           />
 
           <motion.div
-            className="relative z-10 flex h-[85vh] w-[80vw] max-w-5xl flex-col overflow-hidden rounded-lg border border-emerald-mid/40 bg-graphite/85 shadow-[0_0_60px_-12px_#10B98155]"
+            className="relative z-10 flex h-[85vh] w-[80vw] max-w-5xl flex-col overflow-hidden rounded-md border border-emerald-mid/30 bg-graphite/85 shadow-[0_0_80px_-12px_#10B98155]"
+            style={{ backdropFilter: 'blur(20px) saturate(140%)' }}
             variants={PANEL}
           >
-            {/* Top bar */}
-            <div className="flex items-center justify-between border-b border-emerald-mid/30 bg-void/60 px-4 py-2">
-              <button
-                type="button"
-                aria-label="Close résumé"
-                onClick={handleClose}
-                className="font-mono text-[12px] uppercase tracking-[0.2em] text-bone transition hover:text-ivory focus:outline-none focus:ring-2 focus:ring-emerald-hot"
-              >
-                ✕ Close
-              </button>
-              <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-bone">
-                {content.hero.name} · Résumé
+            {/* Gold corner brackets */}
+            <span aria-hidden className="absolute left-2 top-2 z-10 h-4 w-4 border-l border-t border-gold-accent" />
+            <span aria-hidden className="absolute right-2 top-2 z-10 h-4 w-4 border-r border-t border-gold-accent" />
+            <span aria-hidden className="absolute left-2 bottom-2 z-10 h-4 w-4 border-l border-b border-gold-accent" />
+            <span aria-hidden className="absolute right-2 bottom-2 z-10 h-4 w-4 border-r border-b border-gold-accent" />
+
+            {/* Top bar — 40px, mono header (left), filename (centre), action pills (right). */}
+            <div className="flex h-10 shrink-0 items-center justify-between border-b border-gold-accent/40 bg-void/60 px-5">
+              <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-emerald-glow">
+                {'>> RESUME::VIEW'}
               </p>
-              <button
-                type="button"
-                onClick={() => {
-                  play('click_primary');
-                  triggerDownload();
-                }}
-                className="rounded-full border border-gold-accent/70 px-4 py-1.5 font-mono text-[11px] uppercase tracking-[0.2em] text-gold-accent transition hover:bg-gold-accent/10 focus:outline-none focus:ring-2 focus:ring-gold-accent"
-              >
-                Download ↓
-              </button>
+              <p className="hidden font-mono text-[10px] uppercase tracking-[0.25em] text-bone sm:block">
+                Nithesh_Ramachandran.pdf
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    play('click_primary');
+                    triggerDownload();
+                  }}
+                  className="rounded-full border border-gold-accent/70 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.22em] text-gold-accent transition hover:bg-gold-accent/10 focus:outline-none focus:ring-2 focus:ring-gold-accent"
+                >
+                  Download ↓
+                </button>
+                <button
+                  type="button"
+                  aria-label="Close résumé"
+                  onClick={handleClose}
+                  className="rounded-full border border-emerald-mid/50 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.22em] text-bone transition hover:border-emerald-hot hover:text-ivory focus:outline-none focus:ring-2 focus:ring-emerald-hot"
+                >
+                  Close ✕
+                </button>
+              </div>
             </div>
 
-            {/* PDF body */}
+            {/* PDF body — full bleed */}
             <iframe
               src={PDF_PATH}
-              title="Nithesh Ramachandran résumé"
+              title={`${content.hero.name} résumé`}
               className="flex-1 w-full bg-ivory"
             />
           </motion.div>

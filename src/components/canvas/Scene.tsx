@@ -6,7 +6,6 @@ import { useState } from 'react';
 import type { PointLight } from 'three';
 import { Lab } from '@/components/canvas/Lab';
 import { Hologram } from '@/components/canvas/Hologram';
-import { SkillPodiums } from '@/components/canvas/SkillPodiums';
 import { PostFX } from '@/components/canvas/PostFX';
 import { AccessibilityProxies } from '@/components/canvas/AccessibilityProxies';
 import { ScrollCamera } from '@/components/motion/ScrollCamera';
@@ -51,7 +50,6 @@ export function Scene() {
 
       <Lab />
       <Hologram />
-      <SkillPodiums />
       <AccessibilityProxies />
 
       <ScrollCamera />

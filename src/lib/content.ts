@@ -239,19 +239,15 @@ export const certificateGroups: readonly CertificateGroup[] = [
  *  Order = scroll order = narrative order. Certifications inserted between
  *  entrance and portrait so the visitor sees the wall right away. */
 export const waypoints = [
-  { id: 'entrance', position: [0, 1.7, 7] as const, lookAt: [0, 1.4, 0] as const },
-  { id: 'portrait', position: [0, 1.55, 1.2] as const, lookAt: HOLOGRAM_POS },
-  { id: 'console-1', position: [-3.2, 1.05, 1.4] as const, lookAt: STATION_POS.cropai },
-  { id: 'console-2', position: [0, 1.05, 1.0] as const, lookAt: STATION_POS['smart-canteen'] },
-  { id: 'console-3', position: [3.2, 1.05, 1.4] as const, lookAt: STATION_POS.testai },
-  // Camera moved back from z=5.4 → z=6.8 so the ±77.5° arc-edge podiums
-  // (at ~±2.5 world-x, z≈2.35) fit comfortably inside the ~31° horizontal half-FOV.
-  { id: 'skills', position: [0, 2.0, 6.8] as const, lookAt: SKILL_ARC_POS },
-  // Certifications waypoint — front of the right-side rack (was the old server-rack
-  // position). Camera ~3.5 units in front of the rack face, looking straight at it.
-  { id: 'certifications', position: [RACK_POS[0], RACK_POS[1] + 0.2, RACK_POS[2] + 3.6] as const, lookAt: RACK_POS },
-  { id: 'crt', position: [-3.0, 1.1, -1.4] as const, lookAt: CRT_POS },
-  { id: 'contact', position: [0, 1.4, -5.4] as const, lookAt: CONTACT_POS },
+  { id: 'entrance',       label: 'ENTRANCE',                position: [0, 1.7, 7] as const, lookAt: [0, 1.4, 0] as const },
+  { id: 'portrait',       label: 'PORTRAIT',                position: [0, 1.55, 1.2] as const, lookAt: HOLOGRAM_POS },
+  { id: 'console-1',      label: 'CONSOLE_1 [ CROPAI ]',    position: [-3.2, 1.05, 1.4] as const, lookAt: STATION_POS.cropai },
+  { id: 'console-2',      label: 'CONSOLE_2 [ SMART_CANTEEN ]', position: [0, 1.05, 1.0] as const, lookAt: STATION_POS['smart-canteen'] },
+  { id: 'console-3',      label: 'CONSOLE_3 [ TESTAI ]',    position: [3.2, 1.05, 1.4] as const, lookAt: STATION_POS.testai },
+  { id: 'skills',         label: 'SKILLS',                  position: [0, 2.0, 6.8] as const, lookAt: SKILL_ARC_POS },
+  { id: 'certifications', label: 'CERTIFICATIONS',          position: [RACK_POS[0], RACK_POS[1] + 0.2, RACK_POS[2] + 3.6] as const, lookAt: RACK_POS },
+  { id: 'crt',            label: 'TERMINAL',                position: [-3.0, 1.1, -1.4] as const, lookAt: CRT_POS },
+  { id: 'contact',        label: 'CONTACT',                 position: [0, 1.4, -5.4] as const, lookAt: CONTACT_POS },
 ] as const;
 
 export type Waypoint = (typeof waypoints)[number];

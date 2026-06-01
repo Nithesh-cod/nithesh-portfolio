@@ -162,40 +162,93 @@ export function InteractiveConsole({
         </mesh>
         <BezelFrame />
 
-        {/* Project name — centred, large, emerald-glow with subtle gold edge.
+        {/* Project name — Orbitron 900, sci-fi/HUD feel.
             maxWidth=0.85 forces "SMART CANTEEN" to wrap to 2 lines; the
             shorter names (CROPAI, TESTAI) stay single-line. */}
         <Text
           raycast={noRaycast}
           ref={disableRaycast}
+          font="/fonts/Orbitron-Black.ttf"
           position={[0, 0.04, 0.006]}
-          fontSize={0.17}
+          fontSize={0.21}
           color={palette.emeraldGlow}
           anchorX="center"
           anchorY="middle"
           maxWidth={0.85}
           textAlign="center"
           lineHeight={1.0}
-          letterSpacing={0.08}
-          outlineWidth={0.004}
+          letterSpacing={0.18}
+          outlineWidth={0.006}
           outlineColor={palette.goldAccent}
         >
           {label.toUpperCase()}
         </Text>
 
         {/* Thin gold underline rule below the name — the "premium signal". */}
-        <mesh position={[0, -0.15, 0.006]}>
-          <planeGeometry args={[0.57, 0.008]} />
+        <mesh position={[0, -0.16, 0.006]}>
+          <planeGeometry args={[0.6, 0.008]} />
           <meshStandardMaterial
             color={palette.goldAccent}
             emissive={palette.goldAccent}
-            emissiveIntensity={0.6}
+            emissiveIntensity={0.8}
             metalness={0.95}
             roughness={0.25}
           />
         </mesh>
+
+        {/* Targeting-reticle corner brackets — 4 gold L-shapes at each screen corner. */}
+        <ScreenCornerBrackets />
       </group>
     </group>
+  );
+}
+
+/** 4 L-shaped gold corner brackets at the console screen edges. */
+function ScreenCornerBrackets() {
+  // Screen is 0.95 × 0.55 centred at local (0,0). Brackets inset slightly inside.
+  const W = 0.95;
+  const H = 0.55;
+  const L = 0.08; // bracket arm length
+  const T = 0.012; // bracket thickness
+  const Z = 0.007;
+  const matProps = {
+    color: palette.goldAccent,
+    emissive: palette.goldAccent,
+    emissiveIntensity: 1.2,
+    metalness: 0.95,
+    roughness: 0.25,
+  } as const;
+  // Build 4 corners, each with 1 horizontal arm + 1 vertical arm.
+  // sx, sy = sign for x and y (-1 or +1)
+  const corners: readonly [number, number][] = [
+    [-1, 1],
+    [1, 1],
+    [-1, -1],
+    [1, -1],
+  ];
+  return (
+    <>
+      {corners.map(([sx, sy]) => {
+        const xOuter = (sx * (W / 2 - L / 2));
+        const yOuter = (sy * (H / 2 - T / 2));
+        const xInner = (sx * (W / 2 - T / 2));
+        const yInner = (sy * (H / 2 - L / 2));
+        return (
+          <group key={`${sx}_${sy}`}>
+            {/* horizontal arm */}
+            <mesh position={[xOuter, yOuter, Z]}>
+              <planeGeometry args={[L, T]} />
+              <meshStandardMaterial {...matProps} />
+            </mesh>
+            {/* vertical arm */}
+            <mesh position={[xInner, yInner, Z]}>
+              <planeGeometry args={[T, L]} />
+              <meshStandardMaterial {...matProps} />
+            </mesh>
+          </group>
+        );
+      })}
+    </>
   );
 }
 

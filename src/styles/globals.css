@@ -54,6 +54,14 @@ html.lenis-stopped {
   }
 }
 
+/* HUD scanline keyframe — used by Hud.tsx Scanline. */
+@keyframes hudScan {
+  0%   { top: -2%; opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { top: 102%; opacity: 0; }
+}
+
 /* Hide the system cursor only on the canvas; UI chrome + links keep it. */
 .canvas-root,
 .canvas-root canvas {
