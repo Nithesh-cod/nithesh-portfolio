@@ -1,10 +1,10 @@
 'use client';
 
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
-import { Billboard, Text, useTexture } from '@react-three/drei';
+import { Text } from '@react-three/drei';
 import { useMemo, useRef, useState } from 'react';
-import { BackSide, Color, type Mesh, type MeshStandardMaterial, type Texture } from 'three';
-import { stations, RACK_POS, CRT_POS, CONTACT_POS, content, certificateGroups, type Certificate } from '@/lib/content';
+import { AdditiveBlending, BackSide, Color, type Mesh, type MeshBasicMaterial, type MeshStandardMaterial } from 'three';
+import { stations, RACK_POS, certificateGroups, type Certificate } from '@/lib/content';
 import { InteractiveConsole } from '@/components/canvas/InteractiveConsole';
 import { FogParticles } from '@/components/canvas/FogParticles';
 import { play } from '@/lib/audio';
@@ -21,8 +21,7 @@ export function Lab() {
         <InteractiveConsole key={s.slug} slug={s.slug} label={s.label} position={s.position} />
       ))}
       <CertificateRack />
-      <Crt />
-      <ContactTerminal />
+      {/* Crt and ContactTerminal merged into AllTerminalsArc in V2.5 — see Scene.tsx. */}
       <FogParticles />
     </group>
   );
@@ -194,7 +193,46 @@ function CertificateRack() {
       {STRIPE_ORDER.map((spec, i) => (
         <Stripe key={spec.certId} index={i} spec={spec} />
       ))}
+
+      {/* Sweeping scanline — horizontal emerald bar that travels top→bottom
+          across the rack chassis face every 4s. Pure visual drama. */}
+      <RackScanline />
     </group>
+  );
+}
+
+function RackScanline() {
+  const matRef = useRef<MeshBasicMaterial | null>(null);
+  const meshRef = useRef<Mesh>(null);
+  const t = useRef(0);
+  useFrame((_, dt) => {
+    t.current += dt;
+    const period = 4;
+    const phase = (t.current % period) / period; // 0..1
+    if (meshRef.current) {
+      // travel from y = +H/2 - 0.05 → -H/2 + 0.05
+      const top = RACK_H / 2 - 0.05;
+      const bot = -RACK_H / 2 + 0.05;
+      meshRef.current.position.y = top + (bot - top) * phase;
+    }
+    if (matRef.current) {
+      // bright at midpass, dim at the edges
+      const e = Math.sin(phase * Math.PI);
+      matRef.current.opacity = 0.05 + 0.35 * e;
+    }
+  });
+  return (
+    <mesh ref={meshRef} position={[0, RACK_H / 2 - 0.05, RACK_D / 2 + 0.02]}>
+      <planeGeometry args={[RACK_W * 0.96, 0.028]} />
+      <meshBasicMaterial
+        ref={matRef}
+        color={palette.emeraldHot}
+        transparent
+        opacity={0.25}
+        blending={AdditiveBlending}
+        depthWrite={false}
+      />
+    </mesh>
   );
 }
 
@@ -274,161 +312,4 @@ function Stripe({ index, spec }: { index: number; spec: StripeSpec }) {
   );
 }
 
-/* ───────────────────────────  CRT  ─────────────────────────────── */
-
-function Crt() {
-  const setCursorState = usePortfolioStore((s) => s.setCursorState);
-  const openTerminal = usePortfolioStore((s) => s.openTerminal);
-  const [hovered, setHovered] = useState(false);
-  // 150 ms throttle to keep hover from spamming the audio pool on re-entry.
-  const lastHoverAt = useRef(0);
-
-  const handleOver = (e: ThreeEvent<PointerEvent>) => {
-    e.stopPropagation();
-    setHovered(true);
-    setCursorState('interactive');
-    const now = performance.now();
-    if (now - lastHoverAt.current < 150) return;
-    lastHoverAt.current = now;
-    play('hover');
-  };
-  const handleOut = (e: ThreeEvent<PointerEvent>) => {
-    e.stopPropagation();
-    setHovered(false);
-    setCursorState('idle');
-  };
-  const handleClick = (e: ThreeEvent<MouseEvent>) => {
-    e.stopPropagation();
-    play('startup');
-    openTerminal();
-  };
-
-  return (
-    <group position={CRT_POS} rotation={[0, Math.PI / 2.5, 0]} onPointerOver={handleOver} onPointerOut={handleOut} onClick={handleClick}>
-      {/* Hover hint — Billboarded so it always faces camera. */}
-      {hovered ? (
-        <Billboard position={[0, 0.75, 0]}>
-          <Text
-            raycast={noRaycast}
-            ref={disableRaycast}
-            fontSize={0.09}
-            color={palette.emeraldGlow}
-            anchorX="center"
-            anchorY="middle"
-            letterSpacing={0.2}
-            outlineWidth={0.003}
-            outlineColor={palette.void}
-          >
-            CLICK TO OPEN TERMINAL
-          </Text>
-        </Billboard>
-      ) : null}
-
-      <mesh position={[0, -0.45, 0]} receiveShadow>
-        <boxGeometry args={[1.6, 0.08, 0.9]} />
-        <meshStandardMaterial color={palette.graphite} roughness={0.55} metalness={0.6} />
-      </mesh>
-      <mesh castShadow>
-        <boxGeometry args={[0.8, 0.65, 0.7]} />
-        <meshStandardMaterial color={palette.steel} roughness={0.45} metalness={0.6} />
-      </mesh>
-      <mesh position={[0, 0, 0.36]} ref={(m) => m?.layers.enable(1)}>
-        <boxGeometry args={[0.62, 0.48, 0.02]} />
-        <meshStandardMaterial color={palette.void} emissive={palette.emeraldHot} emissiveIntensity={0.9} />
-      </mesh>
-    </group>
-  );
-}
-
-/* ───────────────────────  Contact terminal  ────────────────────── */
-// Email + LinkedIn + a clickable DOWNLOAD RESUME row. The whole group is
-// clickable as a fallback for the resume PDF; the button area in the screen
-// is the visual affordance. Keyboard parity lives in AccessibilityProxies.
-
-const LINKEDIN_SHORT = content.contact.linkedin.replace(/^https?:\/\/(www\.)?/, '');
-
-function ContactTerminal() {
-  const setCursorState = usePortfolioStore((s) => s.setCursorState);
-  const openResume = usePortfolioStore((s) => s.openResume);
-  const lastHoverAt = useRef(0);
-
-  const handleOver = (e: ThreeEvent<PointerEvent>) => {
-    e.stopPropagation();
-    setCursorState('interactive');
-    const now = performance.now();
-    if (now - lastHoverAt.current < 150) return;
-    lastHoverAt.current = now;
-    play('hover');
-  };
-  const handleOut = (e: ThreeEvent<PointerEvent>) => {
-    e.stopPropagation();
-    setCursorState('idle');
-  };
-  const handleClick = (e: ThreeEvent<MouseEvent>) => {
-    e.stopPropagation();
-    play('click_primary');
-    openResume();
-  };
-
-  // Build multi-line URL list from content.contactLinks (label-padded, host-only).
-  const urlText = content.contactLinks
-    .map((l) => `${l.label.padEnd(13)} ${l.url.replace(/^(https?:\/\/|mailto:)/, '')}`)
-    .join('\n');
-
-  return (
-    <group
-      position={CONTACT_POS}
-      onPointerOver={handleOver}
-      onPointerOut={handleOut}
-      onClick={handleClick}
-    >
-      {/* Chassis */}
-      <mesh castShadow>
-        <boxGeometry args={[1.4, 1.8, 0.6]} />
-        <meshStandardMaterial color={palette.graphite} roughness={0.4} metalness={0.85} />
-      </mesh>
-      {/* Screen (slightly proud of chassis, on layer 1 for rim light) — emissive
-          intensity dropped so the text on top reads clearly. */}
-      <mesh position={[0, 0.2, 0.32]} ref={(m) => m?.layers.enable(1)}>
-        <boxGeometry args={[1.1, 0.75, 0.02]} />
-        <meshStandardMaterial color={palette.void} emissive={palette.emeraldMid} emissiveIntensity={0.35} />
-      </mesh>
-      {/* Six-line URL list on the screen, mono, raycast disabled. */}
-      <Text
-        raycast={noRaycast}
-        ref={disableRaycast}
-        position={[0, 0.32, 0.341]}
-        fontSize={0.036}
-        color={palette.emeraldGlow}
-        anchorX="center"
-        anchorY="middle"
-        lineHeight={1.55}
-        letterSpacing={0.02}
-        maxWidth={1.0}
-        textAlign="left"
-      >
-        {urlText}
-      </Text>
-      {/* Divider rule */}
-      <mesh position={[0, 0.04, 0.341]}>
-        <planeGeometry args={[0.95, 0.004]} />
-        <meshBasicMaterial color={palette.goldAccent} transparent opacity={0.7} />
-      </mesh>
-      {/* DOWNLOAD RESUME button row */}
-      <Text
-        raycast={noRaycast}
-        ref={disableRaycast}
-        position={[0, -0.04, 0.341]}
-        fontSize={0.05}
-        color={palette.goldAccent}
-        anchorX="center"
-        anchorY="middle"
-        letterSpacing={0.18}
-        outlineWidth={0.001}
-        outlineColor={palette.void}
-      >
-        {'DOWNLOAD RESUME →'}
-      </Text>
-    </group>
-  );
-}
+/* CRT and ContactTerminal moved to AllTerminalsArc.tsx in V2.5 — see Scene.tsx. */

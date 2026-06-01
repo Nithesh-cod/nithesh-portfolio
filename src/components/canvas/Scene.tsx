@@ -6,8 +6,11 @@ import { useState } from 'react';
 import type { PointLight } from 'three';
 import { Lab } from '@/components/canvas/Lab';
 import { Hologram } from '@/components/canvas/Hologram';
-import { SkillTerminals } from '@/components/canvas/SkillTerminals';
+import { AllTerminalsArc } from '@/components/canvas/AllTerminalsArc';
 import { VolumetricShafts } from '@/components/canvas/VolumetricShafts';
+import { DataStreamWalls } from '@/components/canvas/DataStreamWalls';
+import { FloatingGlyphs } from '@/components/canvas/FloatingGlyphs';
+import { SweepingSpotlights } from '@/components/canvas/SweepingSpotlights';
 import { PostFX } from '@/components/canvas/PostFX';
 import { AccessibilityProxies } from '@/components/canvas/AccessibilityProxies';
 import { ScrollCamera } from '@/components/motion/ScrollCamera';
@@ -53,7 +56,10 @@ export function Scene() {
       <Lab />
       <Hologram />
       <VolumetricShafts />
-      <SkillTerminals />
+      <DataStreamWalls />
+      <FloatingGlyphs />
+      <SweepingSpotlights />
+      <AllTerminalsArc />
       <AccessibilityProxies />
 
       <ScrollCamera />

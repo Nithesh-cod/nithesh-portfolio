@@ -8,6 +8,7 @@ import {
   DoubleSide,
   FrontSide,
   type Mesh,
+  type MeshStandardMaterial,
   NormalBlending,
   SRGBColorSpace,
   Vector2,
@@ -34,6 +35,7 @@ const BOOT_HOLD = 4.2;
  */
 export function Hologram() {
   const mesh = useRef<Mesh>(null);
+  const bezelMat = useRef<MeshStandardMaterial | null>(null);
   const { camera } = useThree();
   const tmpPos = useMemo(() => new Vector3(), []);
 
@@ -69,17 +71,26 @@ export function Hologram() {
 
     uniforms.uTime.value += dt;
     uniforms.uBoot.value += (target - uniforms.uBoot.value) * Math.min(1, dt * 2.2);
+
+    // V2.5 — bezel rim pulse. Slow sine sweeps emissiveIntensity 0.05↔0.20 over
+    // 4 s. Keeps the hologram alive even at idle without overpowering the panel.
+    if (bezelMat.current) {
+      const phase = (uniforms.uTime.value / 4) * Math.PI * 2;
+      bezelMat.current.emissiveIntensity = 0.125 + 0.075 * Math.sin(phase);
+    }
   });
 
   return (
     <group position={HOLOGRAM_POS}>
-      {/* Outer bezel — graphite, very faintly emerald (the plane shader handles the glow). */}
+      {/* Outer bezel — graphite, very faintly emerald (the plane shader handles the glow).
+          V2.5: rim pulse animates emissiveIntensity over 4 s — see useFrame above. */}
       <mesh position={[0, 0, -0.03]} ref={(m) => m?.layers.enable(1)}>
         <boxGeometry args={[1.58, 2.08, 0.04]} />
         <meshStandardMaterial
+          ref={bezelMat}
           color={palette.graphite}
           emissive={palette.emeraldMid}
-          emissiveIntensity={0.08}
+          emissiveIntensity={0.12}
           roughness={0.3}
           metalness={0.9}
         />

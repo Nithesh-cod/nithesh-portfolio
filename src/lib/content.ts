@@ -201,6 +201,59 @@ export const skillCategories: readonly SkillCategory[] = [
   { id: 'tools',     title: 'TOOLS',      items: ['VS Code', 'DevTools', 'Postman', 'Blender'] },
 ] as const;
 
+/* ────────────────────────  Horseshoe arc of 7 terminal podiums  ──────────────────────── */
+// V2.5 consolidation: the CRT, 5 skill terminals, and the contact terminal
+// all live on a single 160° horseshoe arc centred at HOLOGRAM_POS.
+// Order left → right (from camera view): CRT, Languages, Front-End, AI, Platform, Tools, Contact.
+
+export const ARC_CENTER = HOLOGRAM_POS;
+export const ARC_RADIUS = 5.0;
+const ARC_SPAN_DEG = 160;
+const ARC_BASE_DEG = 180; // straight behind hologram (in -Z direction)
+
+export type ArcPodiumKind = 'crt' | 'category' | 'contact';
+export type ArcPodium = {
+  id: SkillCategoryId | 'crt' | 'contact';
+  kind: ArcPodiumKind;
+  title: string;
+  items: readonly string[];
+  position: readonly [number, number, number];
+  yaw: number; // y-rotation so the screen faces arc centre
+};
+
+// Index by id so strict-undefined doesn't trip on numeric access.
+const SKILL_BY_ID: Readonly<Record<SkillCategoryId, readonly string[]>> = Object.fromEntries(
+  skillCategories.map((c) => [c.id, c.items] as const),
+) as Readonly<Record<SkillCategoryId, readonly string[]>>;
+
+const ARC_DEFS: readonly {
+  id: ArcPodium['id'];
+  kind: ArcPodiumKind;
+  title: string;
+  items: readonly string[];
+}[] = [
+  { id: 'crt',       kind: 'crt',      title: 'TERMINAL',    items: ['help', 'projects', 'skills', 'contact', 'matrix', 'sudo hire-me'] },
+  { id: 'languages', kind: 'category', title: 'LANGUAGES',   items: SKILL_BY_ID.languages },
+  { id: 'frontend',  kind: 'category', title: 'FRONT-END',   items: SKILL_BY_ID.frontend },
+  { id: 'ai',        kind: 'category', title: 'AI / GEN AI', items: SKILL_BY_ID.ai },
+  { id: 'platform',  kind: 'category', title: 'PLATFORM',    items: SKILL_BY_ID.platform },
+  { id: 'tools',     kind: 'category', title: 'TOOLS',       items: SKILL_BY_ID.tools },
+  { id: 'contact',   kind: 'contact',  title: 'CONTACT',     items: ['LinkedIn  ' + 'nithesh-r-ba349032b', 'Email     ' + 'nithesh.r.ciet@gmail.com', 'Open Résumé →'] },
+];
+
+export const arcPodiums: readonly ArcPodium[] = ARC_DEFS.map((d, i) => {
+  // t in [-0.5, +0.5]; subtract t*span so i=0 (CRT) ends up on the camera-left side
+  // (angle 260° → world -X).
+  const t = i / (ARC_DEFS.length - 1) - 0.5;
+  const angleDeg = ARC_BASE_DEG - t * ARC_SPAN_DEG;
+  const angleRad = (angleDeg * Math.PI) / 180;
+  const x = ARC_CENTER[0] + ARC_RADIUS * Math.sin(angleRad);
+  const z = ARC_CENTER[2] + ARC_RADIUS * Math.cos(angleRad);
+  // Yaw rotates the podium's local +Z to point at ARC_CENTER (toward camera-front of arc).
+  const yaw = angleRad + Math.PI;
+  return { ...d, position: [x, 0, z] as const, yaw };
+});
+
 /** One-line context per skill item — shown in CategoryDetailModal. */
 export const skillDescriptions: Readonly<Record<string, string>> = {
   // Languages
@@ -284,16 +337,25 @@ export const certificateGroups: readonly CertificateGroup[] = [
 /** Camera waypoints — Catmull-Rom path (tension 0.3 in ScrollCamera).
  *  Order = scroll order = narrative order. Certifications inserted between
  *  entrance and portrait so the visitor sees the wall right away. */
+// V2.5: skills / crt / contact waypoints now look at different sections of
+// the same horseshoe arc behind the hologram.
+const ARC_CRT_POS = arcPodiums[0]?.position ?? ([-3.2, 0, -1.5] as const);
+const ARC_CONTACT_POS = arcPodiums[arcPodiums.length - 1]?.position ?? ([3.2, 0, -1.5] as const);
+const ARC_CENTRE_LOOK = [ARC_CENTER[0], 0.5, ARC_CENTER[2] - ARC_RADIUS + 1.0] as const;
+
 export const waypoints = [
   { id: 'entrance',       label: 'ENTRANCE',                position: [0, 1.7, 7] as const, lookAt: [0, 1.4, 0] as const },
   { id: 'portrait',       label: 'PORTRAIT',                position: [0, 1.55, 1.2] as const, lookAt: HOLOGRAM_POS },
   { id: 'console-1',      label: 'CONSOLE_1 [ CROPAI ]',    position: [-3.2, 1.05, 1.4] as const, lookAt: STATION_POS.cropai },
   { id: 'console-2',      label: 'CONSOLE_2 [ SMART_CANTEEN ]', position: [0, 1.05, 1.0] as const, lookAt: STATION_POS['smart-canteen'] },
   { id: 'console-3',      label: 'CONSOLE_3 [ TESTAI ]',    position: [3.2, 1.05, 1.4] as const, lookAt: STATION_POS.testai },
-  { id: 'skills',         label: 'SKILLS',                  position: [0, 2.0, 6.8] as const, lookAt: SKILL_ARC_POS },
+  // High vantage above hologram looking at arc centre — sees all 5 middle podiums.
+  { id: 'skills',         label: 'SKILLS',                  position: [0, 4.2, 1.5] as const, lookAt: ARC_CENTRE_LOOK },
   { id: 'certifications', label: 'CERTIFICATIONS',          position: [RACK_POS[0], RACK_POS[1] + 0.2, RACK_POS[2] + 3.6] as const, lookAt: RACK_POS },
-  { id: 'crt',            label: 'TERMINAL',                position: [-3.0, 1.1, -1.4] as const, lookAt: CRT_POS },
-  { id: 'contact',        label: 'CONTACT',                 position: [0, 1.4, -5.4] as const, lookAt: CONTACT_POS },
+  // Dolly to the left end of the arc (CRT podium).
+  { id: 'crt',            label: 'TERMINAL',                position: [ARC_CRT_POS[0] + 1.6, 1.1, ARC_CRT_POS[2] + 1.6] as const, lookAt: ARC_CRT_POS },
+  // Dolly to the right end of the arc (Contact podium).
+  { id: 'contact',        label: 'CONTACT',                 position: [ARC_CONTACT_POS[0] - 1.6, 1.1, ARC_CONTACT_POS[2] + 1.6] as const, lookAt: ARC_CONTACT_POS },
 ] as const;
 
 export type Waypoint = (typeof waypoints)[number];

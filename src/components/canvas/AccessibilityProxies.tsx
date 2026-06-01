@@ -3,7 +3,13 @@
 import { Html } from '@react-three/drei';
 import { play } from '@/lib/audio';
 import { usePortfolioStore, type ProxyId } from '@/lib/store';
-import { stations, CRT_POS, CONTACT_POS, RACK_POS, SKILL_ARC_POS, content, waypoints, type Project } from '@/lib/content';
+import { stations, RACK_POS, ARC_CENTER, arcPodiums, content, waypoints, type Project } from '@/lib/content';
+
+// V2.5: CRT lives at the LEFT end of the arc, Contact at the RIGHT.
+// arcPodiums is statically 7 entries — fall back to a sensible default for the
+// strict-undefined index check rather than disable noUncheckedIndexedAccess.
+const ARC_CRT_POS = arcPodiums[0]?.position ?? ([-3.2, 0, -1.5] as const);
+const ARC_CONTACT_POS = arcPodiums[arcPodiums.length - 1]?.position ?? ([3.2, 0, -1.5] as const);
 
 /**
  * Invisible focusable buttons positioned at each interactive 3D object.
@@ -47,26 +53,27 @@ export function AccessibilityProxies() {
       />
 
       <Proxy
-        position={[SKILL_ARC_POS[0], SKILL_ARC_POS[1] + 1.2, SKILL_ARC_POS[2]]}
+        position={[ARC_CENTER[0], 2.0, ARC_CENTER[2]]}
         label="View skills"
         onActivate={() => scrollToWaypoint('skills')}
       />
 
       <Proxy
-        position={[CRT_POS[0], CRT_POS[1] + 0.6, CRT_POS[2]]}
-        label="CRT · Activate terminal (M4)"
+        position={[ARC_CRT_POS[0], ARC_CRT_POS[1] + 1.0, ARC_CRT_POS[2]]}
+        label="CRT · Activate terminal"
         onActivate={() => {
           play('startup');
-          // eslint-disable-next-line no-console
-          console.info('[crt] activated via keyboard');
+          usePortfolioStore.getState().openTerminal();
         }}
       />
       <Proxy
-        position={[CONTACT_POS[0], CONTACT_POS[1] + 0.6, CONTACT_POS[2]]}
-        label="Contact terminal · Download résumé"
+        position={[ARC_CONTACT_POS[0], ARC_CONTACT_POS[1] + 1.0, ARC_CONTACT_POS[2]]}
+        label="Contact terminal · Open résumé"
         onActivate={() => {
           play('click_primary');
+          usePortfolioStore.getState().openResume();
           if (typeof window !== 'undefined') {
+            // Belt-and-braces — also open the PDF as a fallback.
             window.open(content.contact.resumeUrl, '_blank', 'noopener,noreferrer');
           }
         }}

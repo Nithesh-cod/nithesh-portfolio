@@ -4,18 +4,29 @@ import { Text } from '@react-three/drei';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import { useRef, useState } from 'react';
 import { FrontSide, type Group } from 'three';
-import { SKILL_ARC_POS, skillCategories, type SkillCategory, waypoints } from '@/lib/content';
+import {
+  arcPodiums,
+  waypoints,
+  type ArcPodium,
+  type SkillCategoryId,
+} from '@/lib/content';
 import { palette } from '@/lib/palette';
 import { play } from '@/lib/audio';
 import { disableRaycast, noRaycast } from '@/lib/three-utils';
 import { usePortfolioStore } from '@/lib/store';
 
 const SKILLS_WP_IDX = waypoints.findIndex((w) => w.id === 'skills');
+const CRT_WP_IDX = waypoints.findIndex((w) => w.id === 'crt');
+const CONTACT_WP_IDX = waypoints.findIndex((w) => w.id === 'contact');
 
-const ARC_RADIUS = 1.85;
-const ARC_SPAN = Math.PI * 0.72; // ~130°
+// All 7 podiums are visible when section is at/near the skills, crt, or
+// contact waypoints — i.e. when the visitor is "in the arc zone".
+function isArcZone(section: number): boolean {
+  return [SKILLS_WP_IDX, CRT_WP_IDX, CONTACT_WP_IDX].some(
+    (i) => Math.abs(section - i) <= 1,
+  );
+}
 
-// Per-podium dims
 const PLINTH_W = 0.5;
 const PLINTH_H = 0.25;
 const PLINTH_D = 0.4;
@@ -25,54 +36,31 @@ const BODY_D = 0.45;
 const SCREEN_W = 0.42;
 const SCREEN_H = 0.28;
 
-/**
- * Five in-scene CRT terminal podiums arranged in a tight arc, replacing the
- * old DOM HudPanels SkillsPanel. Each terminal shows one skill category and
- * its items; clicking opens the CategoryDetailModal. Section-gated so it only
- * exists in the scene when the visitor is at (or one step from) the skills
- * waypoint — keeps the cylinders out of click rays at other waypoints.
- */
-export function SkillTerminals() {
+export function AllTerminalsArc() {
   const section = usePortfolioStore((s) => s.section);
-  if (Math.abs(section - SKILLS_WP_IDX) > 1) return null;
-
-  const n = skillCategories.length;
-
+  if (!isArcZone(section)) return null;
   return (
-    <group position={SKILL_ARC_POS}>
-      {skillCategories.map((cat, i) => {
-        const t = n === 1 ? 0 : i / (n - 1);
-        const angle = -ARC_SPAN / 2 + t * ARC_SPAN;
-        const x = Math.sin(angle) * ARC_RADIUS;
-        const z = Math.cos(angle) * ARC_RADIUS;
-        // Each podium yaws toward arc centre so the screen faces the camera-side.
-        const yaw = -angle;
-        return <TerminalPodium key={cat.id} category={cat} position={[x, 0, z]} yaw={yaw} />;
-      })}
-    </group>
+    <>
+      {arcPodiums.map((p) => (
+        <TerminalPodium key={p.id} podium={p} />
+      ))}
+    </>
   );
 }
 
-function TerminalPodium({
-  category,
-  position,
-  yaw,
-}: {
-  category: SkillCategory;
-  position: [number, number, number];
-  yaw: number;
-}) {
+function TerminalPodium({ podium }: { podium: ArcPodium }) {
   const [hovered, setHovered] = useState(false);
   const groupRef = useRef<Group | null>(null);
-  const openSkillCategory = usePortfolioStore((s) => s.openSkillCategory);
-  const setCursor = usePortfolioStore((s) => s.setCursorState);
   const lastHoverAt = useRef(0);
-  const baseZ = 0;
 
-  // Hover wake: whole monitor + plinth slides +0.04 toward camera.
+  const setCursor = usePortfolioStore((s) => s.setCursorState);
+  const openSkillCategory = usePortfolioStore((s) => s.openSkillCategory);
+  const openTerminal = usePortfolioStore((s) => s.openTerminal);
+  const openResume = usePortfolioStore((s) => s.openResume);
+
   useFrame((_, dt) => {
     if (!groupRef.current) return;
-    const target = baseZ + (hovered ? 0.04 : 0);
+    const target = hovered ? 0.04 : 0;
     groupRef.current.position.z += (target - groupRef.current.position.z) * Math.min(1, dt * 8);
   });
 
@@ -93,11 +81,23 @@ function TerminalPodium({
   const handleClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
     play('click_secondary');
-    openSkillCategory(category.id);
+    if (podium.kind === 'crt') openTerminal();
+    else if (podium.kind === 'contact') openResume();
+    else openSkillCategory(podium.id as SkillCategoryId);
   };
 
+  // Header colour: CRT + Contact get gold to differentiate from skill categories.
+  const headerColor =
+    podium.kind === 'category' ? palette.emeraldGlow : palette.goldAccent;
+  const screenEmissive =
+    podium.kind === 'crt'
+      ? palette.terminalGrn
+      : podium.kind === 'contact'
+        ? palette.goldAccent
+        : palette.terminalGrn;
+
   return (
-    <group position={position} rotation={[0, yaw, 0]}>
+    <group position={podium.position} rotation={[0, podium.yaw, 0]}>
       <group ref={groupRef}>
         {/* Plinth */}
         <mesh castShadow receiveShadow position={[0, PLINTH_H / 2, 0]}>
@@ -105,7 +105,7 @@ function TerminalPodium({
           <meshStandardMaterial color={palette.graphite} metalness={0.7} roughness={0.5} side={FrontSide} />
         </mesh>
 
-        {/* Monitor body — pointer handlers on this mesh (FIX 1 lesson). */}
+        {/* Monitor body — handlers on this mesh. */}
         <mesh
           castShadow
           position={[0, PLINTH_H + BODY_H / 2, 0]}
@@ -117,7 +117,7 @@ function TerminalPodium({
           <meshStandardMaterial color={palette.graphite} metalness={0.75} roughness={0.4} />
         </mesh>
 
-        {/* Recessed screen plane — emits the terminal-green phosphor glow. */}
+        {/* Screen plane */}
         <mesh
           position={[0, PLINTH_H + BODY_H / 2, BODY_D / 2 + 0.001]}
           ref={(m) => m?.layers.enable(1)}
@@ -125,43 +125,44 @@ function TerminalPodium({
           <planeGeometry args={[SCREEN_W, SCREEN_H]} />
           <meshStandardMaterial
             color={palette.void}
-            emissive={palette.terminalGrn}
+            emissive={screenEmissive}
             emissiveIntensity={hovered ? 0.55 : 0.32}
           />
         </mesh>
 
-        {/* Screen content — header + items, mono terminal-green. */}
+        {/* Screen text */}
         <group position={[0, PLINTH_H + BODY_H / 2, BODY_D / 2 + 0.003]}>
           <Text
             raycast={noRaycast}
             ref={disableRaycast}
             position={[-SCREEN_W / 2 + 0.02, SCREEN_H / 2 - 0.03, 0]}
             fontSize={0.024}
-            color={palette.emeraldGlow}
+            color={headerColor}
             anchorX="left"
             anchorY="top"
             letterSpacing={0.1}
           >
-            {`// SYS::${category.title}`}
+            {`// SYS::${podium.title}`}
           </Text>
-          {category.items.map((item, i) => (
+          {podium.items.map((item, i) => (
             <Text
-              key={item}
+              key={`${podium.id}-${i}`}
               raycast={noRaycast}
               ref={disableRaycast}
               position={[-SCREEN_W / 2 + 0.02, SCREEN_H / 2 - 0.075 - i * 0.038, 0]}
               fontSize={0.022}
-              color={palette.terminalGrn}
+              color={podium.kind === 'contact' ? palette.bone : palette.terminalGrn}
               anchorX="left"
               anchorY="top"
               letterSpacing={0.04}
+              maxWidth={SCREEN_W - 0.05}
             >
               {`> ${item}`}
             </Text>
           ))}
         </group>
 
-        {/* 4 gold targeting-corner brackets on the screen frame. */}
+        {/* Gold corner brackets */}
         <ScreenCornerBrackets bodyOffsetY={PLINTH_H + BODY_H / 2} bodyOffsetZ={BODY_D / 2 + 0.002} />
       </group>
     </group>

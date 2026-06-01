@@ -172,7 +172,8 @@ export function InteractiveConsole({
         <Text
           raycast={noRaycast}
           ref={disableRaycast}
-          position={[0, 0.04, 0.006]}
+          // V2.5: y=0 (true centre) now the underline mesh is gone.
+          position={[0, 0, 0.006]}
           fontSize={0.13}
           color={palette.emeraldGlow}
           anchorX="center"
@@ -186,18 +187,6 @@ export function InteractiveConsole({
         >
           {label.toUpperCase()}
         </Text>
-
-        {/* Thin gold underline rule below the name — the "premium signal". */}
-        <mesh position={[0, -0.16, 0.006]}>
-          <planeGeometry args={[0.6, 0.008]} />
-          <meshStandardMaterial
-            color={palette.goldAccent}
-            emissive={palette.goldAccent}
-            emissiveIntensity={0.8}
-            metalness={0.95}
-            roughness={0.25}
-          />
-        </mesh>
 
         {/* Targeting-reticle corner brackets — 4 gold L-shapes at each screen corner. */}
         <ScreenCornerBrackets />
