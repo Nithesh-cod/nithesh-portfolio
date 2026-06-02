@@ -9,20 +9,19 @@ type Group = {
   lookAt: readonly [number, number, number];
 };
 
-// V8.0 nav targets — aligned to the new "everything visible from entrance"
-// layout.
+// V8.1 nav targets — aligned to the new clean depth layers.
 const GROUPS: readonly Group[] = [
-  { id: 'portrait',     label: 'PORTRAIT',     position: [0, 1.6, 4.5],     lookAt: [0, 1.5, -2] },
-  { id: 'projects',     label: 'PROJECTS',     position: [0, 1.3, 3.0],     lookAt: [0, 0.7, -0.5] },
-  { id: 'skills',       label: 'SKILLS',       position: [0, 1.6, 5.0],     lookAt: [0, 1.2, 0] },
-  { id: 'certificates', label: 'CERTIFICATES', position: [3.5, 2.0, 1.5],   lookAt: [5.5, 1.5, -1.5] },
-  { id: 'terminal',     label: 'TERMINAL',     position: [-2.5, 1.4, 3.5],  lookAt: [-5, 0.9, 1.5] },
-  { id: 'contact',      label: 'CONTACT',      position: [2.5, 1.4, 3.5],   lookAt: [5, 0.9, 1.5] },
+  { id: 'portrait',     label: 'PORTRAIT',     position: [0,  1.8, 3.5],   lookAt: [0,    1.8, 0.5] },
+  { id: 'projects',     label: 'PROJECTS',     position: [0,  1.2, 5.5],   lookAt: [0,    0.8, 2.5] },
+  { id: 'skills',       label: 'SKILLS',       position: [0,  1.5, 5.5],   lookAt: [0,    1.5, -0.5] },
+  { id: 'certificates', label: 'CERTIFICATES', position: [3,  1.5, 2],     lookAt: [6.5,  1.5, -2.5] },
+  { id: 'terminal',     label: 'TERMINAL',     position: [-3, 0.8, 4],     lookAt: [-5.5, 0.5, 1.5] },
+  { id: 'contact',      label: 'CONTACT',      position: [3,  0.8, 4],     lookAt: [5.5,  0.5, 1.5] },
 ];
 
 const RESET = {
-  position: [0, 1.7, 7] as const,
-  lookAt: [0, 1.2, 0] as const,
+  position: [0, 2.5, 9.0] as const,
+  lookAt: [0, 1.0, 0] as const,
 };
 
 export function NavPill() {

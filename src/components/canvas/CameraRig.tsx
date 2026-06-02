@@ -117,11 +117,15 @@ export function CameraRig() {
       dampingFactor={0.05}
       enablePan={false}
       enableZoom
-      minDistance={4}
-      maxDistance={20}
+      // V8.1 — tightened distance bounds so the visitor can't pull too
+      // far back from the new layout or get inside any card.
+      minDistance={5}
+      maxDistance={18}
       minPolarAngle={Math.PI * 0.25}
       maxPolarAngle={Math.PI * 0.55}
-      target={[0, 1.2, 0]}
+      // V8.1 — target slightly lower so the foreground project consoles
+      // sit comfortably in the lower third of the frame.
+      target={[0, 1.0, 0]}
       autoRotate
       autoRotateSpeed={0.25}
       onStart={() => markInteract()}

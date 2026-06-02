@@ -14,7 +14,7 @@ import {
   type MeshBasicMaterial,
   type MeshStandardMaterial,
 } from 'three';
-import { stations, certificateGroups, type Certificate } from '@/lib/content';
+import { stations, certificateGroups, RACK_POS, type Certificate } from '@/lib/content';
 import { InteractiveConsole } from '@/components/canvas/InteractiveConsole';
 import { FogParticles } from '@/components/canvas/FogParticles';
 import { palette } from '@/lib/palette';
@@ -145,7 +145,10 @@ function Floor() {
  *   - status indicator "STATUS: ACTIVE" floating above rack
  * ─────────────────────────────────────────────────────────────────── */
 
-const RACK_POS_V8: readonly [number, number, number] = [5.5, 1.5, -1.5];
+// V8.1 — moved further back-right + slight inward yaw so the rack faces
+// the camera. RACK_POS sourced from content.ts as the authoritative coord.
+const RACK_POS_V8: readonly [number, number, number] = RACK_POS;
+const RACK_YAW = -0.3; // slight rotation toward camera
 const RACK_W = 2.5;
 const RACK_H = 3.0;
 const RACK_D = 0.4;
@@ -241,7 +244,7 @@ function CertificateRack() {
   });
 
   return (
-    <group position={RACK_POS_V8}>
+    <group position={RACK_POS_V8} rotation={[0, RACK_YAW, 0]}>
       {/* Rack body. */}
       <mesh castShadow receiveShadow>
         <boxGeometry args={[RACK_W, RACK_H, RACK_D]} />

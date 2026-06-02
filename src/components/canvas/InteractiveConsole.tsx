@@ -10,9 +10,8 @@ import { disableRaycast, noRaycast } from '@/lib/three-utils';
 import { play } from '@/lib/audio';
 import type { Project, Station } from '@/lib/content';
 
-// V8.0 — SUBSTANTIAL glass card. Lower transmission, more visible borders,
-// internal accent details. Reads as a solid glass plaque, not a ghost.
-const CARD_W = 1.5;
+// V8.1 — project consoles slightly larger (foreground = primary focus).
+const CARD_W = 1.6;
 const CARD_H = 1.0;
 const CARD_D = 0.06;
 const FLOAT_AMP = 0.04;
@@ -39,7 +38,9 @@ export function InteractiveConsole({
   const setCursor = usePortfolioStore((s) => s.setCursorState);
   const lowPerf = usePortfolioStore((s) => s.perfMode === 'low');
 
-  const restY = position[1] + 0.45;
+  // V8.1 — render the card at exactly the station Y (no longer +0.45)
+  // so STATION_POS.y in content.ts is the literal card centre height.
+  const restY = position[1];
 
   useFrame((_, dt) => {
     t.current += dt;
@@ -151,10 +152,10 @@ export function InteractiveConsole({
 
       {/* Mint "active" accent dot, top-left corner. */}
       <mesh
-        position={[-CARD_W / 2 + 0.08, CARD_H / 2 - 0.08, CARD_D / 2 + 0.0015]}
+        position={[-CARD_W / 2 + 0.10, CARD_H / 2 - 0.10, CARD_D / 2 + 0.0015]}
         rotation={[Math.PI / 2, 0, 0]}
       >
-        <cylinderGeometry args={[0.018, 0.018, 0.005, 16]} />
+        <cylinderGeometry args={[0.05, 0.05, 0.005, 24]} />
         <meshStandardMaterial
           ref={accentDotRef}
           color={palette.signalMint}

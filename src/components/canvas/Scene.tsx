@@ -42,7 +42,7 @@ export function Scene() {
         depth: true,
         alpha: false,
       }}
-      camera={{ position: [0, 1.7, 7], fov: 38, near: 0.1, far: 120 }}
+      camera={{ position: [0, 2.5, 9.0], fov: 38, near: 0.1, far: 120 }}
       onCreated={({ gl }) => gl.setClearColor(palette.nightBase, 1)}
     >
       <PerformanceTier

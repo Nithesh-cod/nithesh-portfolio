@@ -20,12 +20,13 @@ import { usePortfolioStore } from '@/lib/store';
 // podiums get their own hex pylons (rendered as cards too, but with
 // distinct accent colours).
 
-const CARD_W = 1.05;
-const CARD_H = 0.78;
+// V8.1 — uniform 1.2 × 0.85 size; border thickness 0.015 across all cards.
+const CARD_W = 1.2;
+const CARD_H = 0.85;
 const CARD_D = 0.06;
 const FLOAT_AMP = 0.025;
 const FLOAT_PERIOD = 7;
-const BORDER_T = 0.012;
+const BORDER_T = 0.015;
 
 export function AllTerminalsArc() {
   return (
@@ -134,12 +135,12 @@ function TerminalCard({ podium, phase }: { podium: ArcPodium; phase: number }) {
           )}
         </RoundedBox>
 
-        {/* Accent dot top-left. */}
+        {/* Accent dot top-left — V8.1 spec radius 0.05. */}
         <mesh
-          position={[-CARD_W / 2 + 0.06, CARD_H / 2 - 0.06, CARD_D / 2 + 0.0015]}
+          position={[-CARD_W / 2 + 0.10, CARD_H / 2 - 0.10, CARD_D / 2 + 0.0015]}
           rotation={[Math.PI / 2, 0, 0]}
         >
-          <cylinderGeometry args={[0.015, 0.015, 0.005, 16]} />
+          <cylinderGeometry args={[0.05, 0.05, 0.005, 24]} />
           <meshStandardMaterial
             ref={accentDotRef}
             color={accentColor}
@@ -148,15 +149,17 @@ function TerminalCard({ podium, phase }: { podium: ArcPodium; phase: number }) {
           />
         </mesh>
 
-        {/* Header. */}
+        {/* V8.1 layout — title at y=+0.30, underline at y=+0.22, items
+            start at y=+0.10 with 0.08 spacing. */}
         <Text
           raycast={noRaycast}
           ref={disableRaycast}
-          position={[0, CARD_H / 2 - 0.12, CARD_D / 2 + 0.002]}
+          position={[0, 0.30, CARD_D / 2 + 0.002]}
           fontSize={0.092}
           color={accentColor}
           anchorX="center"
-          anchorY="top"
+          anchorY="middle"
+          maxWidth={1.1}
           letterSpacing={0.08}
           outlineWidth={0.002}
           outlineColor={palette.champagneGold}
@@ -165,8 +168,7 @@ function TerminalCard({ podium, phase }: { podium: ArcPodium; phase: number }) {
           {podium.title}
         </Text>
 
-        {/* Underline. */}
-        <mesh position={[0, CARD_H / 2 - 0.21, CARD_D / 2 + 0.0015]}>
+        <mesh position={[0, 0.22, CARD_D / 2 + 0.0015]}>
           <planeGeometry args={[CARD_W * 0.55, 0.005]} />
           <meshStandardMaterial
             color={palette.champagneGold}
@@ -177,14 +179,13 @@ function TerminalCard({ podium, phase }: { podium: ArcPodium; phase: number }) {
           />
         </mesh>
 
-        {/* Items. */}
         {podium.items.map((item, i) => (
           <Text
             key={`${podium.id}-${i}`}
             raycast={noRaycast}
             ref={disableRaycast}
-            position={[0, CARD_H / 2 - 0.27 - i * 0.078, CARD_D / 2 + 0.002]}
-            fontSize={0.048}
+            position={[0, 0.10 - i * 0.08, CARD_D / 2 + 0.002]}
+            fontSize={0.045}
             color={palette.ivoryWarm}
             anchorX="center"
             anchorY="top"

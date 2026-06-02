@@ -155,8 +155,13 @@ export const content: Content = {
 /** World coordinates for the procedural lab.
  *  Origin = centre of the floor. +Z is "out of the screen toward the visitor".
  *  Hologram sits on the back wall (negative Z); contact terminal is deepest. */
-export const HOLOGRAM_POS = [0, 1.5, -2] as const;
-export const RACK_POS = [4.5, 1.3, -3.2] as const;
+// V8.1 — clean depth layers.
+//   LAYER A foreground (z = +2.5): project consoles
+//   LAYER B mid     (z = +0.5):    hologram centerpiece
+//   LAYER C mid     (z = -0.5):    skill podiums (flanking)
+//   LAYER D back    (z = -2.5):    cert rack
+export const HOLOGRAM_POS = [0, 1.8, 0.5] as const;
+export const RACK_POS = [6.5, 1.5, -2.5] as const;
 export const CRT_POS = [-4.2, 0.9, -2.6] as const;
 export const CONTACT_POS = [0, 1.1, -7.5] as const;
 
@@ -166,10 +171,12 @@ export type Station = {
   position: readonly [number, number, number];
 };
 
+// V8.1 — project consoles in foreground (z = +2.5/2.8), evenly spaced
+// across x. Identical Y so the row reads as a clean foreground band.
 const STATION_POS = {
-  cropai: [-2.8, 0.55, -0.2] as const,
-  'smart-canteen': [0, 0.55, -0.8] as const,
-  testai: [2.8, 0.55, -0.2] as const,
+  cropai:          [-3.0, 0.8, 2.5] as const,
+  'smart-canteen': [0,    0.8, 2.8] as const,
+  testai:          [3.0,  0.8, 2.5] as const,
 } as const;
 
 /** Stations in an arc in front of the hologram. Read by Lab.tsx. */
@@ -246,14 +253,20 @@ const ARC_DEFS: readonly {
 // V8.0 — explicit grid positions flanking the hologram. NO more arc behind
 // the hologram. 3 podiums left, 2 right, CRT pylon far left, Contact globe
 // far right. Each faces the camera (yaw = 0).
+// V8.1 — clean vertical columns flanking the hologram + low pylons in
+// front. Skill cards at x = ±5.5 (mid-depth), terminal + contact at
+// y = 0.5 (foreground band).
 const V8_PODIUM_POSITIONS: Readonly<Record<ArcPodium['id'], readonly [number, number, number]>> = {
-  crt:       [-5,   0.6, 1.5],   // far-left pylon (terminal)
-  languages: [-3.5, 1.8, 0.5],   // top-left
-  frontend:  [-3.8, 1.2, 1.5],   // middle-left
-  ai:        [-3.5, 0.6, 2.0],   // bottom-left, forward
-  platform:  [3.5,  1.5, 0.5],   // top-right
-  tools:     [3.8,  0.8, 1.5],   // middle-right
-  contact:   [5,    0.6, 1.5],   // far-right (contact globe)
+  // Skill column LEFT — 3 stacked at x = -5.5.
+  languages: [-5.5, 2.5, -0.5],
+  frontend:  [-5.5, 1.5, -0.5],
+  ai:        [-5.5, 0.5, -0.5],
+  // Skill column RIGHT — 2 stacked at x = +5.5.
+  platform:  [ 5.5, 2.5, -0.5],
+  tools:     [ 5.5, 1.5, -0.5],
+  // Pylons in foreground at y = 0.5, in front of the skill columns.
+  crt:       [-5.5, 0.5, 1.5],
+  contact:   [ 5.5, 0.5, 1.5],
 };
 
 export const arcPodiums: readonly ArcPodium[] = ARC_DEFS.map((d) => ({
