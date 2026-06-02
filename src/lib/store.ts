@@ -5,6 +5,12 @@ export type PerfMode = 'low' | 'medium' | 'cinematic';
 export type CursorState = 'idle' | 'interactive' | 'pressed';
 export type ProxyId = Project['slug'] | 'crt' | 'contact';
 
+export type FocusTarget = {
+  position: readonly [number, number, number];
+  lookAt: readonly [number, number, number];
+  requestId: number;
+};
+
 type PortfolioStore = {
   section: number;
   audioEnabled: boolean;
@@ -50,6 +56,15 @@ type PortfolioStore = {
   activeSkillCategory: SkillCategoryId | null;
   openSkillCategory: (id: SkillCategoryId) => void;
   closeSkillCategory: () => void;
+
+  /** V8.0 — cursor-driven camera focus. CameraRig listens to focusTarget
+   *  changes and tweens OrbitControls toward the requested pose. */
+  focusTarget: FocusTarget | null;
+  focusOn: (position: readonly [number, number, number], lookAt: readonly [number, number, number]) => void;
+
+  /** Wall-clock of the last user interaction; auto-rotate idle gate. */
+  lastInteractAt: number;
+  markInteract: () => void;
 };
 
 export const usePortfolioStore = create<PortfolioStore>((set) => ({
@@ -91,4 +106,11 @@ export const usePortfolioStore = create<PortfolioStore>((set) => ({
   activeSkillCategory: null,
   openSkillCategory: (id) => set({ activeSkillCategory: id }),
   closeSkillCategory: () => set({ activeSkillCategory: null }),
+
+  focusTarget: null,
+  focusOn: (position, lookAt) =>
+    set({ focusTarget: { position, lookAt, requestId: performance.now() } }),
+
+  lastInteractAt: 0,
+  markInteract: () => set({ lastInteractAt: performance.now() }),
 }));

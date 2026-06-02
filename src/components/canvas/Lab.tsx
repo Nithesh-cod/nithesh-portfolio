@@ -1,19 +1,20 @@
 'use client';
 
-import { MeshTransmissionMaterial, RoundedBox, Text, useTexture } from '@react-three/drei';
-import { useFrame, type ThreeEvent } from '@react-three/fiber';
+import { Text } from '@react-three/drei';
+import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import gsap from 'gsap';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  AdditiveBlending,
   BackSide,
   Color,
-  SRGBColorSpace,
+  Vector3,
   type Group,
   type Mesh,
+  type MeshBasicMaterial,
   type MeshStandardMaterial,
-  type Texture,
 } from 'three';
-import { stations, RACK_POS, certificateGroups, type Certificate } from '@/lib/content';
+import { stations, certificateGroups, type Certificate } from '@/lib/content';
 import { InteractiveConsole } from '@/components/canvas/InteractiveConsole';
 import { FogParticles } from '@/components/canvas/FogParticles';
 import { palette } from '@/lib/palette';
@@ -21,6 +22,14 @@ import { usePortfolioStore } from '@/lib/store';
 import { disableRaycast, noRaycast } from '@/lib/three-utils';
 import { play } from '@/lib/audio';
 
+/**
+ * V8.0 — environment shell.
+ *   - 3-stop atmospheric sky sphere.
+ *   - Reflective polished-obsidian floor disc (no grid).
+ *   - Project console glass cards.
+ *   - V8 CertificateRack: solid body + 12 stripes + 6 distinct animations.
+ *   - FogParticles for atmospheric dust.
+ */
 export function Lab() {
   return (
     <group>
@@ -29,15 +38,13 @@ export function Lab() {
       {stations.map((s) => (
         <InteractiveConsole key={s.slug} slug={s.slug} label={s.label} position={s.position} />
       ))}
-      <CertificateCards />
+      <CertificateRack />
       <FogParticles />
     </group>
   );
 }
 
-/* ────────────────────────────  Sky  ──────────────────────────────
- * V7.0 — soft 3-stop atmospheric gradient. night-base top / night-mid
- * middle with a subtle warm wash / night-base bottom. */
+/* ────────────────────────────  Sky  ────────────────────────────── */
 
 const SKY_VERT = /* glsl */ `varying vec3 vDir;
 void main(){ vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
@@ -52,7 +59,6 @@ void main(){
   float t = clamp(d.y * 0.5 + 0.5, 0.0, 1.0);
   vec3 lower = mix(uBot, uMid, smoothstep(0.0, 0.5, t));
   vec3 col   = mix(lower, uTop, smoothstep(0.5, 1.0, t));
-  // Subtle warm wash near the horizon band.
   float band = exp(-pow((t - 0.4) * 6.0, 2.0));
   col = mix(col, uWarm, band * 0.10);
   gl_FragColor = vec4(col, 1.0);
@@ -82,15 +88,12 @@ function Sky() {
   );
 }
 
-/* ────────────────────────────  Floor  ────────────────────────────
- * V7.0 — reflective polished-obsidian disc. No grid, no dots. Just a
- * dark mirror that picks up the env IBL + spotlight reflections. Radial
- * alpha fade overlay so the floor blends into atmosphere at edges. */
+/* ────────────────────────────  Floor  ──────────────────────────── */
 
-const FLOOR_VERT_V7 = /* glsl */ `varying vec2 vUv;
+const FLOOR_VERT = /* glsl */ `varying vec2 vUv;
 void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
 
-const FLOOR_FRAG_V7 = /* glsl */ `precision highp float;
+const FLOOR_FRAG = /* glsl */ `precision highp float;
 varying vec2 vUv;
 uniform vec3 uBase;
 void main(){
@@ -107,7 +110,6 @@ function Floor() {
   );
   return (
     <>
-      {/* Reflective base disc. */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <circleGeometry args={[22, 64]} />
         <meshPhysicalMaterial
@@ -120,12 +122,11 @@ function Floor() {
           envMapIntensity={1.2}
         />
       </mesh>
-      {/* Radial alpha-fade overlay. */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]}>
         <circleGeometry args={[22, 64]} />
         <shaderMaterial
-          vertexShader={FLOOR_VERT_V7}
-          fragmentShader={FLOOR_FRAG_V7}
+          vertexShader={FLOOR_VERT}
+          fragmentShader={FLOOR_FRAG}
           uniforms={overlayUniforms}
           transparent
           depthWrite={false}
@@ -135,111 +136,273 @@ function Floor() {
   );
 }
 
-/* ─────────────  V7.0 Certificate Wall: 4×3 floating glass cards  ───────────── */
+/* ═══════════════════════  Certificate Rack (V8.0)  ═══════════════════════
+ * Solid rack body with 12 vertical stripes. Restored from V2.7. V8 adds:
+ *   - approach unfold tied to camera distance (replaces V2.7 section gate)
+ *   - GSAP drawer-click animation
+ *   - hover preview (this stripe forward, adjacent dim)
+ *   - idle pulse on a random stripe every ~12 s
+ *   - status indicator "STATUS: ACTIVE" floating above rack
+ * ─────────────────────────────────────────────────────────────────── */
 
-const TILE_W = 0.8;
-const TILE_H = 0.6;
-const TILE_D = 0.08;
-const FLAT_CERTS: readonly Certificate[] = certificateGroups
-  .flatMap((g) => g.certs)
-  .slice(0, 12);
+const RACK_POS_V8: readonly [number, number, number] = [5.5, 1.5, -1.5];
+const RACK_W = 2.5;
+const RACK_H = 3.0;
+const RACK_D = 0.4;
 
-// Two featured tiles get accent edge strokes; everything else gets neutral.
-const FEATURED_GOLD_INDEX = 4;   // Applied Generative AI
-const FEATURED_MINT_INDEX = 5;   // AI-First Software Engineering
+type StripeAccent = 'mint' | 'gold' | 'purple';
+type StripeSpec = { certId: string; accent: StripeAccent };
 
-function CertificateCards() {
-  // 4 columns × 3 rows centred on RACK_POS, but with NO rack body — the
-  // tiles just float in a grid formation in the air.
+const STRIPE_ORDER: readonly StripeSpec[] = [
+  // Top row.
+  { certId: 'html5',                          accent: 'mint' },
+  { certId: 'css3',                           accent: 'mint' },
+  { certId: 'javascript',                     accent: 'mint' },
+  { certId: 'front-end-web-dev',              accent: 'mint' },
+  { certId: 'applied-gen-ai',                 accent: 'gold' },
+  { certId: 'ai-first-software-engineering',  accent: 'purple' },
+  // Bottom row.
+  { certId: 'openai-gpt-models',              accent: 'mint' },
+  { certId: 'gpt-3-for-developers',           accent: 'mint' },
+  { certId: 'prompt-engineering',             accent: 'mint' },
+  { certId: 'basics-of-python',               accent: 'mint' },
+  { certId: 'python-fundamentals-part1',      accent: 'mint' },
+  { certId: 'python-fundamentals-part2',      accent: 'mint' },
+];
+
+const ACCENT_COLOR: Record<StripeAccent, string> = {
+  mint:   palette.signalMint,
+  gold:   palette.champagneGold,
+  purple: '#B89DFF',
+};
+
+const CERT_BY_ID: ReadonlyMap<string, Certificate> = new Map(
+  certificateGroups.flatMap((g) => g.certs.map((c) => [c.id, c] as const)),
+);
+
+const APPROACH_DISTANCE = 5.5;
+const APPROACH_FAR = 9.0;
+
+function CertificateRack() {
+  // Approach state — driven by camera distance to rack centre.
+  const openAmount = useRef({ value: 0 });
+  const lastOpen = useRef(0);
+  const idlePulseTarget = useRef<number>(-1); // index of currently pulsing stripe
+  const lastIdlePulseAt = useRef(performance.now() + Math.random() * 12000);
+
+  const bodyMatRef = useRef<MeshStandardMaterial | null>(null);
+  const labelGroupRef = useRef<Group | null>(null);
+  const statusDotRef = useRef<MeshStandardMaterial | null>(null);
+
+  const { camera } = useThree();
+  const tmpPos = useMemo(() => new Vector3(), []);
+
+  useFrame((_, dt) => {
+    // Approach amount: 0 if camera further than APPROACH_FAR, 1 if closer
+    // than APPROACH_DISTANCE, lerp in-between.
+    tmpPos.set(RACK_POS_V8[0], RACK_POS_V8[1], RACK_POS_V8[2]);
+    const dist = camera.position.distanceTo(tmpPos);
+    const target =
+      dist <= APPROACH_DISTANCE
+        ? 1
+        : dist >= APPROACH_FAR
+          ? 0
+          : 1 - (dist - APPROACH_DISTANCE) / (APPROACH_FAR - APPROACH_DISTANCE);
+    openAmount.current.value += (target - openAmount.current.value) * Math.min(1, dt * 4);
+    const open = openAmount.current.value;
+
+    // Activation sound — once on cross 0.3 → 0.5.
+    if (lastOpen.current <= 0.3 && open > 0.5) play('startup');
+    lastOpen.current = open;
+
+    if (bodyMatRef.current) {
+      bodyMatRef.current.emissiveIntensity = 0.05 + open * 0.30;
+    }
+    if (labelGroupRef.current) {
+      const s = 1 + open * 0.15;
+      labelGroupRef.current.scale.setScalar(s);
+    }
+    if (statusDotRef.current) {
+      // Mint dot pulses regardless.
+      const t = performance.now() / 1000;
+      statusDotRef.current.emissiveIntensity = 1.0 + 0.5 * Math.sin(t * 3.0);
+    }
+
+    // Idle pulse — pick a random stripe every ~12 s.
+    const now = performance.now();
+    if (now - lastIdlePulseAt.current > 12000 && idlePulseTarget.current < 0) {
+      idlePulseTarget.current = Math.floor(Math.random() * STRIPE_ORDER.length);
+      // Reset target after 1 s (each Stripe inspects idlePulseTarget.current).
+      setTimeout(() => {
+        idlePulseTarget.current = -1;
+        lastIdlePulseAt.current = performance.now() + Math.random() * 4000;
+      }, 1000);
+    }
+  });
+
   return (
-    <group position={RACK_POS}>
-      {/* "CERTIFICATES" floating title above grid. */}
-      <Text
-        raycast={noRaycast}
-        ref={disableRaycast}
-        position={[0, 1.55, 0]}
-        fontSize={0.18}
-        color={palette.champagneGold}
-        anchorX="center"
-        anchorY="middle"
-        letterSpacing={0.2}
-        outlineWidth={0.002}
-        outlineColor={palette.nightBase}
-        outlineOpacity={0.6}
-      >
-        CERTIFICATES
-      </Text>
-      <Text
-        raycast={noRaycast}
-        ref={disableRaycast}
-        position={[0, 1.35, 0]}
-        fontSize={0.06}
-        color={palette.pearlCool}
-        anchorX="center"
-        anchorY="middle"
-        letterSpacing={0.3}
-      >
-        12 / 12
-      </Text>
+    <group position={RACK_POS_V8}>
+      {/* Rack body. */}
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[RACK_W, RACK_H, RACK_D]} />
+        <meshStandardMaterial
+          ref={bodyMatRef}
+          color={palette.nightMid}
+          emissive={palette.signalMint}
+          emissiveIntensity={0.05}
+          roughness={0.5}
+          metalness={0.85}
+        />
+      </mesh>
 
-      {FLAT_CERTS.map((cert, i) => {
-        const row = Math.floor(i / 4); // 0..2
-        const col = i % 4;              // 0..3
-        const x = -1.35 + col * 0.9;
-        const y = 0.7 - row * 0.7;
-        const accent =
-          i === FEATURED_GOLD_INDEX ? palette.champagneGold :
-          i === FEATURED_MINT_INDEX ? palette.signalMint :
-          null;
-        return (
-          <FloatingCertCard
-            key={cert.id}
-            cert={cert}
-            position={[x, y, 0]}
-            accent={accent}
-            phase={i * 0.6}
+      {/* Gold frame border around the body face. */}
+      <BodyFrame />
+
+      {/* CERTIFICATES label. */}
+      <group ref={labelGroupRef} position={[0, RACK_H / 2 + 0.22, RACK_D / 2 + 0.001]}>
+        <Text
+          raycast={noRaycast}
+          ref={disableRaycast}
+          fontSize={0.20}
+          color={palette.champagneGold}
+          anchorX="center"
+          anchorY="bottom"
+          letterSpacing={0.22}
+          outlineWidth={0.002}
+          outlineColor={palette.nightBase}
+          outlineOpacity={0.6}
+        >
+          CERTIFICATES
+        </Text>
+        <Text
+          raycast={noRaycast}
+          ref={disableRaycast}
+          position={[0, -0.04, 0]}
+          fontSize={0.06}
+          color={palette.pearlCool}
+          anchorX="center"
+          anchorY="top"
+          letterSpacing={0.3}
+        >
+          12 / 12
+        </Text>
+      </group>
+
+      {/* STATUS: ACTIVE indicator. */}
+      <group position={[RACK_W / 2 - 0.45, RACK_H / 2 - 0.12, RACK_D / 2 + 0.002]}>
+        <mesh position={[-0.18, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.018, 0.018, 0.005, 14]} />
+          <meshStandardMaterial
+            ref={statusDotRef}
+            color={palette.signalMint}
+            emissive={palette.signalMint}
+            emissiveIntensity={1.2}
           />
-        );
-      })}
+        </mesh>
+        <Text
+          raycast={noRaycast}
+          ref={disableRaycast}
+          position={[0.02, 0, 0]}
+          fontSize={0.05}
+          color={palette.signalMint}
+          anchorX="left"
+          anchorY="middle"
+          letterSpacing={0.2}
+        >
+          STATUS: ACTIVE
+        </Text>
+      </group>
+
+      {/* 12 stripes. */}
+      {STRIPE_ORDER.map((spec, i) => (
+        <Stripe
+          key={spec.certId}
+          index={i}
+          spec={spec}
+          openAmountRef={openAmount}
+          idlePulseTargetRef={idlePulseTarget}
+        />
+      ))}
+
+      {/* Sweep scanline. */}
+      <RackScanline />
     </group>
   );
 }
 
-function FloatingCertCard({
-  cert,
-  position,
-  accent,
-  phase,
+function BodyFrame() {
+  const T = 0.018;
+  const Z = RACK_D / 2 + 0.001;
+  const props = {
+    color: palette.champagneGold,
+    emissive: palette.champagneGold,
+    emissiveIntensity: 0.6,
+    metalness: 0.95,
+    roughness: 0.22,
+  } as const;
+  return (
+    <>
+      <mesh position={[0, RACK_H / 2, Z]}>
+        <planeGeometry args={[RACK_W, T]} />
+        <meshStandardMaterial {...props} />
+      </mesh>
+      <mesh position={[0, -RACK_H / 2, Z]}>
+        <planeGeometry args={[RACK_W, T]} />
+        <meshStandardMaterial {...props} />
+      </mesh>
+      <mesh position={[-RACK_W / 2, 0, Z]}>
+        <planeGeometry args={[T, RACK_H]} />
+        <meshStandardMaterial {...props} />
+      </mesh>
+      <mesh position={[RACK_W / 2, 0, Z]}>
+        <planeGeometry args={[T, RACK_H]} />
+        <meshStandardMaterial {...props} />
+      </mesh>
+    </>
+  );
+}
+
+const STRIPE_W = 0.28;
+const STRIPE_H = 1.05;
+const STRIPE_D = 0.04;
+
+function Stripe({
+  index,
+  spec,
+  openAmountRef,
+  idlePulseTargetRef,
 }: {
-  cert: Certificate;
-  position: readonly [number, number, number];
-  accent: string | null;
-  phase: number;
+  index: number;
+  spec: StripeSpec;
+  openAmountRef: React.MutableRefObject<{ value: number }>;
+  idlePulseTargetRef: React.MutableRefObject<number>;
 }) {
-  const groupRef = useRef<Group | null>(null);
-  const innerRef = useRef<Mesh>(null);
+  const cert = CERT_BY_ID.get(spec.certId);
+  const meshRef = useRef<Mesh>(null);
   const matRef = useRef<MeshStandardMaterial | null>(null);
   const [hovered, setHovered] = useState(false);
-  const openProgress = useRef({ value: 0 });
-  const animating = useRef(false);
-  const t = useRef(phase);
-
   const openCertificate = usePortfolioStore((s) => s.openCertificate);
   const lightboxCertId = usePortfolioStore((s) => s.lightboxCertId);
   const setCursor = usePortfolioStore((s) => s.setCursorState);
-  const lowPerf = usePortfolioStore((s) => s.perfMode === 'low');
 
-  const tex = useTexture(cert.image, (loaded) => {
-    if (!Array.isArray(loaded)) {
-      loaded.colorSpace = SRGBColorSpace;
-      loaded.anisotropy = 4;
-    }
-  }) as Texture;
+  // GSAP-driven per-stripe drawer animation.
+  const clickProgress = useRef({ value: 0 });
+  const idleProgress = useRef({ value: 0 });
+  const animating = useRef(false);
+  const timeRef = useRef(Math.random() * 6.0);
 
+  // Position formula: 6-wide rows.
+  const row = Math.floor(index / 6);
+  const col = index % 6;
+  const x = -RACK_W / 2 + 0.27 + col * 0.40;
+  const y = row === 0 ? 0.45 : -0.55;
+  const baseZ = RACK_D / 2 + 0.012;
+
+  // Reverse tween when lightbox closes.
   useEffect(() => {
-    if (lightboxCertId !== cert.id && openProgress.current.value > 0.001) {
-      gsap.killTweensOf(openProgress.current);
-      gsap.to(openProgress.current, {
+    if (lightboxCertId !== spec.certId && clickProgress.current.value > 0.001) {
+      gsap.killTweensOf(clickProgress.current);
+      gsap.to(clickProgress.current, {
         value: 0,
         duration: 0.4,
         ease: 'power2.in',
@@ -248,21 +411,63 @@ function FloatingCertCard({
         },
       });
     }
-  }, [lightboxCertId, cert.id]);
+  }, [lightboxCertId, spec.certId]);
+
+  // Trigger idle pulse if this stripe is selected.
+  useEffect(() => {
+    const checkIdle = () => {
+      if (idlePulseTargetRef.current === index && idleProgress.current.value < 0.01) {
+        gsap.to(idleProgress.current, {
+          value: 1,
+          duration: 0.2,
+          ease: 'power2.out',
+          onComplete: () => {
+            gsap.to(idleProgress.current, { value: 0, duration: 0.8, ease: 'power2.in' });
+          },
+        });
+      }
+    };
+    const interval = setInterval(checkIdle, 80);
+    return () => clearInterval(interval);
+  }, [idlePulseTargetRef, index]);
 
   useFrame((_, dt) => {
-    t.current += dt;
-    const op = openProgress.current.value;
-    if (groupRef.current) {
-      const bob = Math.sin((t.current / 8) * Math.PI * 2) * 0.03;
-      const lift = hovered ? 0.1 : 0;
-      groupRef.current.position.z = position[2] + lift + op * 0.5;
-      groupRef.current.position.y = position[1] + bob;
+    timeRef.current += dt;
+    const open = openAmountRef.current.value;
+    const click = clickProgress.current.value;
+    const idle = idleProgress.current.value;
+
+    if (meshRef.current) {
+      // Approach unfold: stripes slide forward 0.3.
+      const approachZ = baseZ + open * 0.3;
+      // Approach fan: top row tilts left, bottom row tilts right.
+      const fanRot = (row === 0 ? -1 : 1) * open * 0.06;
+      // Hover preview: +0.08 forward.
+      const hoverZ = hovered ? 0.08 : 0;
+      // Click slide: +0.6 forward, 5° tilt.
+      const clickZ = click * 0.6;
+      const clickRot = click * 0.087; // ~5°
+      // Idle pulse: +0.15.
+      const idleZ = idle * 0.15;
+
+      const targetZ = approachZ + hoverZ + clickZ + idleZ;
+      meshRef.current.position.z += (targetZ - meshRef.current.position.z) * Math.min(1, dt * 12);
+      meshRef.current.rotation.x = -clickRot; // tilt top toward camera
+      meshRef.current.rotation.z = fanRot;
     }
     if (matRef.current) {
-      matRef.current.emissiveIntensity = hovered ? 0.7 : 0.3;
+      // Breathing — 6 s, 10 % amplitude, phase-offset by index.
+      const phase = (timeRef.current / 6) * Math.PI * 2 + index * 0.55;
+      const breathe = 1 + Math.sin(phase) * 0.1;
+      const base = hovered ? 1.4 : 0.95;
+      const boost = click * 1.0 + idle * 0.6;
+      matRef.current.emissiveIntensity = base * breathe + boost;
     }
   });
+
+  if (!cert) return null;
+
+  const color = ACCENT_COLOR[spec.accent];
 
   const handleOver = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
@@ -280,122 +485,66 @@ function FloatingCertCard({
     if (animating.current) return;
     animating.current = true;
     play('click_primary');
-    gsap.killTweensOf(openProgress.current);
-    gsap.to(openProgress.current, {
+    gsap.killTweensOf(clickProgress.current);
+    gsap.to(clickProgress.current, {
       value: 1,
       duration: 0.6,
       ease: 'power2.out',
       onComplete: () => {
-        openCertificate(cert.id);
+        openCertificate(spec.certId);
         animating.current = false;
       },
     });
   };
 
   return (
-    <group ref={groupRef} position={[position[0], position[1], position[2]]}>
-      {/* Glass slab. */}
-      <RoundedBox
-        args={[TILE_W, TILE_H, TILE_D]}
-        radius={0.03}
-        smoothness={3}
-        onPointerOver={handleOver}
-        onPointerOut={handleOut}
-        onClick={handleClick}
-      >
-        {lowPerf ? (
-          <meshStandardMaterial
-            color={palette.glassIce}
-            roughness={0.25}
-            metalness={0.1}
-            transparent
-            opacity={0.4}
-          />
-        ) : (
-          <MeshTransmissionMaterial
-            transmission={0.78}
-            thickness={0.4}
-            roughness={0.18}
-            chromaticAberration={0.02}
-            ior={1.5}
-            distortion={0.04}
-            color={palette.glassIce}
-            samples={3}
-            resolution={256}
-          />
-        )}
-      </RoundedBox>
-
-      {/* Inner certificate PNG plane — sits behind the glass front. */}
-      <mesh ref={innerRef} position={[0, 0, TILE_D / 2 - 0.005]}>
-        <planeGeometry args={[TILE_W * 0.92, TILE_H * 0.92]} />
-        <meshStandardMaterial
-          ref={matRef}
-          map={tex}
-          color={palette.ivoryWarm}
-          emissive={accent ?? palette.champagneDeep}
-          emissiveIntensity={0.3}
-          roughness={0.4}
-          metalness={0.1}
-        />
-      </mesh>
-
-      {/* Corner brackets — gold L-shapes; mint if signal accent, otherwise gold. */}
-      <CertBrackets
-        w={TILE_W}
-        h={TILE_H}
-        z={TILE_D / 2 + 0.002}
-        color={accent ?? palette.champagneGold}
-        opacity={accent ? 1 : 0.7}
+    <mesh
+      ref={meshRef}
+      position={[x, y, baseZ]}
+      onPointerOver={handleOver}
+      onPointerOut={handleOut}
+      onClick={handleClick}
+    >
+      <boxGeometry args={[STRIPE_W, STRIPE_H, STRIPE_D]} />
+      <meshStandardMaterial
+        ref={matRef}
+        color={palette.nightBase}
+        emissive={color}
+        emissiveIntensity={0.95}
       />
-    </group>
+    </mesh>
   );
 }
 
-function CertBrackets({
-  w,
-  h,
-  z,
-  color,
-  opacity,
-}: {
-  w: number;
-  h: number;
-  z: number;
-  color: string;
-  opacity: number;
-}) {
-  const L = 0.08;
-  const T = 0.01;
-  const mat = (
-    <meshStandardMaterial
-      color={color}
-      emissive={color}
-      emissiveIntensity={opacity}
-      metalness={0.95}
-      roughness={0.22}
-    />
-  );
-  const corners: readonly [number, number][] = [
-    [-1, 1],
-    [1, 1],
-    [-1, -1],
-    [1, -1],
-  ];
+function RackScanline() {
+  const matRef = useRef<MeshBasicMaterial | null>(null);
+  const meshRef = useRef<Mesh>(null);
+  const t = useRef(0);
+  useFrame((_, dt) => {
+    t.current += dt;
+    const period = 4;
+    const phase = (t.current % period) / period;
+    if (meshRef.current) {
+      const top = RACK_H / 2 - 0.05;
+      const bot = -RACK_H / 2 + 0.05;
+      meshRef.current.position.y = top + (bot - top) * phase;
+    }
+    if (matRef.current) {
+      const e = Math.sin(phase * Math.PI);
+      matRef.current.opacity = 0.05 + 0.35 * e;
+    }
+  });
   return (
-    <group position={[0, 0, z]}>
-      {corners.map(([sx, sy]) => (
-        <group key={`${sx}_${sy}`}>
-          <mesh position={[sx * (w / 2 - L / 2), sy * (h / 2 - T / 2), 0]}>
-            <planeGeometry args={[L, T]} />
-            {mat}
-          </mesh>
-          <mesh position={[sx * (w / 2 - T / 2), sy * (h / 2 - L / 2), 0]}>
-            <planeGeometry args={[T, L]} />
-            {mat}
-          </mesh>
-        </group>
-      ))}
-    </group>
+    <mesh ref={meshRef} position={[0, RACK_H / 2 - 0.05, RACK_D / 2 + 0.02]}>
+      <planeGeometry args={[RACK_W * 0.96, 0.028]} />
+      <meshBasicMaterial
+        ref={matRef}
+        color={palette.signalMint}
+        transparent
+        opacity={0.25}
+        blending={AdditiveBlending}
+        depthWrite={false}
+      />
+    </mesh>
   );
 }

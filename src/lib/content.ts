@@ -243,18 +243,26 @@ const ARC_DEFS: readonly {
   { id: 'contact',   kind: 'contact',  title: 'CONTACT',     items: ['LinkedIn  ' + 'nithesh-r-ba349032b', 'Email     ' + 'nithesh.r.ciet@gmail.com', 'Open Résumé →'] },
 ];
 
-export const arcPodiums: readonly ArcPodium[] = ARC_DEFS.map((d, i) => {
-  // t in [-0.5, +0.5]; subtract t*span so i=0 (CRT) ends up on the camera-left side
-  // (angle 260° → world -X).
-  const t = i / (ARC_DEFS.length - 1) - 0.5;
-  const angleDeg = ARC_BASE_DEG - t * ARC_SPAN_DEG;
-  const angleRad = (angleDeg * Math.PI) / 180;
-  const x = ARC_CENTER[0] + ARC_RADIUS * Math.sin(angleRad);
-  const z = ARC_CENTER[2] + ARC_RADIUS * Math.cos(angleRad);
-  // Yaw rotates the podium's local +Z to point at ARC_CENTER (toward camera-front of arc).
-  const yaw = angleRad + Math.PI;
-  return { ...d, position: [x, 0, z] as const, yaw };
-});
+// V8.0 — explicit grid positions flanking the hologram. NO more arc behind
+// the hologram. 3 podiums left, 2 right, CRT pylon far left, Contact globe
+// far right. Each faces the camera (yaw = 0).
+const V8_PODIUM_POSITIONS: Readonly<Record<ArcPodium['id'], readonly [number, number, number]>> = {
+  crt:       [-5,   0.6, 1.5],   // far-left pylon (terminal)
+  languages: [-3.5, 1.8, 0.5],   // top-left
+  frontend:  [-3.8, 1.2, 1.5],   // middle-left
+  ai:        [-3.5, 0.6, 2.0],   // bottom-left, forward
+  platform:  [3.5,  1.5, 0.5],   // top-right
+  tools:     [3.8,  0.8, 1.5],   // middle-right
+  contact:   [5,    0.6, 1.5],   // far-right (contact globe)
+};
+
+export const arcPodiums: readonly ArcPodium[] = ARC_DEFS.map((d) => ({
+  ...d,
+  position: V8_PODIUM_POSITIONS[d.id],
+  // Yaw 0 = face +Z (camera at entrance is in +Z direction). All podiums
+  // face camera so every screen is visible from the default angle.
+  yaw: 0,
+}));
 
 /** One-line context per skill item — shown in CategoryDetailModal. */
 export const skillDescriptions: Readonly<Record<string, string>> = {

@@ -45,6 +45,11 @@ const config: Config = {
         'text-primary': palette.ivory,
         'text-muted': palette.bone,
         'terminal-grn': palette.emeraldHot,
+
+        // V8.0 NavPill utilities.
+        'night-base': palette.nightBase,
+        'signal-mint': palette.signalMint,
+        'champagne-gold': palette.champagneGold,
       },
       fontFamily: {
         display: ['var(--font-display)', 'sans-serif'],

@@ -9,7 +9,8 @@ import { Terminal } from '@/components/ui/Terminal';
 import { CertificateLightbox } from '@/components/ui/CertificateLightbox';
 import { ResumeViewer } from '@/components/ui/ResumeViewer';
 import { CategoryDetailModal } from '@/components/ui/CategoryDetailModal';
-import { content, waypoints } from '@/lib/content';
+import { NavPill } from '@/components/ui/NavPill';
+import { content } from '@/lib/content';
 
 const Scene = dynamic(() => import('@/components/canvas/Scene').then((m) => m.Scene), {
   ssr: false,
@@ -25,6 +26,7 @@ export default function Page() {
       </div>
 
       <Hud />
+      <NavPill />
       <Cursor />
       <ProjectModal />
       <CertificateLightbox />
@@ -34,22 +36,8 @@ export default function Page() {
       <Terminal />
       <Intro />
 
-      {/* Scroll spine — one screen per camera waypoint; Lenis + GSAP map scrollY → curve t.
-          POINTER-EVENTS:NONE is the root-cause fix for 8 rounds of "clicks don't work":
-          these full-viewport <section> spacers sit at z-10 over the canvas (z-0) and
-          were absorbing every click before the canvas ever saw it. Scroll detection
-          uses window scroll + IntersectionObserver, not pointer events on these
-          elements — disabling pointer-events here has zero functional cost. */}
-      <div className="pointer-events-none relative z-10">
-        {waypoints.map((w, i) => (
-          <section
-            key={w.id}
-            data-waypoint={i}
-            className="pointer-events-none h-screen w-full"
-            aria-label={w.id}
-          />
-        ))}
-      </div>
+      {/* V8.0 — scroll spine REMOVED. OrbitControls owns the camera now;
+          NavPill + clicks on 3D objects drive focus via the store. */}
 
       {/* DOM résumé fallback — sr-only so the cinematic frame is uninterrupted, but
           full content stays in the tree for SR, SEO, no-JS, and reduced-motion. */}

@@ -23,7 +23,6 @@
     "framer-motion": "^11.11.0",
     "gsap": "^3.12.5",
     "howler": "^2.2.4",
-    "lenis": "^1.1.13",
     "next": "14.2.15",
     "postprocessing": "^6.36.4",
     "react": "^18.3.1",

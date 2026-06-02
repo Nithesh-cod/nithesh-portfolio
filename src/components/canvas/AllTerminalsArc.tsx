@@ -3,10 +3,9 @@
 import { MeshTransmissionMaterial, RoundedBox, Text } from '@react-three/drei';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import { useRef, useState } from 'react';
-import { type Group } from 'three';
+import { type Group, type MeshStandardMaterial } from 'three';
 import {
   arcPodiums,
-  waypoints,
   type ArcPodium,
   type SkillCategoryId,
 } from '@/lib/content';
@@ -15,26 +14,20 @@ import { play } from '@/lib/audio';
 import { disableRaycast, noRaycast } from '@/lib/three-utils';
 import { usePortfolioStore } from '@/lib/store';
 
-const ORBIT_IDS = ['portrait', 'orbit-left', 'orbit-back', 'orbit-right'] as const;
-const ORBIT_INDICES = ORBIT_IDS.map((id) => waypoints.findIndex((w) => w.id === id)).filter((i) => i >= 0);
+// V8.0 — skill podiums are now always-visible glass cards flanking the
+// hologram (positions from content.V8_PODIUM_POSITIONS). No more section
+// gating — they mount whenever the scene is rendered. The CRT + Contact
+// podiums get their own hex pylons (rendered as cards too, but with
+// distinct accent colours).
 
-function isArcZone(section: number): boolean {
-  return ORBIT_INDICES.some((i) => Math.abs(section - i) <= 1);
-}
-
-// V7.0 — floating glass card. No plinth, no monitor body. Each podium is
-// a single thin slab carrying the category name + items list, floating at
-// arc-eye-height.
 const CARD_W = 1.05;
-const CARD_H = 0.8;
-const CARD_D = 0.05;
+const CARD_H = 0.78;
+const CARD_D = 0.06;
 const FLOAT_AMP = 0.025;
 const FLOAT_PERIOD = 7;
-const RIDE_HEIGHT = 1.15;
+const BORDER_T = 0.012;
 
 export function AllTerminalsArc() {
-  const section = usePortfolioStore((s) => s.section);
-  if (!isArcZone(section)) return null;
   return (
     <>
       {arcPodiums.map((p, i) => (
@@ -47,6 +40,8 @@ export function AllTerminalsArc() {
 function TerminalCard({ podium, phase }: { podium: ArcPodium; phase: number }) {
   const [hovered, setHovered] = useState(false);
   const groupRef = useRef<Group | null>(null);
+  const borderMatRef = useRef<MeshStandardMaterial | null>(null);
+  const accentDotRef = useRef<MeshStandardMaterial | null>(null);
   const t = useRef(phase);
   const lastHoverAt = useRef(0);
 
@@ -54,14 +49,29 @@ function TerminalCard({ podium, phase }: { podium: ArcPodium; phase: number }) {
   const openSkillCategory = usePortfolioStore((s) => s.openSkillCategory);
   const openTerminal = usePortfolioStore((s) => s.openTerminal);
   const openResume = usePortfolioStore((s) => s.openResume);
+  const focusOn = usePortfolioStore((s) => s.focusOn);
   const lowPerf = usePortfolioStore((s) => s.perfMode === 'low');
+
+  // V8.0 — accent colour by kind. Category cards = mint. CRT/Contact get
+  // distinct colours.
+  const accentColor =
+    podium.kind === 'crt' ? palette.champagneGold :
+    podium.kind === 'contact' ? '#B89DFF' :  // contact pop (lilac)
+    palette.signalMint;
 
   useFrame((_, dt) => {
     t.current += dt;
     if (!groupRef.current) return;
     const bob = Math.sin((t.current / FLOAT_PERIOD) * Math.PI * 2) * FLOAT_AMP;
     const lift = hovered ? 0.06 : 0;
-    groupRef.current.position.y = RIDE_HEIGHT + bob + lift;
+    groupRef.current.position.y = podium.position[1] + bob + lift;
+    if (borderMatRef.current) {
+      borderMatRef.current.emissiveIntensity = hovered ? 1.8 : 1.2;
+    }
+    if (accentDotRef.current) {
+      const blink = 0.6 + 0.4 * Math.sin(t.current * 1.8);
+      accentDotRef.current.emissiveIntensity = blink * 1.4;
+    }
   });
 
   const handleOver = (e: ThreeEvent<PointerEvent>) => {
@@ -81,23 +91,18 @@ function TerminalCard({ podium, phase }: { podium: ArcPodium; phase: number }) {
   const handleClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
     play('click_secondary');
+    // Focus camera on this card.
+    const [px, py, pz] = podium.position;
+    focusOn([px * 0.5, py + 0.3, pz + 2.0], [px, py, pz]);
     if (podium.kind === 'crt') openTerminal();
     else if (podium.kind === 'contact') openResume();
     else openSkillCategory(podium.id as SkillCategoryId);
   };
 
-  // Header colour: signal-mint for live data, champagne-gold for CRT/Contact.
-  const headerColor = podium.kind === 'category' ? palette.signalMint : palette.champagneGold;
-  // Body text: ivory-warm.
-  const itemColor = palette.ivoryWarm;
-
   return (
-    <group
-      position={[podium.position[0], RIDE_HEIGHT, podium.position[2]]}
-      rotation={[0, podium.yaw, 0]}
-    >
-      <group ref={groupRef}>
-        {/* Glass slab. */}
+    <group position={podium.position}>
+      <group ref={groupRef} position={[0, 0, 0]}>
+        {/* Substantial glass slab. */}
         <RoundedBox
           args={[CARD_W, CARD_H, CARD_D]}
           radius={0.04}
@@ -108,34 +113,48 @@ function TerminalCard({ podium, phase }: { podium: ArcPodium; phase: number }) {
         >
           {lowPerf ? (
             <meshStandardMaterial
-              color={palette.glassIce}
+              color="#A8B5D8"
               roughness={0.25}
-              metalness={0.1}
+              metalness={0.15}
               transparent
-              opacity={0.35}
+              opacity={0.55}
             />
           ) : (
             <MeshTransmissionMaterial
-              transmission={0.88}
-              thickness={0.45}
-              roughness={0.14}
+              transmission={0.65}
+              thickness={0.8}
+              roughness={0.18}
               chromaticAberration={0.02}
               ior={1.5}
-              distortion={0.05}
-              color={palette.glassIce}
+              distortion={0.04}
+              color="#A8B5D8"
               samples={3}
               resolution={256}
             />
           )}
         </RoundedBox>
 
-        {/* Header text. */}
+        {/* Accent dot top-left. */}
+        <mesh
+          position={[-CARD_W / 2 + 0.06, CARD_H / 2 - 0.06, CARD_D / 2 + 0.0015]}
+          rotation={[Math.PI / 2, 0, 0]}
+        >
+          <cylinderGeometry args={[0.015, 0.015, 0.005, 16]} />
+          <meshStandardMaterial
+            ref={accentDotRef}
+            color={accentColor}
+            emissive={accentColor}
+            emissiveIntensity={1.2}
+          />
+        </mesh>
+
+        {/* Header. */}
         <Text
           raycast={noRaycast}
           ref={disableRaycast}
           position={[0, CARD_H / 2 - 0.12, CARD_D / 2 + 0.002]}
-          fontSize={0.10}
-          color={headerColor}
+          fontSize={0.092}
+          color={accentColor}
           anchorX="center"
           anchorY="top"
           letterSpacing={0.08}
@@ -146,26 +165,38 @@ function TerminalCard({ podium, phase }: { podium: ArcPodium; phase: number }) {
           {podium.title}
         </Text>
 
-        {/* Items list. */}
+        {/* Underline. */}
+        <mesh position={[0, CARD_H / 2 - 0.21, CARD_D / 2 + 0.0015]}>
+          <planeGeometry args={[CARD_W * 0.55, 0.005]} />
+          <meshStandardMaterial
+            color={palette.champagneGold}
+            emissive={palette.champagneGold}
+            emissiveIntensity={0.7}
+            metalness={0.95}
+            roughness={0.22}
+          />
+        </mesh>
+
+        {/* Items. */}
         {podium.items.map((item, i) => (
           <Text
             key={`${podium.id}-${i}`}
             raycast={noRaycast}
             ref={disableRaycast}
-            position={[0, CARD_H / 2 - 0.27 - i * 0.085, CARD_D / 2 + 0.002]}
-            fontSize={0.05}
-            color={itemColor}
+            position={[0, CARD_H / 2 - 0.27 - i * 0.078, CARD_D / 2 + 0.002]}
+            fontSize={0.048}
+            color={palette.ivoryWarm}
             anchorX="center"
             anchorY="top"
-            letterSpacing={0.08}
+            letterSpacing={0.06}
             maxWidth={CARD_W - 0.18}
           >
             {item}
           </Text>
         ))}
 
-        {/* Champagne-gold edge stroke. */}
-        <EdgeStroke w={CARD_W} h={CARD_H} z={CARD_D / 2 + 0.001} brightness={hovered ? 0.95 : 0.55} />
+        {/* Border. */}
+        <EdgeStroke w={CARD_W} h={CARD_H} z={CARD_D / 2 + 0.001} borderMatRef={borderMatRef} />
       </group>
     </group>
   );
@@ -175,18 +206,18 @@ function EdgeStroke({
   w,
   h,
   z,
-  brightness,
+  borderMatRef,
 }: {
   w: number;
   h: number;
   z: number;
-  brightness: number;
+  borderMatRef: React.MutableRefObject<MeshStandardMaterial | null>;
 }) {
-  const T = 0.008;
+  const T = BORDER_T;
   const matProps = {
     color: palette.champagneGold,
     emissive: palette.champagneGold,
-    emissiveIntensity: brightness,
+    emissiveIntensity: 1.2,
     metalness: 0.95,
     roughness: 0.22,
   } as const;
@@ -194,7 +225,7 @@ function EdgeStroke({
     <>
       <mesh position={[0, h / 2, z]}>
         <planeGeometry args={[w, T]} />
-        <meshStandardMaterial {...matProps} />
+        <meshStandardMaterial ref={borderMatRef} {...matProps} />
       </mesh>
       <mesh position={[0, -h / 2, z]}>
         <planeGeometry args={[w, T]} />

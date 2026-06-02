@@ -16,7 +16,7 @@ import { Hologram } from '@/components/canvas/Hologram';
 import { AllTerminalsArc } from '@/components/canvas/AllTerminalsArc';
 import { PostFX } from '@/components/canvas/PostFX';
 import { AccessibilityProxies } from '@/components/canvas/AccessibilityProxies';
-import { ScrollCamera } from '@/components/motion/ScrollCamera';
+import { CameraRig } from '@/components/canvas/CameraRig';
 import { usePortfolioStore, type PerfMode } from '@/lib/store';
 import { palette } from '@/lib/palette';
 
@@ -74,7 +74,7 @@ export function Scene() {
         position={[0, 1.5, -2]}
       />
 
-      <ScrollCamera />
+      <CameraRig />
       <PostFX />
 
       <AdaptiveDpr pixelated />
