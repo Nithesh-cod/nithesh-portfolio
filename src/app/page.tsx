@@ -1,5 +1,4 @@
 import dynamic from 'next/dynamic';
-import { Hud } from '@/components/ui/Hud';
 import { Loader } from '@/components/ui/Loader';
 import { Cursor } from '@/components/ui/Cursor';
 import { ProjectModal } from '@/components/ui/ProjectModal';
@@ -9,7 +8,7 @@ import { Terminal } from '@/components/ui/Terminal';
 import { CertificateLightbox } from '@/components/ui/CertificateLightbox';
 import { ResumeViewer } from '@/components/ui/ResumeViewer';
 import { CategoryDetailModal } from '@/components/ui/CategoryDetailModal';
-import { NavPill } from '@/components/ui/NavPill';
+import { TopBar, LeftRail, RightRail, CapsuleOverlays, ServicesStrip } from '@/components/hud/Dashboard';
 import { content } from '@/lib/content';
 
 const Scene = dynamic(() => import('@/components/canvas/Scene').then((m) => m.Scene), {
@@ -19,14 +18,20 @@ const Scene = dynamic(() => import('@/components/canvas/Scene').then((m) => m.Sc
 
 export default function Page() {
   return (
-    <main className="relative min-h-screen w-full bg-bg-void text-text-primary">
-      {/* Canvas root — cursor:none scoped here so the system cursor stays for UI/links. */}
+    <main className="relative min-h-screen w-full overflow-hidden bg-bg-base text-text-prim">
+      {/* V9.0 — Canvas as the centerpiece. HUD overlay is DOM positioned
+          OVER the canvas at higher z-index. canvas-root keeps the cursor
+          style scoped. */}
       <div className="fixed inset-0 z-0 canvas-root">
         <Scene />
       </div>
 
-      <Hud />
-      <NavPill />
+      <TopBar />
+      <LeftRail />
+      <CapsuleOverlays />
+      <RightRail />
+      <ServicesStrip />
+
       <Cursor />
       <ProjectModal />
       <CertificateLightbox />
@@ -36,11 +41,6 @@ export default function Page() {
       <Terminal />
       <Intro />
 
-      {/* V8.0 — scroll spine REMOVED. OrbitControls owns the camera now;
-          NavPill + clicks on 3D objects drive focus via the store. */}
-
-      {/* DOM résumé fallback — sr-only so the cinematic frame is uninterrupted, but
-          full content stays in the tree for SR, SEO, no-JS, and reduced-motion. */}
       <DomFallback />
     </main>
   );

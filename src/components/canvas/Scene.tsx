@@ -10,27 +10,44 @@ import {
   Sparkles,
   SpotLight,
 } from '@react-three/drei';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Lab } from '@/components/canvas/Lab';
-import { Hologram } from '@/components/canvas/Hologram';
-import { AllTerminalsArc } from '@/components/canvas/AllTerminalsArc';
-import { PostFX } from '@/components/canvas/PostFX';
-import { AccessibilityProxies } from '@/components/canvas/AccessibilityProxies';
+import { HexFloor } from '@/components/canvas/HexFloor';
+import { HoloCapsule } from '@/components/canvas/HoloCapsule';
+import { ProjectPedestal } from '@/components/canvas/ProjectPedestal';
+import { SpotlightBeams } from '@/components/canvas/SpotlightBeams';
+import { FloatingDataGlyphs } from '@/components/canvas/FloatingDataGlyphs';
 import { CameraRig } from '@/components/canvas/CameraRig';
+import { PostFX } from '@/components/canvas/PostFX';
 import { usePortfolioStore, type PerfMode } from '@/lib/store';
+import { useIsMobile } from '@/lib/use-is-mobile';
 import { palette } from '@/lib/palette';
 
 const FPS_DOWNGRADE_HOLD_MS = 3000;
 
+const PROJECTS = [
+  { slug: 'cropai',        label: 'CropAI',        subtitle: 'AI CROP ADVISOR SYSTEM',                  position: [-3.5, 0, 2.5], iconKind: 'leaf' },
+  { slug: 'smart-canteen', label: 'Smart Canteen', subtitle: 'AI · AUTOMATION · IoT CAPSTONE PROJECT', position: [0,    0, 4.0], iconKind: 'box' },
+  { slug: 'testai',        label: 'TestAI',        subtitle: 'AI EXAM PROCTORING SYSTEM',               position: [3.5,  0, 2.5], iconKind: 'globe' },
+] as const;
+
 /**
- * V7.0 — refined elegant scene root. V2.7 camera + click architecture
- * preserved. Heavy ambient layer removed. Lighting reduced to warm key +
- * cool fill + ambient. One sparkles layer. Apartment IBL for glass
- * refraction.
+ * V9.0 — minimal centerpiece scene. HexFloor + central HoloCapsule + 3
+ * ProjectPedestals + spotlight beams + atmospheric Sparkles + floating
+ * data glyphs. Fixed CameraRig with slow auto-rotate. The HUD overlay
+ * (DOM) is mounted in page.tsx and carries the rest of the content.
  */
 export function Scene() {
   const setPerfMode = usePortfolioStore((s) => s.setPerfMode);
+  const isMobile = useIsMobile();
   const [dpr, setDpr] = useState<[number, number]>([1, 2]);
+
+  useEffect(() => {
+    if (isMobile) {
+      setPerfMode('low');
+      setDpr([1, 1.5]);
+    }
+  }, [isMobile, setPerfMode]);
 
   return (
     <Canvas
@@ -42,8 +59,8 @@ export function Scene() {
         depth: true,
         alpha: false,
       }}
-      camera={{ position: [0, 2.5, 9.0], fov: 38, near: 0.1, far: 120 }}
-      onCreated={({ gl }) => gl.setClearColor(palette.nightBase, 1)}
+      camera={{ position: [0, 2.5, 9.5], fov: 38, near: 0.1, far: 120 }}
+      onCreated={({ gl }) => gl.setClearColor(palette.bgBase, 1)}
     >
       <PerformanceTier
         onDowngrade={(m) => {
@@ -52,26 +69,36 @@ export function Scene() {
         }}
       />
 
-      <fog attach="fog" args={[palette.nightBase, 6, 26]} />
-
-      <Environment preset="apartment" background={false} environmentIntensity={0.55} />
+      <fog attach="fog" args={[palette.bgBase, 8, 30]} />
+      <Environment preset="night" background={false} environmentIntensity={0.4} />
 
       <Lights />
-
       <Lab />
-      <Hologram />
-      <AllTerminalsArc />
-      <AccessibilityProxies />
+      <HexFloor />
+      <HoloCapsule />
 
-      {/* V7.0 — single Sparkles layer. Subtle ivory-warm dust motes. */}
+      {PROJECTS.map((p) => (
+        <ProjectPedestal
+          key={p.slug}
+          slug={p.slug}
+          label={p.label}
+          subtitle={p.subtitle}
+          position={p.position}
+          iconKind={p.iconKind}
+        />
+      ))}
+
+      <SpotlightBeams />
+      <FloatingDataGlyphs />
+
       <Sparkles
-        count={80}
-        scale={[10, 6, 10]}
+        count={100}
+        scale={[12, 8, 12]}
         size={1.2}
         speed={0.15}
-        opacity={0.35}
-        color={palette.ivoryWarm}
-        position={[0, 1.5, -2]}
+        opacity={0.4}
+        color="#88FFCC"
+        position={[0, 2, 0]}
       />
 
       <CameraRig />
@@ -84,34 +111,48 @@ export function Scene() {
   );
 }
 
-/**
- * V7.0 refined 2-spot + ambient kit. NO mint rim, NO point lights.
- *   ambient    → warm-tinted ivory fill at 0.08.
- *   key        → warm tungsten SpotLight from front-right above.
- *   fill       → cool moonlight SpotLight from camera-left.
- */
 function Lights() {
   return (
     <>
-      <ambientLight intensity={0.08} color={palette.ivoryWarm} />
+      <ambientLight intensity={0.10} color="#0A1014" />
       <SpotLight
-        position={[3, 6, 3]}
-        target-position={[0, 1, 0]}
-        intensity={1.8}
-        angle={0.4}
-        penumbra={0.8}
-        color={palette.lightWarm}
+        position={[-2.5, 7, 2]}
+        target-position={[0, 0, 0]}
+        intensity={2.5}
+        angle={0.35}
+        penumbra={0.7}
+        color="#CCFFDD"
         distance={20}
         decay={1.5}
         castShadow
       />
       <SpotLight
-        position={[-3, 5, 0]}
-        target-position={[0, 1, 0]}
-        intensity={0.6}
-        angle={0.5}
-        penumbra={0.9}
-        color={palette.lightCool}
+        position={[2.5, 7, 2]}
+        target-position={[0, 0, 0]}
+        intensity={2.5}
+        angle={0.35}
+        penumbra={0.7}
+        color="#CCFFDD"
+        distance={20}
+        decay={1.5}
+      />
+      <SpotLight
+        position={[-2, 7, -1.5]}
+        target-position={[0, 0, 0]}
+        intensity={1.8}
+        angle={0.4}
+        penumbra={0.8}
+        color="#AAFFCC"
+        distance={20}
+        decay={1.5}
+      />
+      <SpotLight
+        position={[2, 7, -1.5]}
+        target-position={[0, 0, 0]}
+        intensity={1.8}
+        angle={0.4}
+        penumbra={0.8}
+        color="#AAFFCC"
         distance={20}
         decay={1.5}
       />

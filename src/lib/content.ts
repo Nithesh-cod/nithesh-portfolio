@@ -152,6 +152,83 @@ export const content: Content = {
   },
 } as const;
 
+/* ───────────────────────  V9.0 dashboard content  ─────────────────────── */
+
+export const taglineRoles: readonly string[] = [
+  'FULL STACK DEVELOPER',
+  'AI ENGINEER',
+  'CREATIVE TECH ARCHITECT',
+];
+
+export const philosophy =
+  "Code is not just what I write, it's how I solve problems, create impact, and build a better future.";
+
+export const achievements: readonly string[] = [
+  '20+ PROJECTS DELIVERED',
+  '5+ HACKATHONS PARTICIPATED',
+  '3+ AWARDS RECOGNIZED',
+  '100% PROJECT SUCCESS RATE',
+];
+
+export const systemStatus: readonly { label: string; value: string }[] = [
+  { label: 'INNOVATION', value: 'ACTIVE' },
+  { label: 'CREATIVITY', value: 'ACTIVE' },
+  { label: 'DEDICATION', value: '100%' },
+  { label: 'LEARNING',   value: 'ONGOING' },
+  { label: 'IMPACT',     value: 'HIGH' },
+];
+
+export const metrics: readonly { label: string; value: string; ringPct: number }[] = [
+  { label: 'PROJECTS',         value: '25+',  ringPct: 80 },
+  { label: 'USERS IMPACTED',   value: '3.2K+', ringPct: 75 },
+  { label: 'UPTIME',           value: '99%',  ringPct: 99 },
+  { label: 'COUNTRIES REACHED', value: '12+', ringPct: 60 },
+  { label: 'REPEAT USERS',     value: '28%',  ringPct: 28 },
+  { label: 'LEARNING MODE',    value: '24/7', ringPct: 100 },
+];
+
+export const liveFeed: readonly { event: string; ago: string }[] = [
+  { event: 'LOGIN',           ago: '18:59:01' },
+  { event: 'DATA SYNC',       ago: '18:59:12' },
+  { event: 'AI SCAN',         ago: '18:59:18' },
+  { event: 'REPORT GEN',      ago: '18:59:24' },
+  { event: 'LINK EST.',       ago: '18:59:27' },
+];
+
+export const coreExpertise: readonly { title: string; icon: string }[] = [
+  { title: 'FULL STACK DEVELOPMENT',          icon: 'Code2' },
+  { title: 'AI / ML ENGINEERING',             icon: 'BrainCircuit' },
+  { title: 'CLOUD ARCHITECTURE',              icon: 'Cloud' },
+  { title: 'CYBERSECURITY & DEVOPS',          icon: 'Shield' },
+  { title: 'DATA ANALYTICS & VISUALIZATION',  icon: 'BarChart3' },
+  { title: 'UI / UX & INTERACTIVE DESIGN',    icon: 'Palette' },
+];
+
+export const techStack: readonly string[] = [
+  'React', 'Next.js', 'Node.js', 'TypeScript',
+  'Python', 'AWS', 'Docker', 'Kubernetes',
+  'MongoDB', 'PostgreSQL', 'TensorFlow', 'GitHub',
+];
+
+export const services: readonly { title: string; lines: readonly [string, string]; icon: string }[] = [
+  { title: 'AI SOLUTIONS',     lines: ['Smart Automation', 'Intelligent Systems'],         icon: 'Cpu' },
+  { title: 'WEB DEVELOPMENT',  lines: ['Scalable Web Apps', 'Modern Technologies'],        icon: 'Globe' },
+  { title: 'CLOUD & DEVOPS',   lines: ['Deploy · Scale · Secure', 'Infrastructure'],       icon: 'CloudCog' },
+  { title: 'DATA & ANALYTICS', lines: ['Insights · Visualization', 'Data Driven Decisions'], icon: 'LineChart' },
+  { title: 'CYBER SECURITY',   lines: ['Secure · Protect · Monitor', 'Threat Intelligence'], icon: 'ShieldCheck' },
+  { title: 'UI / UX DESIGN',   lines: ['Interactive · Modern', 'User Centered'],           icon: 'Sparkles' },
+];
+
+export const navItems: readonly { id: string; label: string; subtitle: string; icon: string }[] = [
+  { id: 'home',         label: 'HOME',         subtitle: 'Start your journey',     icon: 'Home' },
+  { id: 'about',        label: 'ABOUT',        subtitle: 'Who I am',               icon: 'User' },
+  { id: 'projects',     label: 'PROJECTS',     subtitle: 'My creations',           icon: 'FolderGit2' },
+  { id: 'skills',       label: 'SKILLS',       subtitle: 'Technologies & tools',   icon: 'Sparkles' },
+  { id: 'experience',   label: 'EXPERIENCE',   subtitle: 'My professional path',   icon: 'Briefcase' },
+  { id: 'certificates', label: 'CERTIFICATES', subtitle: 'Achievements',           icon: 'Award' },
+  { id: 'contact',      label: 'CONTACT',      subtitle: 'Get in touch',           icon: 'Mail' },
+];
+
 /** World coordinates for the procedural lab.
  *  Origin = centre of the floor. +Z is "out of the screen toward the visitor".
  *  Hologram sits on the back wall (negative Z); contact terminal is deepest. */

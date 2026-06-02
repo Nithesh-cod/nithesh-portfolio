@@ -41,6 +41,16 @@ export const palette = {
   lightWarm: '#FFD9A8',
   lightCool: '#9CB5DD',
 
+  // ── V9.0 neon-green dashboard tokens ─────────────────────────────
+  bgBase:        '#050810',
+  bgPanel:       'rgba(8, 20, 12, 0.65)',
+  neonGreen:     '#00FF88',
+  neonBright:    '#4DFFAA',
+  neonDim:       '#00AA55',
+  textPrimary:   '#DDFFEE',
+  textSecondary: '#88CCAA',
+  textMono:      '#00FF88',
+
   // ── Legacy aliases (re-pointed) ───────────────────────────────────
   // Same hex values as V7 canonical tokens above, but available under the
   // names existing components import. Ensures the whole scene picks up

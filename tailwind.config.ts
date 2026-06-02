@@ -50,6 +50,15 @@ const config: Config = {
         'night-base': palette.nightBase,
         'signal-mint': palette.signalMint,
         'champagne-gold': palette.champagneGold,
+
+        // V9.0 neon-green dashboard utilities.
+        'bg-base': palette.bgBase,
+        'neon-green': palette.neonGreen,
+        'neon-bright': palette.neonBright,
+        'neon-dim': palette.neonDim,
+        'text-prim': palette.textPrimary,
+        'text-sec': palette.textSecondary,
+        'text-mono': palette.textMono,
       },
       fontFamily: {
         display: ['var(--font-display)', 'sans-serif'],
