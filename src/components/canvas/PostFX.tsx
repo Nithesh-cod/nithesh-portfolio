@@ -2,57 +2,58 @@
 
 import {
   Bloom,
-  DepthOfField,
+  ChromaticAberration,
   EffectComposer,
-  LUT,
+  GodRays,
   ToneMapping,
 } from '@react-three/postprocessing';
 import { BlendFunction, KernelSize, ToneMappingMode } from 'postprocessing';
 import { type ReactElement, useMemo } from 'react';
-import { HalfFloatType } from 'three';
-import { buildEmeraldLut } from '@/lib/lut';
+import { HalfFloatType, type Mesh, Vector2 } from 'three';
 import { usePortfolioStore } from '@/lib/store';
-import { waypoints } from '@/lib/content';
 
 /**
- * V7.0 — refined chain. Noise + ChromaticAberration + Vignette deleted
- * (glass handles its own CA, radial floor fade does the vignette job,
- * film grain reads dated). Bloom soft, ToneMapping ACES, LUT for warm-
- * cool grade. DoF still gated to cinematic tier.
+ * V9.3 — chain order: Bloom (heavy, threshold 0.65) → GodRays from the
+ * capsule's invisible sun mesh → ChromaticAberration (0.0005) → ToneMapping
+ * (ACES_FILMIC). LUT dropped — the cyan/green grade comes from the
+ * neon-green emissives directly.
  */
-export function PostFX() {
+export function PostFX({ sunRef }: { sunRef?: React.MutableRefObject<Mesh | null> | React.RefObject<Mesh> }) {
   const perfMode = usePortfolioStore((s) => s.perfMode);
-  const section = usePortfolioStore((s) => s.section);
-
-  const lutTexture = useMemo(() => buildEmeraldLut(32), []);
+  const caOffset = useMemo(() => new Vector2(0.0005, 0.0005), []);
 
   if (perfMode === 'low') return null;
-
-  const tProgress = section / Math.max(1, waypoints.length - 1);
-  const focusDistance = 0.005 + tProgress * 0.045;
-  const cinematic = perfMode === 'cinematic';
 
   const effects: ReactElement[] = [
     <Bloom
       key="bloom"
-      intensity={0.22}
-      luminanceThreshold={0.85}
-      luminanceSmoothing={0.2}
-      radius={0.4}
+      intensity={0.8}
+      luminanceThreshold={0.65}
+      luminanceSmoothing={0.4}
       mipmapBlur
-      kernelSize={KernelSize.SMALL}
+      kernelSize={KernelSize.LARGE}
     />,
-    cinematic ? (
-      <DepthOfField
-        key="dof"
-        focusDistance={focusDistance}
-        focalLength={0.05}
-        bokehScale={2.2}
-        blendFunction={BlendFunction.NORMAL}
+    sunRef?.current ? (
+      <GodRays
+        key="godrays"
+        sun={sunRef.current}
+        density={0.96}
+        decay={0.94}
+        weight={0.5}
+        exposure={0.4}
+        samples={60}
+        clampMax={1.0}
+        blendFunction={BlendFunction.SCREEN}
       />
     ) : null,
+    <ChromaticAberration
+      key="ca"
+      offset={caOffset}
+      radialModulation={false}
+      modulationOffset={0}
+      blendFunction={BlendFunction.NORMAL}
+    />,
     <ToneMapping key="tm" mode={ToneMappingMode.ACES_FILMIC} />,
-    <LUT key="lut" lut={lutTexture} tetrahedralInterpolation />,
   ].filter((e): e is ReactElement => e !== null);
 
   return (

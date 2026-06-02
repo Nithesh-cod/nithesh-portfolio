@@ -9,6 +9,7 @@ import { CertificateLightbox } from '@/components/ui/CertificateLightbox';
 import { ResumeViewer } from '@/components/ui/ResumeViewer';
 import { CategoryDetailModal } from '@/components/ui/CategoryDetailModal';
 import { TopBar, LeftRail, RightRail, CapsuleOverlays, ServicesStrip } from '@/components/hud/Dashboard';
+import { CursorTrackerMount } from '@/components/hud/CursorTrackerMount';
 import { content } from '@/lib/content';
 
 const Scene = dynamic(() => import('@/components/canvas/Scene').then((m) => m.Scene), {
@@ -18,14 +19,15 @@ const Scene = dynamic(() => import('@/components/canvas/Scene').then((m) => m.Sc
 
 export default function Page() {
   return (
-    <main className="relative min-h-screen w-full overflow-hidden bg-bg-base text-text-prim">
+    <main className="hud-stage relative min-h-screen w-full overflow-hidden bg-bg-base text-text-prim">
       {/* V9.0 — Canvas as the centerpiece. HUD overlay is DOM positioned
           OVER the canvas at higher z-index. canvas-root keeps the cursor
-          style scoped. */}
+          style scoped. V9.3 — `hud-stage` adds the 3D perspective root. */}
       <div className="fixed inset-0 z-0 canvas-root">
         <Scene />
       </div>
 
+      <CursorTrackerMount />
       <TopBar />
       <LeftRail />
       <CapsuleOverlays />

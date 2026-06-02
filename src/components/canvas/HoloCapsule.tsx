@@ -2,12 +2,15 @@
 
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import { Billboard, Text, useTexture } from '@react-three/drei';
-import { useRef, useState } from 'react';
+import { forwardRef, useMemo, useRef, useState } from 'react';
 import {
   AdditiveBlending,
+  Color,
   DoubleSide,
-  SRGBColorSpace,
+  type IUniform,
+  type Mesh,
   type MeshStandardMaterial,
+  SRGBColorSpace,
 } from 'three';
 import { palette } from '@/lib/palette';
 import { usePortfolioStore } from '@/lib/store';
@@ -15,26 +18,56 @@ import { disableRaycast, noRaycast } from '@/lib/three-utils';
 import { play } from '@/lib/audio';
 
 const POS: readonly [number, number, number] = [0, 0, 0];
-const CAPSULE_R = 0.75;
+const CAPSULE_R = 0.78;
 const CAPSULE_H = 2.8;
-const CAPSULE_Y = 1.4;       // capsule centre = base + height/2
+const CAPSULE_Y = 1.4;
 const HEX_SIDES = 6;
 const CAGE_BARS = 12;
 const CAGE_RADIUS = 0.85;
 
-/**
- * V9.1 — capsule is now a TRANSPARENT glass tube. The cylinder uses
- * openEnded geometry + DoubleSide so you can see straight through.
- * Inside: a Billboarded portrait plane (MeshBasicMaterial) facing the
- * camera, plus an internal pointLight that gives the portrait a soft
- * glow and lights the inside of the glass.
- *
- * Hex base + pedestal + emissive top/bottom rings + 12-bar cage of
- * light all kept from V9.0 but tuned brighter so they hold against
- * the now-transparent body.
- */
-export function HoloCapsule() {
-  const ringMatRef = useRef<MeshStandardMaterial | null>(null);
+/* ──────────────  Inner plasma shader  ────────────── */
+const INNER_VERT = /* glsl */ `varying vec2 vUv;
+void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
+
+const NOISE = /* glsl */ `
+float hash(vec3 p){ return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453123); }
+float vnoise(vec3 p){
+  vec3 i = floor(p); vec3 f = fract(p);
+  vec3 u = f * f * (3.0 - 2.0 * f);
+  float n000 = hash(i + vec3(0,0,0));
+  float n100 = hash(i + vec3(1,0,0));
+  float n010 = hash(i + vec3(0,1,0));
+  float n110 = hash(i + vec3(1,1,0));
+  float n001 = hash(i + vec3(0,0,1));
+  float n101 = hash(i + vec3(1,0,1));
+  float n011 = hash(i + vec3(0,1,1));
+  float n111 = hash(i + vec3(1,1,1));
+  return mix(mix(mix(n000, n100, u.x), mix(n010, n110, u.x), u.y),
+             mix(mix(n001, n101, u.x), mix(n011, n111, u.x), u.y), u.z);
+}`;
+
+const INNER_FRAG = /* glsl */ `
+precision highp float;
+uniform float uTime;
+varying vec2 vUv;
+${NOISE}
+void main(){
+  float vGrad = pow(sin(vUv.y * 3.14159), 0.6);
+  float dist = abs(vUv.x - 0.5) * 2.0;
+  float rGrad = pow(1.0 - dist, 1.2);
+  float energy = sin(vUv.y * 40.0 - uTime * 1.5) * 0.5 + 0.5;
+  energy = pow(energy, 3.0);
+  float plasma = vnoise(vec3(vUv * 6.0, uTime * 0.6));
+  plasma = plasma * 0.5 + 0.5;
+  float alpha = vGrad * rGrad * (0.3 + energy * 0.4 + plasma * 0.3);
+  alpha *= 0.7;
+  vec3 color = vec3(0.5, 1.0, 0.7) + vec3(0.0, 0.2, 0.1) * plasma;
+  gl_FragColor = vec4(color, alpha);
+}`;
+
+export const HoloCapsule = forwardRef<Mesh>(function HoloCapsule(_props, sunRef) {
+  const ringTopRef = useRef<MeshStandardMaterial | null>(null);
+  const ringBotRef = useRef<MeshStandardMaterial | null>(null);
   const dotMatRef = useRef<MeshStandardMaterial | null>(null);
   const labelDotRef = useRef<MeshStandardMaterial | null>(null);
   const [hovered, setHovered] = useState(false);
@@ -46,14 +79,22 @@ export function HoloCapsule() {
   portrait.colorSpace = SRGBColorSpace;
   portrait.anisotropy = 8;
 
+  const innerUniforms = useMemo<{ uTime: IUniform<number> }>(
+    () => ({ uTime: { value: 0 } }),
+    [],
+  );
+
   useFrame((_, dt) => {
     t.current += dt;
-    const phase = (t.current / 3) * Math.PI * 2;
-    if (ringMatRef.current) {
-      ringMatRef.current.emissiveIntensity = 1.2 + 0.4 * Math.sin(phase);
+    innerUniforms.uTime.value = t.current;
+    if (ringTopRef.current) {
+      ringTopRef.current.emissiveIntensity = 2.5 + Math.sin(t.current * 2) * 0.8;
+    }
+    if (ringBotRef.current) {
+      ringBotRef.current.emissiveIntensity = 2.5 + Math.sin(t.current * 2 + Math.PI) * 0.8;
     }
     if (dotMatRef.current) {
-      dotMatRef.current.emissiveIntensity = 1.3 + 0.5 * Math.sin(phase + Math.PI / 4);
+      dotMatRef.current.emissiveIntensity = 1.3 + 0.5 * Math.sin(t.current * 2);
     }
     if (labelDotRef.current) {
       labelDotRef.current.emissiveIntensity = 1.4 + 0.4 * Math.sin(t.current * 3.5);
@@ -77,166 +118,127 @@ export function HoloCapsule() {
       {/* Hex base. */}
       <mesh position={[0, 0.15, 0]} rotation={[0, Math.PI / 6, 0]}>
         <cylinderGeometry args={[1.2, 1.25, 0.3, HEX_SIDES]} />
-        <meshStandardMaterial
-          color="#0A1014"
-          metalness={0.85}
-          roughness={0.35}
-          emissive={palette.neonGreen}
-          emissiveIntensity={0.05}
-        />
+        <meshStandardMaterial color="#0A1014" metalness={0.85} roughness={0.35}
+          emissive={palette.neonGreen} emissiveIntensity={0.05} />
       </mesh>
 
-      {/* Hex top-edge ring. */}
-      <mesh position={[0, 0.30, 0]} rotation={[Math.PI / 2, 0, Math.PI / 6]}>
-        <torusGeometry args={[1.22, 0.012, 8, 6 * 10]} />
-        <meshStandardMaterial
-          ref={ringMatRef}
-          color={palette.neonGreen}
-          emissive={palette.neonGreen}
-          emissiveIntensity={1.2}
-          metalness={0.9}
-          roughness={0.2}
-        />
-      </mesh>
-
-      {/* 8 perimeter dots on the hex base top. */}
+      {/* 8 perimeter dots. */}
       {Array.from({ length: 8 }).map((_, i) => {
         const a = (i / 8) * Math.PI * 2;
-        const x = Math.cos(a) * 1.15;
-        const z = Math.sin(a) * 1.15;
         return (
-          <mesh key={i} position={[x, 0.305, z]} rotation={[Math.PI / 2, 0, 0]}>
+          <mesh key={i} position={[Math.cos(a) * 1.15, 0.305, Math.sin(a) * 1.15]} rotation={[Math.PI / 2, 0, 0]}>
             <cylinderGeometry args={[0.025, 0.025, 0.008, 14]} />
             <meshStandardMaterial
               ref={i === 0 ? dotMatRef : undefined}
               color={palette.neonBright}
               emissive={palette.neonBright}
               emissiveIntensity={1.3}
+              toneMapped={false}
             />
           </mesh>
         );
       })}
 
-      {/* Circular pedestal. */}
+      {/* Circular pedestal + top edge ring. */}
       <mesh position={[0, 0.36, 0]}>
         <cylinderGeometry args={[1.0, 1.0, 0.15, 48]} />
-        <meshStandardMaterial
-          color="#091015"
-          metalness={0.85}
-          roughness={0.3}
-          emissive={palette.neonGreen}
-          emissiveIntensity={0.08}
-        />
+        <meshStandardMaterial color="#091015" metalness={0.85} roughness={0.3}
+          emissive={palette.neonGreen} emissiveIntensity={0.08} />
       </mesh>
-      <mesh position={[0, 0.435, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.85, 0.95, 64]} />
+
+      {/* Bottom energy ring. */}
+      <mesh position={[0, 0.05, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[CAPSULE_R, 0.025, 16, 64]} />
         <meshStandardMaterial
-          color={palette.neonGreen}
-          emissive={palette.neonGreen}
-          emissiveIntensity={1.0}
-          metalness={0.9}
-          roughness={0.2}
-          side={DoubleSide}
+          ref={ringBotRef}
+          color="#00FF88"
+          emissive="#00FF88"
+          emissiveIntensity={3.0}
+          toneMapped={false}
         />
       </mesh>
 
-      {/* V9.1 — BOTTOM energy ring (the "scanner" base of the capsule). */}
-      <mesh position={[0, 0.5, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[CAPSULE_R, 0.016, 10, 64]} />
-        <meshStandardMaterial
-          color={palette.neonGreen}
-          emissive={palette.neonGreen}
-          emissiveIntensity={1.6}
-          metalness={0.9}
-          roughness={0.18}
-        />
-      </mesh>
-
-      {/* V9.1 — TRANSPARENT glass tube. openEnded geometry + DoubleSide
-          so the portrait inside is visible regardless of camera angle. */}
+      {/* OUTER glass cylinder. */}
       <mesh
         position={[0, CAPSULE_Y, 0]}
         onPointerOver={handleOver}
         onPointerOut={handleOut}
       >
-        <cylinderGeometry args={[CAPSULE_R, CAPSULE_R, CAPSULE_H, 32, 1, true]} />
+        <cylinderGeometry args={[CAPSULE_R, CAPSULE_R, CAPSULE_H, 64, 1, true]} />
         <meshPhysicalMaterial
           color="#88FFCC"
           transmission={lowPerf ? 0 : 0.92}
           thickness={0.15}
-          roughness={0.05}
-          ior={1.5}
+          roughness={0.04}
+          ior={1.4}
+          attenuationColor={new Color('#88FFCC')}
+          attenuationDistance={2.0}
           metalness={0.0}
           transparent
-          opacity={0.4}
+          opacity={0.35}
           side={DoubleSide}
-          envMapIntensity={1.3}
-          emissive={palette.neonGreen}
-          emissiveIntensity={hovered ? 0.35 : 0.18}
+          envMapIntensity={1.5}
         />
       </mesh>
 
-      {/* V9.1 — Billboarded portrait plane INSIDE the capsule. Simple
-          MeshBasicMaterial with the portrait texture; the PNG already has
-          alpha, no shader mask needed. Always faces camera. */}
+      {/* INNER volumetric plasma core. */}
+      {!lowPerf && (
+        <mesh position={[0, CAPSULE_Y, 0]}>
+          <cylinderGeometry args={[0.55, 0.55, CAPSULE_H * 0.96, 32, 1, true]} />
+          <shaderMaterial
+            vertexShader={INNER_VERT}
+            fragmentShader={INNER_FRAG}
+            uniforms={innerUniforms}
+            transparent
+            blending={AdditiveBlending}
+            side={DoubleSide}
+            depthWrite={false}
+          />
+        </mesh>
+      )}
+
+      {/* Billboarded portrait inside. */}
       <Billboard position={[0, CAPSULE_Y, 0]}>
         <mesh>
-          <planeGeometry args={[1.0, 1.6]} />
-          <meshBasicMaterial
-            map={portrait}
-            transparent
-            alphaTest={0.05}
-          />
+          <planeGeometry args={[1.0, 1.5]} />
+          <meshBasicMaterial map={portrait} transparent toneMapped={false} alphaTest={0.05} />
         </mesh>
       </Billboard>
 
-      {/* V9.1 — internal pointLight inside the capsule. Lights the portrait
-          + gives the glass tube edge glow. */}
-      <pointLight
-        position={[0, CAPSULE_Y, 0]}
-        intensity={1.2}
-        color={palette.neonGreen}
-        distance={3}
-        decay={2}
-      />
+      {/* Internal point light. */}
+      <pointLight position={[0, CAPSULE_Y, 0]} intensity={2.0} color="#00FF88" distance={4} decay={2} />
 
-      {/* V9.1 — TOP energy ring. */}
-      <mesh
-        position={[0, CAPSULE_Y + CAPSULE_H / 2, 0]}
-        rotation={[Math.PI / 2, 0, 0]}
-      >
-        <torusGeometry args={[CAPSULE_R, 0.016, 10, 64]} />
+      {/* Top energy ring. */}
+      <mesh position={[0, CAPSULE_Y + CAPSULE_H / 2 + 0.05, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[CAPSULE_R, 0.025, 16, 64]} />
         <meshStandardMaterial
-          color={palette.neonGreen}
-          emissive={palette.neonGreen}
-          emissiveIntensity={1.6}
-          metalness={0.9}
-          roughness={0.18}
+          ref={ringTopRef}
+          color="#00FF88"
+          emissive="#00FF88"
+          emissiveIntensity={3.0}
+          toneMapped={false}
         />
       </mesh>
 
-      {/* V9.1 — 12-bar "cage of light" — thin neon-green beam cylinders
-          around the capsule (radius 0.85, every 30°). Additive blending. */}
+      {/* Light cage — 12 thin vertical beams. */}
       {Array.from({ length: CAGE_BARS }).map((_, i) => {
         const a = (i / CAGE_BARS) * Math.PI * 2;
-        const x = Math.cos(a) * CAGE_RADIUS;
-        const z = Math.sin(a) * CAGE_RADIUS;
         return (
-          <mesh key={i} position={[x, CAPSULE_Y, z]}>
-            <cylinderGeometry args={[0.005, 0.005, CAPSULE_H, 8]} />
-            <meshBasicMaterial
-              color={palette.neonGreen}
-              transparent
-              opacity={0.55}
-              blending={AdditiveBlending}
-              depthWrite={false}
-            />
+          <mesh key={i} position={[Math.cos(a) * CAGE_RADIUS, CAPSULE_Y, Math.sin(a) * CAGE_RADIUS]}>
+            <cylinderGeometry args={[0.005, 0.005, CAPSULE_H, 6]} />
+            <meshBasicMaterial color="#00FF88" transparent opacity={0.9} toneMapped={false} />
           </mesh>
         );
       })}
 
-      {/* "DIGITAL IDENTITY // ONLINE" floating label above capsule. */}
-      <group position={[0, CAPSULE_Y + CAPSULE_H / 2 + 0.5, 0]}>
+      {/* Invisible GodRays sun — small bright sphere at capsule centre. */}
+      <mesh ref={sunRef as React.RefObject<Mesh>} position={[0, CAPSULE_Y, 0]}>
+        <sphereGeometry args={[0.3, 16, 16]} />
+        <meshBasicMaterial color="#FFFFFF" transparent opacity={0.001} toneMapped={false} />
+      </mesh>
+
+      {/* DIGITAL IDENTITY label. */}
+      <group position={[0, CAPSULE_Y + CAPSULE_H / 2 + 0.55, 0]}>
         <Text
           raycast={noRaycast}
           ref={disableRaycast}
@@ -257,21 +259,10 @@ export function HoloCapsule() {
             color={palette.neonBright}
             emissive={palette.neonBright}
             emissiveIntensity={1.4}
+            toneMapped={false}
           />
         </mesh>
       </group>
-
-      {/* Subtle upward beam (additive cone) — kept from V9.0. */}
-      <mesh position={[0, CAPSULE_Y, 0]}>
-        <coneGeometry args={[CAPSULE_R * 0.9, CAPSULE_H * 1.1, 48, 1, true]} />
-        <meshBasicMaterial
-          color={palette.neonGreen}
-          transparent
-          opacity={0.04}
-          blending={AdditiveBlending}
-          depthWrite={false}
-        />
-      </mesh>
     </group>
   );
-}
+});

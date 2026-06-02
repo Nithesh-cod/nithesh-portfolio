@@ -10,12 +10,13 @@ import {
   Sparkles,
   SpotLight,
 } from '@react-three/drei';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { Mesh } from 'three';
 import { Lab } from '@/components/canvas/Lab';
 import { HexFloor } from '@/components/canvas/HexFloor';
 import { HoloCapsule } from '@/components/canvas/HoloCapsule';
 import { ProjectPedestal } from '@/components/canvas/ProjectPedestal';
-import { SpotlightBeams } from '@/components/canvas/SpotlightBeams';
+import { VolumetricBeam } from '@/components/canvas/VolumetricBeam';
 import { FloatingDataGlyphs } from '@/components/canvas/FloatingDataGlyphs';
 import { CameraRig } from '@/components/canvas/CameraRig';
 import { PostFX } from '@/components/canvas/PostFX';
@@ -31,16 +32,13 @@ const PROJECTS = [
   { slug: 'testai',        label: 'TestAI',        subtitle: 'AI EXAM PROCTORING SYSTEM',               position: [3.5,  0, 2.5], iconKind: 'globe', phase: 2.8 },
 ] as const;
 
-/**
- * V9.0 — minimal centerpiece scene. HexFloor + central HoloCapsule + 3
- * ProjectPedestals + spotlight beams + atmospheric Sparkles + floating
- * data glyphs. Fixed CameraRig with slow auto-rotate. The HUD overlay
- * (DOM) is mounted in page.tsx and carries the rest of the content.
- */
 export function Scene() {
   const setPerfMode = usePortfolioStore((s) => s.setPerfMode);
   const isMobile = useIsMobile();
   const [dpr, setDpr] = useState<[number, number]>([1, 2]);
+  // Sun mesh ref — capsule mounts an invisible bright sphere, PostFX uses
+  // it as the GodRays source.
+  const sunRef = useRef<Mesh | null>(null);
 
   useEffect(() => {
     if (isMobile) {
@@ -59,7 +57,7 @@ export function Scene() {
         depth: true,
         alpha: false,
       }}
-      camera={{ position: [0, 2.5, 9.5], fov: 38, near: 0.1, far: 120 }}
+      camera={{ position: [0, 3.2, 9], fov: 38, near: 0.1, far: 120 }}
       onCreated={({ gl }) => gl.setClearColor(palette.bgBase, 1)}
     >
       <PerformanceTier
@@ -75,7 +73,7 @@ export function Scene() {
       <Lights />
       <Lab />
       <HexFloor />
-      <HoloCapsule />
+      <HoloCapsule ref={sunRef} />
 
       {PROJECTS.map((p) => (
         <ProjectPedestal
@@ -89,7 +87,12 @@ export function Scene() {
         />
       ))}
 
-      <SpotlightBeams />
+      {/* 4 volumetric beams. */}
+      <VolumetricBeam position={[-2.5, 8, 1]}  rotation={[0, 0,  0.05]} color="#CCFFDD" intensity={0.85} seed={0} />
+      <VolumetricBeam position={[-0.8, 8, -1]} rotation={[0, 0, -0.03]} color="#AAFFCC" intensity={0.7}  seed={1.3} />
+      <VolumetricBeam position={[ 0.8, 8, -1]} rotation={[0, 0,  0.04]} color="#AAFFCC" intensity={0.7}  seed={2.6} />
+      <VolumetricBeam position={[ 2.5, 8, 1]}  rotation={[0, 0, -0.05]} color="#CCFFDD" intensity={0.85} seed={3.9} />
+
       <FloatingDataGlyphs />
 
       <Sparkles
@@ -103,7 +106,7 @@ export function Scene() {
       />
 
       <CameraRig />
-      <PostFX />
+      <PostFX sunRef={sunRef} />
 
       <AdaptiveDpr pixelated />
       <AdaptiveEvents />
@@ -116,47 +119,10 @@ function Lights() {
   return (
     <>
       <ambientLight intensity={0.10} color="#0A1014" />
-      <SpotLight
-        position={[-2.5, 7, 2]}
-        target-position={[0, 0, 0]}
-        intensity={2.5}
-        angle={0.35}
-        penumbra={0.7}
-        color="#CCFFDD"
-        distance={20}
-        decay={1.5}
-        castShadow
-      />
-      <SpotLight
-        position={[2.5, 7, 2]}
-        target-position={[0, 0, 0]}
-        intensity={2.5}
-        angle={0.35}
-        penumbra={0.7}
-        color="#CCFFDD"
-        distance={20}
-        decay={1.5}
-      />
-      <SpotLight
-        position={[-2, 7, -1.5]}
-        target-position={[0, 0, 0]}
-        intensity={1.8}
-        angle={0.4}
-        penumbra={0.8}
-        color="#AAFFCC"
-        distance={20}
-        decay={1.5}
-      />
-      <SpotLight
-        position={[2, 7, -1.5]}
-        target-position={[0, 0, 0]}
-        intensity={1.8}
-        angle={0.4}
-        penumbra={0.8}
-        color="#AAFFCC"
-        distance={20}
-        decay={1.5}
-      />
+      <SpotLight position={[-2.5, 7, 2]} target-position={[0, 0, 0]} intensity={2.5} angle={0.35} penumbra={0.7} color="#CCFFDD" distance={20} decay={1.5} castShadow />
+      <SpotLight position={[ 2.5, 7, 2]} target-position={[0, 0, 0]} intensity={2.5} angle={0.35} penumbra={0.7} color="#CCFFDD" distance={20} decay={1.5} />
+      <SpotLight position={[-2,   7, -1.5]} target-position={[0, 0, 0]} intensity={1.8} angle={0.4} penumbra={0.8} color="#AAFFCC" distance={20} decay={1.5} />
+      <SpotLight position={[ 2,   7, -1.5]} target-position={[0, 0, 0]} intensity={1.8} angle={0.4} penumbra={0.8} color="#AAFFCC" distance={20} decay={1.5} />
     </>
   );
 }

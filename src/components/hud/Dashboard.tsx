@@ -104,22 +104,25 @@ function Clock() {
   );
 }
 
-/* ───────────────────────────── Panel shell ───────────────────────── */
+/* ───────────────────────────── Panel shell ─────────────────────────
+ * V9.3 — `hud-panel` class brings glass + scanline + perspective.
+ * The `tilt` prop selects which side-tilt transform variant to apply.
+ */
 function Panel({
   title,
   subtitle,
   children,
   className = '',
+  tilt = 'left',
 }: {
   title?: string;
   subtitle?: string;
   children: React.ReactNode;
   className?: string;
+  tilt?: 'left' | 'right' | 'center' | 'bottom';
 }) {
   return (
-    <div
-      className={`rounded-md border border-neon-green/25 bg-[rgba(8,20,12,0.65)] p-3 shadow-[0_4px_20px_rgba(0,0,0,0.35)] backdrop-blur-[12px] ${className}`}
-    >
+    <div className={`hud-panel hud-panel--${tilt} ${className}`}>
       {title && (
         <div className="mb-2 flex items-baseline justify-between">
           <h3 className="font-mono text-[11px] uppercase tracking-[0.22em] text-neon-bright">
@@ -137,7 +140,7 @@ function Panel({
 export function LeftRail() {
   const openResume = usePortfolioStore((s) => s.openResume);
   return (
-    <aside className="pointer-events-auto fixed left-4 top-[88px] z-30 hidden w-[210px] flex-col gap-3 lg:flex">
+    <aside className="hud-rail pointer-events-auto fixed left-4 top-[88px] z-30 hidden w-[210px] flex-col gap-3 lg:flex">
       {/* Navigation menu. */}
       <Panel className="!p-2">
         <ul className="flex flex-col gap-1">
@@ -251,9 +254,9 @@ export function RightRail() {
   const certs = certificateGroups.flatMap((g) => g.certs).slice(0, 12);
 
   return (
-    <aside className="pointer-events-auto fixed right-4 top-[88px] z-30 hidden w-[260px] flex-col gap-3 lg:flex">
+    <aside className="hud-rail pointer-events-auto fixed right-4 top-[88px] z-30 hidden w-[260px] flex-col gap-3 lg:flex">
       {/* System overview. */}
-      <Panel title="SYSTEM OVERVIEW">
+      <Panel title="SYSTEM OVERVIEW" tilt="right">
         <ul className="space-y-1 font-mono text-[10px]">
           {[
             { label: 'PROJECTS COMPLETED',  value: '25+' },
@@ -270,7 +273,7 @@ export function RightRail() {
       </Panel>
 
       {/* Project metrics (gauges). */}
-      <Panel title="PROJECT METRICS">
+      <Panel title="PROJECT METRICS" tilt="right">
         <div className="grid grid-cols-3 gap-2">
           {metrics.map((m) => (
             <RingGauge key={m.label} pct={m.ringPct} value={m.value} label={m.label} />
@@ -279,7 +282,7 @@ export function RightRail() {
       </Panel>
 
       {/* Live feed. */}
-      <Panel title="LIVE FEED">
+      <Panel title="LIVE FEED" tilt="right">
         <ul className="space-y-1 font-mono text-[10px]">
           {liveFeed.map((row) => (
             <li key={row.event} className="flex items-center gap-2">
@@ -291,14 +294,15 @@ export function RightRail() {
       </Panel>
 
       {/* Credentials vault. */}
-      <Panel title="CREDENTIALS VAULT" subtitle="CERTS · ACHIEVEMENTS">
+      <Panel title="CREDENTIALS VAULT" subtitle="CERTS · ACHIEVEMENTS" tilt="right">
         <div className="grid grid-cols-3 gap-1.5">
-          {certs.map((c) => (
+          {certs.map((c, i) => (
             <button
               key={c.id}
               type="button"
               onClick={() => openCertificate(c.id)}
-              className="aspect-[3/4] rounded-sm border border-neon-green/40 bg-bg-base/50 p-1 transition hover:border-neon-bright hover:shadow-[0_0_12px_rgba(77,255,170,0.4)]"
+              className="cert-card aspect-[3/4] rounded-sm border border-neon-green/40 bg-bg-base/50 p-1 transition hover:border-neon-bright hover:shadow-[0_0_12px_rgba(77,255,170,0.4)]"
+              style={{ ['--cert-index' as string]: i }}
               title={c.title}
             >
               <div
@@ -314,7 +318,7 @@ export function RightRail() {
       </Panel>
 
       {/* Philosophy. */}
-      <Panel title="MY PHILOSOPHY">
+      <Panel title="MY PHILOSOPHY" tilt="right">
         <blockquote className="font-sans text-[11px] italic leading-snug text-text-prim">
           <span className="mr-1 font-serif text-base text-neon-green">“</span>
           {philosophy}
@@ -390,12 +394,12 @@ export function CapsuleOverlays() {
 
       {/* Right of capsule — system status. */}
       <div className="pointer-events-auto fixed right-[280px] top-[120px] z-20 hidden w-[180px] flex-col gap-3 lg:flex">
-        <Panel title="SYSTEM STATUS">
+        <Panel title="SYSTEM STATUS" tilt="right">
           <ul className="space-y-1.5 font-mono text-[10px]">
             {systemStatus.map((s) => (
               <li key={s.label} className="flex items-center justify-between">
                 <span className="uppercase tracking-[0.15em] text-text-sec">{s.label}</span>
-                <span className="text-neon-bright">{s.value}</span>
+                <span className="status-value text-neon-bright">{s.value}</span>
               </li>
             ))}
           </ul>
@@ -408,7 +412,7 @@ export function CapsuleOverlays() {
 /* ───────────────────────── Bottom services strip ─────────────────── */
 export function ServicesStrip() {
   return (
-    <div className="pointer-events-auto fixed bottom-0 left-0 right-0 z-30 border-t border-neon-green/30 bg-[rgba(5,8,16,0.78)] px-4 py-3 backdrop-blur-[16px]">
+    <div className="hud-panel hud-panel--bottom pointer-events-auto fixed bottom-2 left-2 right-2 z-30 !rounded-none border-t border-neon-green/30 !px-4 !py-3">
       <div className="mx-auto flex max-w-[1400px] flex-col gap-2">
         <h3 className="text-center font-mono text-[11px] uppercase tracking-[0.32em] text-neon-bright">
           SERVICES I OFFER
