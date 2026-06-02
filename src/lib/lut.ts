@@ -14,8 +14,11 @@ import { Data3DTexture, LinearFilter, RGBAFormat, UnsignedByteType } from 'three
 export function buildEmeraldLut(size = 32): Data3DTexture {
   const data = new Uint8Array(size ** 3 * 4);
 
-  const shadowTint: [number, number, number] = [0x07 / 255, 0x26 / 255, 0x1f / 255];
-  const highlightTint: [number, number, number] = [0xf5 / 255, 0xd8 / 255, 0x9a / 255];
+  // V7.0 — shadows toward night-warm (#1A1A2A) at 0.25 strength, highlights
+  // toward ivory-warm (#F0EAD8) at 0.12. Subtle warm-cool cinematic grade
+  // with no green wash and no blue dominance.
+  const shadowTint: [number, number, number] = [0x1a / 255, 0x1a / 255, 0x2a / 255];
+  const highlightTint: [number, number, number] = [0xf0 / 255, 0xea / 255, 0xd8 / 255];
 
   // smoothstep(-0.08, 1.08, x) — a tiny shoulder + toe S-curve.
   const sCurve = (x: number) => {
@@ -35,8 +38,8 @@ export function buildEmeraldLut(size = 32): Data3DTexture {
         const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
 
         if (luma < 0.25) {
-          // Shadows: pull toward dark teal-green at 0.35 strength.
-          const t = 0.35;
+          // Shadows: pull toward night-warm at 0.25 strength.
+          const t = 0.25;
           r = r + (shadowTint[0] - r) * t;
           g = g + (shadowTint[1] - g) * t;
           b = b + (shadowTint[2] - b) * t;
@@ -47,8 +50,8 @@ export function buildEmeraldLut(size = 32): Data3DTexture {
           g = luma + (g - luma) * sat;
           b = luma + (b - luma) * sat;
         } else {
-          // Highlights: pull toward warm cream at 0.18 strength.
-          const t = 0.18;
+          // Highlights: pull toward ivory-warm at 0.12 strength.
+          const t = 0.12;
           r = r + (highlightTint[0] - r) * t;
           g = g + (highlightTint[1] - g) * t;
           b = b + (highlightTint[2] - b) * t;

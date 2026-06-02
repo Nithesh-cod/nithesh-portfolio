@@ -1,16 +1,19 @@
 'use client';
 
 import { Canvas } from '@react-three/fiber';
-import { AdaptiveDpr, AdaptiveEvents, Environment, PerformanceMonitor, Preload, Sparkles, SpotLight } from '@react-three/drei';
+import {
+  AdaptiveDpr,
+  AdaptiveEvents,
+  Environment,
+  PerformanceMonitor,
+  Preload,
+  Sparkles,
+  SpotLight,
+} from '@react-three/drei';
 import { useState } from 'react';
-import type { PointLight } from 'three';
 import { Lab } from '@/components/canvas/Lab';
 import { Hologram } from '@/components/canvas/Hologram';
 import { AllTerminalsArc } from '@/components/canvas/AllTerminalsArc';
-import { VolumetricShafts } from '@/components/canvas/VolumetricShafts';
-import { DataStreamWalls } from '@/components/canvas/DataStreamWalls';
-import { FloatingGlyphs } from '@/components/canvas/FloatingGlyphs';
-import { SweepingSpotlights } from '@/components/canvas/SweepingSpotlights';
 import { PostFX } from '@/components/canvas/PostFX';
 import { AccessibilityProxies } from '@/components/canvas/AccessibilityProxies';
 import { ScrollCamera } from '@/components/motion/ScrollCamera';
@@ -19,6 +22,12 @@ import { palette } from '@/lib/palette';
 
 const FPS_DOWNGRADE_HOLD_MS = 3000;
 
+/**
+ * V7.0 — refined elegant scene root. V2.7 camera + click architecture
+ * preserved. Heavy ambient layer removed. Lighting reduced to warm key +
+ * cool fill + ambient. One sparkles layer. Apartment IBL for glass
+ * refraction.
+ */
 export function Scene() {
   const setPerfMode = usePortfolioStore((s) => s.setPerfMode);
   const [dpr, setDpr] = useState<[number, number]>([1, 2]);
@@ -26,12 +35,6 @@ export function Scene() {
   return (
     <Canvas
       dpr={dpr}
-      // gl props locked to the M3.7 spec EXACTLY — every additional prop is a
-      // potential FBO attachment mismatch with the EffectComposer config.
-      // outputColorSpace + toneMapping default to (SRGBColorSpace, NoToneMapping)
-      // in three.js v0.169 which is what we want; explicit setters here previously
-      // forced extra encoding passes that share depth-stencil with the composer.
-      // stencil:false MUST match stencilBuffer={false} on EffectComposer.
       gl={{
         powerPreference: 'high-performance',
         antialias: false,
@@ -40,9 +43,7 @@ export function Scene() {
         alpha: false,
       }}
       camera={{ position: [0, 1.7, 7], fov: 38, near: 0.1, far: 120 }}
-      // V6.0 — clear colour gets a 20 % wash of deep slate-purple over the
-      // pure void. Adds atmospheric depth without changing the chassis read.
-      onCreated={({ gl }) => gl.setClearColor('#080A18', 1)}
+      onCreated={({ gl }) => gl.setClearColor(palette.nightBase, 1)}
     >
       <PerformanceTier
         onDowngrade={(m) => {
@@ -51,35 +52,25 @@ export function Scene() {
         }}
       />
 
-      {/* V6.0 — fog colour matches the new slate-purple clear so distant
-          geometry blends into atmosphere rather than vanishing into pure
-          black. Same near/far. */}
-      <fog attach="fog" args={['#080A18', 4, 22]} />
+      <fog attach="fog" args={[palette.nightBase, 6, 26]} />
 
-      {/* V2.6 — night-preset env map so metal chassis materials have something
-          to reflect. background={false} keeps our custom Sky in place. */}
-      <Environment preset="night" background={false} environmentIntensity={0.35} />
+      <Environment preset="apartment" background={false} environmentIntensity={0.55} />
 
       <Lights />
 
       <Lab />
       <Hologram />
-      <VolumetricShafts />
-      <DataStreamWalls />
-      <FloatingGlyphs />
-      <SweepingSpotlights />
       <AllTerminalsArc />
       <AccessibilityProxies />
 
-      {/* V6.0 — soft ambient dust motes. Lower count than the deleted
-          Matrix-rain layer; subtle, not chaotic. */}
+      {/* V7.0 — single Sparkles layer. Subtle ivory-warm dust motes. */}
       <Sparkles
-        count={60}
-        scale={[12, 6, 12]}
+        count={80}
+        scale={[10, 6, 10]}
         size={1.2}
         speed={0.15}
-        opacity={0.3}
-        color="#E8F5EE"
+        opacity={0.35}
+        color={palette.ivoryWarm}
         position={[0, 1.5, -2]}
       />
 
@@ -94,74 +85,40 @@ export function Scene() {
 }
 
 /**
- * Lighting kit per §M3.5-7.
- *   ambient    → very dim void colour (no green ambient — that was making
- *                even shadows read green).
- *   key        → amber-key directional from front-right above, intensity 1.4.
- *   fill       → azure-rim directional from back-left, intensity 0.4.
- *   rim        → emerald-mid point light scoped to layer 1 (hologram + console
- *                screens only); chassis stay neutral.
+ * V7.0 refined 2-spot + ambient kit. NO mint rim, NO point lights.
+ *   ambient    → warm-tinted ivory fill at 0.08.
+ *   key        → warm tungsten SpotLight from front-right above.
+ *   fill       → cool moonlight SpotLight from camera-left.
  */
 function Lights() {
   return (
     <>
-      <ambientLight intensity={0.15} color={palette.void} />
-      <directionalLight
-        position={[6, 7, 4]}
-        intensity={1.4}
-        color={palette.amberKey}
+      <ambientLight intensity={0.08} color={palette.ivoryWarm} />
+      <SpotLight
+        position={[3, 6, 3]}
+        target-position={[0, 1, 0]}
+        intensity={1.8}
+        angle={0.4}
+        penumbra={0.8}
+        color={palette.lightWarm}
+        distance={20}
+        decay={1.5}
         castShadow
       />
-      <directionalLight position={[-5, 3, -4]} intensity={0.4} color={palette.azureRim} />
-      <pointLight
-        ref={(l: PointLight | null) => {
-          if (!l) return;
-          l.layers.set(1); // ONLY illuminate meshes that opted into layer 1
-        }}
-        position={[0, 2.2, 0]}
-        intensity={0.8}
-        color={palette.emeraldMid}
-        distance={8}
-        decay={2}
-      />
-      {/* Tiny warm fill near the hologram for skin readability — layer 0 default. */}
-      <pointLight
-        position={[0, 1.8, 1.5]}
-        intensity={0.5}
-        color={palette.amberKey}
-        distance={5}
-        decay={2}
-      />
-
-      {/* V6.0 — additional warm key spotlight from above, narrow + soft.
-          Adds a warm sculpt to the cool-dominant scene without changing
-          the overall palette. */}
       <SpotLight
-        position={[3, 6, 2]}
+        position={[-3, 5, 0]}
         target-position={[0, 1, 0]}
-        intensity={0.8}
+        intensity={0.6}
         angle={0.5}
-        penumbra={0.7}
-        color="#FFD89A"
-        distance={18}
-        decay={1.6}
+        penumbra={0.9}
+        color={palette.lightCool}
+        distance={20}
+        decay={1.5}
       />
     </>
   );
 }
 
-// r3f-perf overlay removed in V1.5 — its "144 Hz / laptop" badge was leaking
-// into production renders. Re-add only behind an explicit dev-branch import.
-
-/**
- * Watches framerate via drei's PerformanceMonitor.
- * Sustained fps < 40 for ~3s drops the perf tier (medium -> low),
- * which PostFX reads to disable the whole chain, and Scene uses to floor DPR.
- *
- * Initial local tier matches the store default (`medium`). Cinematic is only
- * reachable when the user opts in via the (future) PerfToggle — and from there
- * downgrades the normal way on sustained fps dips.
- */
 function PerformanceTier({ onDowngrade }: { onDowngrade: (mode: PerfMode) => void }) {
   const [tier, setTier] = useState<PerfMode>('medium');
   const [declineSince, setDeclineSince] = useState<number | null>(null);

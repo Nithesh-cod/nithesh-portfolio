@@ -1,9 +1,9 @@
 'use client';
 
-import { RoundedBox, Text } from '@react-three/drei';
+import { MeshTransmissionMaterial, RoundedBox, Text } from '@react-three/drei';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import { useRef, useState } from 'react';
-import { FrontSide, type Group } from 'three';
+import { type Group } from 'three';
 import {
   arcPodiums,
   waypoints,
@@ -15,9 +15,6 @@ import { play } from '@/lib/audio';
 import { disableRaycast, noRaycast } from '@/lib/three-utils';
 import { usePortfolioStore } from '@/lib/store';
 
-// V2.6: arc zone covers portrait → orbit-left → orbit-back → orbit-right.
-// We render all 7 podiums while the camera is anywhere in that band so the
-// CatmullRom orbit always sees a continuous ring of meshes — no popping.
 const ORBIT_IDS = ['portrait', 'orbit-left', 'orbit-back', 'orbit-right'] as const;
 const ORBIT_INDICES = ORBIT_IDS.map((id) => waypoints.findIndex((w) => w.id === id)).filter((i) => i >= 0);
 
@@ -25,42 +22,46 @@ function isArcZone(section: number): boolean {
   return ORBIT_INDICES.some((i) => Math.abs(section - i) <= 1);
 }
 
-// V2.7: 2× scale — podiums must read at distance during the orbit waypoints.
-const PLINTH_W = 1.0;
-const PLINTH_H = 0.5;
-const PLINTH_D = 0.8;
-const BODY_W = 1.1;
-const BODY_H = 0.8;
-const BODY_D = 0.9;
-const SCREEN_W = 0.84;
-const SCREEN_H = 0.56;
+// V7.0 — floating glass card. No plinth, no monitor body. Each podium is
+// a single thin slab carrying the category name + items list, floating at
+// arc-eye-height.
+const CARD_W = 1.05;
+const CARD_H = 0.8;
+const CARD_D = 0.05;
+const FLOAT_AMP = 0.025;
+const FLOAT_PERIOD = 7;
+const RIDE_HEIGHT = 1.15;
 
 export function AllTerminalsArc() {
   const section = usePortfolioStore((s) => s.section);
   if (!isArcZone(section)) return null;
   return (
     <>
-      {arcPodiums.map((p) => (
-        <TerminalPodium key={p.id} podium={p} />
+      {arcPodiums.map((p, i) => (
+        <TerminalCard key={p.id} podium={p} phase={i * 0.7} />
       ))}
     </>
   );
 }
 
-function TerminalPodium({ podium }: { podium: ArcPodium }) {
+function TerminalCard({ podium, phase }: { podium: ArcPodium; phase: number }) {
   const [hovered, setHovered] = useState(false);
   const groupRef = useRef<Group | null>(null);
+  const t = useRef(phase);
   const lastHoverAt = useRef(0);
 
   const setCursor = usePortfolioStore((s) => s.setCursorState);
   const openSkillCategory = usePortfolioStore((s) => s.openSkillCategory);
   const openTerminal = usePortfolioStore((s) => s.openTerminal);
   const openResume = usePortfolioStore((s) => s.openResume);
+  const lowPerf = usePortfolioStore((s) => s.perfMode === 'low');
 
   useFrame((_, dt) => {
+    t.current += dt;
     if (!groupRef.current) return;
-    const target = hovered ? 0.04 : 0;
-    groupRef.current.position.z += (target - groupRef.current.position.z) * Math.min(1, dt * 8);
+    const bob = Math.sin((t.current / FLOAT_PERIOD) * Math.PI * 2) * FLOAT_AMP;
+    const lift = hovered ? 0.06 : 0;
+    groupRef.current.position.y = RIDE_HEIGHT + bob + lift;
   });
 
   const handleOver = (e: ThreeEvent<PointerEvent>) => {
@@ -85,158 +86,128 @@ function TerminalPodium({ podium }: { podium: ArcPodium }) {
     else openSkillCategory(podium.id as SkillCategoryId);
   };
 
-  // Header colour: CRT + Contact get gold to differentiate from skill categories.
-  const headerColor =
-    podium.kind === 'category' ? palette.emeraldGlow : palette.goldAccent;
-  const screenEmissive =
-    podium.kind === 'crt'
-      ? palette.terminalGrn
-      : podium.kind === 'contact'
-        ? palette.goldAccent
-        : palette.terminalGrn;
+  // Header colour: signal-mint for live data, champagne-gold for CRT/Contact.
+  const headerColor = podium.kind === 'category' ? palette.signalMint : palette.champagneGold;
+  // Body text: ivory-warm.
+  const itemColor = palette.ivoryWarm;
 
   return (
-    <group position={podium.position} rotation={[0, podium.yaw, 0]}>
+    <group
+      position={[podium.position[0], RIDE_HEIGHT, podium.position[2]]}
+      rotation={[0, podium.yaw, 0]}
+    >
       <group ref={groupRef}>
-        {/* Plinth */}
-        <mesh castShadow receiveShadow position={[0, PLINTH_H / 2, 0]}>
-          <boxGeometry args={[PLINTH_W, PLINTH_H, PLINTH_D]} />
-          <meshStandardMaterial color={palette.graphite} metalness={0.7} roughness={0.5} side={FrontSide} />
-        </mesh>
-
-        {/* Monitor body — RoundedBox gives the chassis a soft bevel. Handlers
-            stay on this mesh so the V2.1 click pattern continues to work. */}
+        {/* Glass slab. */}
         <RoundedBox
-          args={[BODY_W, BODY_H, BODY_D]}
-          radius={0.07}
+          args={[CARD_W, CARD_H, CARD_D]}
+          radius={0.04}
           smoothness={3}
-          castShadow
-          position={[0, PLINTH_H + BODY_H / 2, 0]}
           onPointerOver={handleOver}
           onPointerOut={handleOut}
           onClick={handleClick}
         >
-          <meshStandardMaterial color={palette.graphite} metalness={0.75} roughness={0.4} />
+          {lowPerf ? (
+            <meshStandardMaterial
+              color={palette.glassIce}
+              roughness={0.25}
+              metalness={0.1}
+              transparent
+              opacity={0.35}
+            />
+          ) : (
+            <MeshTransmissionMaterial
+              transmission={0.88}
+              thickness={0.45}
+              roughness={0.14}
+              chromaticAberration={0.02}
+              ior={1.5}
+              distortion={0.05}
+              color={palette.glassIce}
+              samples={3}
+              resolution={256}
+            />
+          )}
         </RoundedBox>
 
-        {/* Two steel knob cylinders on the lower front face of the body. */}
-        {[-0.32, 0.32].map((x) => (
-          <mesh
-            key={`knob-${x}`}
-            position={[x, PLINTH_H + 0.09, BODY_D / 2 + 0.001]}
-            rotation={[Math.PI / 2, 0, 0]}
-          >
-            <cylinderGeometry args={[0.030, 0.030, 0.04, 16]} />
-            <meshStandardMaterial color={palette.steel} metalness={0.9} roughness={0.3} />
-          </mesh>
-        ))}
-
-        {/* Power LED — bottom-right of the body, emissive emerald. */}
-        <mesh
-          position={[BODY_W / 2 - 0.10, PLINTH_H + 0.09, BODY_D / 2 + 0.0016]}
-          rotation={[Math.PI / 2, 0, 0]}
+        {/* Header text. */}
+        <Text
+          raycast={noRaycast}
+          ref={disableRaycast}
+          position={[0, CARD_H / 2 - 0.12, CARD_D / 2 + 0.002]}
+          fontSize={0.10}
+          color={headerColor}
+          anchorX="center"
+          anchorY="top"
+          letterSpacing={0.08}
+          outlineWidth={0.002}
+          outlineColor={palette.champagneGold}
+          outlineOpacity={0.5}
         >
-          <cylinderGeometry args={[0.018, 0.018, 0.010, 12]} />
-          <meshStandardMaterial
-            color={palette.emeraldHot}
-            emissive={palette.emeraldHot}
-            emissiveIntensity={1.4}
-          />
-        </mesh>
+          {podium.title}
+        </Text>
 
-        {/* Screen plane */}
-        <mesh
-          position={[0, PLINTH_H + BODY_H / 2, BODY_D / 2 + 0.001]}
-          ref={(m) => m?.layers.enable(1)}
-        >
-          <planeGeometry args={[SCREEN_W, SCREEN_H]} />
-          <meshStandardMaterial
-            color={palette.void}
-            emissive={screenEmissive}
-            emissiveIntensity={hovered ? 0.55 : 0.32}
-          />
-        </mesh>
-
-        {/* Screen text — all offsets scaled 2× to match 2× screen size. */}
-        <group position={[0, PLINTH_H + BODY_H / 2, BODY_D / 2 + 0.006]}>
+        {/* Items list. */}
+        {podium.items.map((item, i) => (
           <Text
+            key={`${podium.id}-${i}`}
             raycast={noRaycast}
             ref={disableRaycast}
-            position={[-SCREEN_W / 2 + 0.04, SCREEN_H / 2 - 0.06, 0]}
-            fontSize={0.048}
-            color={headerColor}
-            anchorX="left"
+            position={[0, CARD_H / 2 - 0.27 - i * 0.085, CARD_D / 2 + 0.002]}
+            fontSize={0.05}
+            color={itemColor}
+            anchorX="center"
             anchorY="top"
-            letterSpacing={0.1}
+            letterSpacing={0.08}
+            maxWidth={CARD_W - 0.18}
           >
-            {`// SYS::${podium.title}`}
+            {item}
           </Text>
-          {podium.items.map((item, i) => (
-            <Text
-              key={`${podium.id}-${i}`}
-              raycast={noRaycast}
-              ref={disableRaycast}
-              position={[-SCREEN_W / 2 + 0.04, SCREEN_H / 2 - 0.15 - i * 0.076, 0]}
-              fontSize={0.044}
-              color={podium.kind === 'contact' ? palette.bone : palette.terminalGrn}
-              anchorX="left"
-              anchorY="top"
-              letterSpacing={0.04}
-              maxWidth={SCREEN_W - 0.1}
-            >
-              {`> ${item}`}
-            </Text>
-          ))}
-        </group>
+        ))}
 
-        {/* Gold corner brackets */}
-        <ScreenCornerBrackets bodyOffsetY={PLINTH_H + BODY_H / 2} bodyOffsetZ={BODY_D / 2 + 0.002} />
+        {/* Champagne-gold edge stroke. */}
+        <EdgeStroke w={CARD_W} h={CARD_H} z={CARD_D / 2 + 0.001} brightness={hovered ? 0.95 : 0.55} />
       </group>
     </group>
   );
 }
 
-function ScreenCornerBrackets({
-  bodyOffsetY,
-  bodyOffsetZ,
+function EdgeStroke({
+  w,
+  h,
+  z,
+  brightness,
 }: {
-  bodyOffsetY: number;
-  bodyOffsetZ: number;
+  w: number;
+  h: number;
+  z: number;
+  brightness: number;
 }) {
-  const W = SCREEN_W;
-  const H = SCREEN_H;
-  // V2.7 — 2× bracket length + thickness to match the bigger screen.
-  const L = 0.10;
-  const T = 0.016;
-  const mat = (
-    <meshStandardMaterial
-      color={palette.goldAccent}
-      emissive={palette.goldAccent}
-      emissiveIntensity={1.3}
-      metalness={0.95}
-      roughness={0.2}
-    />
-  );
-  const corners: readonly [number, number][] = [
-    [-1, 1],
-    [1, 1],
-    [-1, -1],
-    [1, -1],
-  ];
+  const T = 0.008;
+  const matProps = {
+    color: palette.champagneGold,
+    emissive: palette.champagneGold,
+    emissiveIntensity: brightness,
+    metalness: 0.95,
+    roughness: 0.22,
+  } as const;
   return (
-    <group position={[0, bodyOffsetY, bodyOffsetZ]}>
-      {corners.map(([sx, sy]) => (
-        <group key={`${sx}_${sy}`}>
-          <mesh position={[sx * (W / 2 - L / 2), sy * (H / 2 - T / 2), 0]}>
-            <planeGeometry args={[L, T]} />
-            {mat}
-          </mesh>
-          <mesh position={[sx * (W / 2 - T / 2), sy * (H / 2 - L / 2), 0]}>
-            <planeGeometry args={[T, L]} />
-            {mat}
-          </mesh>
-        </group>
-      ))}
-    </group>
+    <>
+      <mesh position={[0, h / 2, z]}>
+        <planeGeometry args={[w, T]} />
+        <meshStandardMaterial {...matProps} />
+      </mesh>
+      <mesh position={[0, -h / 2, z]}>
+        <planeGeometry args={[w, T]} />
+        <meshStandardMaterial {...matProps} />
+      </mesh>
+      <mesh position={[-w / 2, 0, z]}>
+        <planeGeometry args={[T, h]} />
+        <meshStandardMaterial {...matProps} />
+      </mesh>
+      <mesh position={[w / 2, 0, z]}>
+        <planeGeometry args={[T, h]} />
+        <meshStandardMaterial {...matProps} />
+      </mesh>
+    </>
   );
 }
