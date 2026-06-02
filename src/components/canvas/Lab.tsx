@@ -76,7 +76,9 @@ void main(){
   vec2 c = vUv - 0.5;
   float r = length(c);
   float pulse = 0.5 + 0.5 * sin(uTime * 0.6 - r * 14.0);
-  vec3 col = mix(uBase, uLine, line * 0.30 * (0.6 + 0.4 * pulse));
+  // V6.0 — grid line emissive bumped 0.30 → 0.39 (+30 %) for a brighter
+  // emerald grid against the new slate-purple background tint.
+  vec3 col = mix(uBase, uLine, line * 0.39 * (0.6 + 0.4 * pulse));
 
   // Expanding ring pulse — bright band sweeps outward over 8s, fades at the
   // horizon. The exp(-x²) gives a soft band, sin(...) only contributes the
@@ -229,6 +231,21 @@ function CertificateRack() {
           outlineColor={palette.void}
         >
           CERTIFICATES
+        </Text>
+        {/* V6.0 — small "12 / 12" counter below the title in subtle bone. */}
+        <Text
+          raycast={noRaycast}
+          ref={disableRaycast}
+          position={[0, -0.04, 0]}
+          fontSize={0.06}
+          color={palette.bone}
+          anchorX="center"
+          anchorY="top"
+          letterSpacing={0.3}
+          outlineWidth={0.001}
+          outlineColor={palette.void}
+        >
+          12 / 12
         </Text>
       </group>
 

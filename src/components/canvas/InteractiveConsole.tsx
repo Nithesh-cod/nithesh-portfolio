@@ -158,6 +158,19 @@ export function InteractiveConsole({
         <meshStandardMaterial color={palette.steel} metalness={0.9} roughness={0.35} />
       </mesh>
 
+      {/* V6.0 — thin gold inlay strip running along the front top edge of
+          the lid. Reads as a premium chrome accent. */}
+      <mesh position={[0, -0.052, 0.72 / 2 + 0.001]}>
+        <boxGeometry args={[1.06, 0.005, 0.005]} />
+        <meshStandardMaterial
+          color={palette.goldAccent}
+          emissive={palette.goldAccent}
+          emissiveIntensity={0.8}
+          metalness={0.95}
+          roughness={0.2}
+        />
+      </mesh>
+
       {/* Front-face LED row — 4 emerald dots near the top of the body. */}
       <PlinthLedRow z={0.62 / 2 + 0.001} />
       {/* Rear-face LED row — same colour, visible from the orbit-back waypoint. */}
@@ -194,15 +207,18 @@ export function InteractiveConsole({
           // V2.5: y=0 (true centre) now the underline mesh is gone.
           position={[0, 0, 0.006]}
           fontSize={0.13}
-          color={palette.emeraldGlow}
+          // V6.0 — slight warm tint instead of pure emerald glow; outline
+          // gold at 60 % opacity (=goldAccent with 0.003 width).
+          color="#FFF6E0"
           anchorX="center"
           anchorY="middle"
           maxWidth={0.85}
           textAlign="center"
           lineHeight={1.0}
           letterSpacing={0.16}
-          outlineWidth={0.004}
+          outlineWidth={0.003}
           outlineColor={palette.goldAccent}
+          outlineOpacity={0.6}
         >
           {label.toUpperCase()}
         </Text>

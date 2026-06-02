@@ -1,7 +1,7 @@
 'use client';
 
 import { Canvas } from '@react-three/fiber';
-import { AdaptiveDpr, AdaptiveEvents, Environment, PerformanceMonitor, Preload } from '@react-three/drei';
+import { AdaptiveDpr, AdaptiveEvents, Environment, PerformanceMonitor, Preload, Sparkles, SpotLight } from '@react-three/drei';
 import { useState } from 'react';
 import type { PointLight } from 'three';
 import { Lab } from '@/components/canvas/Lab';
@@ -40,7 +40,9 @@ export function Scene() {
         alpha: false,
       }}
       camera={{ position: [0, 1.7, 7], fov: 38, near: 0.1, far: 120 }}
-      onCreated={({ gl }) => gl.setClearColor(palette.void, 1)}
+      // V6.0 — clear colour gets a 20 % wash of deep slate-purple over the
+      // pure void. Adds atmospheric depth without changing the chassis read.
+      onCreated={({ gl }) => gl.setClearColor('#080A18', 1)}
     >
       <PerformanceTier
         onDowngrade={(m) => {
@@ -49,7 +51,10 @@ export function Scene() {
         }}
       />
 
-      <fog attach="fog" args={[palette.void, 4, 22]} />
+      {/* V6.0 — fog colour matches the new slate-purple clear so distant
+          geometry blends into atmosphere rather than vanishing into pure
+          black. Same near/far. */}
+      <fog attach="fog" args={['#080A18', 4, 22]} />
 
       {/* V2.6 — night-preset env map so metal chassis materials have something
           to reflect. background={false} keeps our custom Sky in place. */}
@@ -65,6 +70,18 @@ export function Scene() {
       <SweepingSpotlights />
       <AllTerminalsArc />
       <AccessibilityProxies />
+
+      {/* V6.0 — soft ambient dust motes. Lower count than the deleted
+          Matrix-rain layer; subtle, not chaotic. */}
+      <Sparkles
+        count={60}
+        scale={[12, 6, 12]}
+        size={1.2}
+        speed={0.15}
+        opacity={0.3}
+        color="#E8F5EE"
+        position={[0, 1.5, -2]}
+      />
 
       <ScrollCamera />
       <PostFX />
@@ -114,6 +131,20 @@ function Lights() {
         color={palette.amberKey}
         distance={5}
         decay={2}
+      />
+
+      {/* V6.0 — additional warm key spotlight from above, narrow + soft.
+          Adds a warm sculpt to the cool-dominant scene without changing
+          the overall palette. */}
+      <SpotLight
+        position={[3, 6, 2]}
+        target-position={[0, 1, 0]}
+        intensity={0.8}
+        angle={0.5}
+        penumbra={0.7}
+        color="#FFD89A"
+        distance={18}
+        decay={1.6}
       />
     </>
   );

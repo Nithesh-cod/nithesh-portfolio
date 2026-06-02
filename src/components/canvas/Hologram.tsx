@@ -103,6 +103,10 @@ export function Hologram() {
           intensity is driven by the same rim-pulse phase as the bezel mat. */}
       <CornerLeds matRef={bezelMat} />
 
+      {/* V6.0 — four small gold rivets at the gold-frame corners. Reads
+          as a premium hardware detail without changing the rim pulse. */}
+      <CornerRivets />
+
       {/* The hologram itself.
           NormalBlending (was AdditiveBlending): additive was summing the
           shader output onto the bezel's emissive contribution, so subject
@@ -244,6 +248,39 @@ function GoldFrame() {
         <boxGeometry args={[T, H, 0.005]} />
         <meshStandardMaterial {...props} />
       </mesh>
+    </>
+  );
+}
+
+/**
+ * V6.0 — 4 small gold rivets, one at each gold-frame corner. Tiny detail
+ * that suggests fastened hardware. radius 0.012 so they sit roughly the
+ * thickness of the gold slabs. Static emissive (no animation needed).
+ */
+function CornerRivets() {
+  const W = 1.56;
+  const H = 2.06;
+  const Z = 0.0;
+  const corners: readonly [number, number][] = [
+    [-W / 2, H / 2],
+    [W / 2, H / 2],
+    [-W / 2, -H / 2],
+    [W / 2, -H / 2],
+  ];
+  return (
+    <>
+      {corners.map(([x, y], i) => (
+        <mesh key={i} position={[x, y, Z]} rotation={[Math.PI / 2, 0, 0]}>
+          <cylinderGeometry args={[0.012, 0.012, 0.008, 16]} />
+          <meshStandardMaterial
+            color={palette.goldAccent}
+            emissive={palette.goldAccent}
+            emissiveIntensity={0.35}
+            metalness={0.95}
+            roughness={0.2}
+          />
+        </mesh>
+      ))}
     </>
   );
 }
