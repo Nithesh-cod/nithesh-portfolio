@@ -2,10 +2,23 @@
 
 import { useFrame } from '@react-three/fiber';
 import { useMemo } from 'react';
-import { Color } from 'three';
+import { Color, DoubleSide } from 'three';
 import { palette } from '@/lib/palette';
 
-const VERT = /* glsl */ `varying vec2 vUv; varying vec3 vWorld;
+/**
+ * V9.1 — flat hex tile floor.
+ *   - planeGeometry rotated -π/2 around X so the plane lies in the XZ
+ *     world plane (normal = +Y).
+ *   - shader samples world-space (x, z) → hex grid math → cyan-green
+ *     edges + ~15 % randomly-active pulsing cells.
+ *   - reflective base disc UNDER the shader plane catches spotlight
+ *     reflections; the alpha-blended shader sits 1 mm above.
+ *   - side: DoubleSide on the shader plane so the floor renders even
+ *     if the camera dips below the horizon for any frame.
+ */
+
+const VERT = /* glsl */ `varying vec2 vUv;
+varying vec3 vWorld;
 void main(){
   vUv = uv;
   vec4 wp = modelMatrix * vec4(position, 1.0);
@@ -22,7 +35,7 @@ uniform float uTime;
 
 float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123); }
 
-// Hex SDF — returns vec4(localPos.xy, dist, cellId).
+// Returns (relativeXY, edgeDist 0..1, cellId).
 vec4 hexCell(vec2 p, float r){
   vec2 s = vec2(1.0, 1.7320508);
   vec2 hC = vec2(r * s.x, r * s.y);
@@ -36,6 +49,7 @@ vec4 hexCell(vec2 p, float r){
 }
 
 void main(){
+  // Sample world-space (x, z) for the hex pattern.
   vec2 p = vWorld.xz;
   float r = 0.55;
   vec4 c = hexCell(p, r);
@@ -44,19 +58,20 @@ void main(){
 
   float rad = length(p);
 
-  // Edge glow.
+  // Edge band — bright near d=0.92.
   float edge = smoothstep(0.86, 0.93, d) * (1.0 - smoothstep(0.96, 1.0, d));
 
-  // ~15 % active hexes pulse.
+  // Cell fill — ~15 % of cells "active", slow pulse.
   float active = step(0.85, id);
   float pulse = 0.4 + 0.4 * sin(uTime * 1.4 + id * 12.0);
   float fill = active * pulse * (1.0 - d) * 0.08;
 
   vec3 col = uBase;
-  col += uEdge * edge * 1.1;
+  col += uEdge * edge * 1.2;
   col += uEdge * fill * 4.0;
 
-  float a = 1.0 - smoothstep(7.0, 19.0, rad);
+  // Radial alpha — opaque near origin, fades past r=18.
+  float a = 1.0 - smoothstep(7.0, 18.0, rad);
   gl_FragColor = vec4(col, a);
 }`;
 
@@ -74,8 +89,9 @@ export function HexFloor() {
   });
   return (
     <>
-      {/* Reflective base disc for spotlights to catch. */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.001, 0]} receiveShadow>
+      {/* Reflective base disc — catches spotlight reflections. Locked
+          flat with the rotation prop. */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <circleGeometry args={[20, 64]} />
         <meshPhysicalMaterial
           color="#020406"
@@ -86,8 +102,10 @@ export function HexFloor() {
           reflectivity={0.5}
         />
       </mesh>
-      {/* Hex grid overlay. */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, 0]}>
+
+      {/* Hex grid overlay — 1 mm above the base disc, DoubleSide so any
+          camera dip doesn't reveal a back-cull. */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]}>
         <planeGeometry args={[44, 44, 1, 1]} />
         <shaderMaterial
           vertexShader={VERT}
@@ -95,6 +113,7 @@ export function HexFloor() {
           uniforms={uniforms}
           transparent
           depthWrite={false}
+          side={DoubleSide}
         />
       </mesh>
     </>

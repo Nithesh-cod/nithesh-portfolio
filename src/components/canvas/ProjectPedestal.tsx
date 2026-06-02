@@ -1,6 +1,6 @@
 'use client';
 
-import { Text } from '@react-three/drei';
+import { Billboard, Text } from '@react-three/drei';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import { useRef, useState } from 'react';
 import { type Group, type MeshStandardMaterial } from 'three';
@@ -15,24 +15,36 @@ type Props = {
   label: string;
   subtitle: string;
   position: readonly [number, number, number];
-  /** Which procedural wireframe icon to render. */
   iconKind: 'leaf' | 'box' | 'globe';
+  /** Bob phase offset so adjacent pedestals don't move in unison. */
+  phase?: number;
 };
 
 const HEX_SIDES = 6;
 
-/**
- * V9.0 — hex pedestal carrying a slowly rotating wireframe icon, the
- * project name, a subtitle, and a "VIEW PROJECT" button. Click anywhere
- * on the group → opens the ProjectModal.
- */
-export function ProjectPedestal({ slug, label, subtitle, position, iconKind }: Props) {
+// V9.1 — 3 stacked hex tiers, each h=0.15.
+//   tier 1 (bottom): y centre 0.075, top 0.15, radius 0.85
+//   tier 2 (middle): y centre 0.225, top 0.30, radius 0.7
+//   tier 3 (top):    y centre 0.375, top 0.45, radius 0.55
+const TIERS: readonly { y: number; radius: number; h: number }[] = [
+  { y: 0.075, radius: 0.85, h: 0.15 },
+  { y: 0.225, radius: 0.70, h: 0.15 },
+  { y: 0.375, radius: 0.55, h: 0.15 },
+];
+
+const PEDESTAL_TOP_Y = 0.45;
+const ICON_Y = PEDESTAL_TOP_Y + 0.30;       // floating wireframe icon
+const NAME_Y = PEDESTAL_TOP_Y + 0.10;       // name floats just above pedestal
+const SUBTITLE_Y = PEDESTAL_TOP_Y - 0.02;   // subtitle on top tier's front
+const BUTTON_Y = 0.375;                     // tier 3 centre — button on its front face
+
+export function ProjectPedestal({ slug, label, subtitle, position, iconKind, phase = 0 }: Props) {
   const groupRef = useRef<Group | null>(null);
   const iconRef = useRef<Group | null>(null);
-  const trimRef = useRef<MeshStandardMaterial | null>(null);
+  const trimRefs = useRef<(MeshStandardMaterial | null)[]>([]);
   const buttonMatRef = useRef<MeshStandardMaterial | null>(null);
   const [hovered, setHovered] = useState(false);
-  const t = useRef(Math.random() * 6);
+  const t = useRef(phase);
 
   const openProject = usePortfolioStore((s) => s.openProject);
   const setCursor = usePortfolioStore((s) => s.setCursorState);
@@ -40,16 +52,17 @@ export function ProjectPedestal({ slug, label, subtitle, position, iconKind }: P
   useFrame((_, dt) => {
     t.current += dt;
     if (groupRef.current) {
-      const bob = Math.sin(t.current * 0.8) * 0.04;
+      // Sin-wave bob, amplitude 0.05, period 6 s.
+      const bob = Math.sin((t.current / 6) * Math.PI * 2) * 0.05;
       groupRef.current.position.y = position[1] + bob + (hovered ? 0.06 : 0);
     }
     if (iconRef.current) {
       iconRef.current.rotation.y += dt * 0.5;
       iconRef.current.rotation.x += dt * 0.2;
     }
-    if (trimRef.current) {
-      trimRef.current.emissiveIntensity = hovered ? 1.8 : 1.1;
-    }
+    trimRefs.current.forEach((m) => {
+      if (m) m.emissiveIntensity = hovered ? 1.8 : 1.0;
+    });
     if (buttonMatRef.current) {
       buttonMatRef.current.emissiveIntensity = hovered ? 1.6 : 0.8;
     }
@@ -72,87 +85,88 @@ export function ProjectPedestal({ slug, label, subtitle, position, iconKind }: P
     openProject(slug, slug);
   };
 
-  // Pedestal tier stack (3 stepped hex tiers).
-  const TIERS = [
-    { y: 0.05, radius: 0.65, h: 0.10 },
-    { y: 0.18, radius: 0.55, h: 0.16 },
-    { y: 0.32, radius: 0.45, h: 0.08 },
-  ];
-
   return (
     <group ref={groupRef} position={position}>
-      {/* Hex tiers. */}
+      {/* 3 hex tiers — each rotated 30° around Y so the flat hex face points
+          straight at the camera-front (z+). */}
       {TIERS.map((tier, i) => (
-        <mesh
-          key={i}
-          position={[0, tier.y, 0]}
-          rotation={[0, Math.PI / 6, 0]}
-          onPointerOver={handleOver}
-          onPointerOut={handleOut}
-          onClick={handleClick}
-        >
-          <cylinderGeometry args={[tier.radius, tier.radius * 1.04, tier.h, HEX_SIDES]} />
-          <meshStandardMaterial
-            color="#0A1014"
-            metalness={0.85}
-            roughness={0.35}
-            emissive={palette.neonGreen}
-            emissiveIntensity={0.05}
-          />
-        </mesh>
+        <group key={i}>
+          <mesh
+            position={[0, tier.y, 0]}
+            rotation={[0, Math.PI / 6, 0]}
+            onPointerOver={handleOver}
+            onPointerOut={handleOut}
+            onClick={handleClick}
+          >
+            <cylinderGeometry args={[tier.radius, tier.radius * 1.04, tier.h, HEX_SIDES]} />
+            <meshStandardMaterial
+              color="#1A1A2A"
+              metalness={0.8}
+              roughness={0.3}
+              emissive={palette.neonGreen}
+              emissiveIntensity={0.04}
+            />
+          </mesh>
+          {/* Top-edge emissive trim ring for each tier. */}
+          <mesh
+            position={[0, tier.y + tier.h / 2, 0]}
+            rotation={[Math.PI / 2, 0, Math.PI / 6]}
+          >
+            <torusGeometry args={[tier.radius, 0.008, 8, 6 * 8]} />
+            <meshStandardMaterial
+              ref={(m) => {
+                trimRefs.current[i] = m;
+              }}
+              color={palette.neonGreen}
+              emissive={palette.neonGreen}
+              emissiveIntensity={1.0}
+              metalness={0.9}
+              roughness={0.2}
+            />
+          </mesh>
+        </group>
       ))}
 
-      {/* Top-edge trim ring. */}
-      <mesh position={[0, 0.37, 0]} rotation={[Math.PI / 2, 0, Math.PI / 6]}>
-        <torusGeometry args={[0.46, 0.012, 8, 6 * 8]} />
-        <meshStandardMaterial
-          ref={trimRef}
-          color={palette.neonGreen}
-          emissive={palette.neonGreen}
-          emissiveIntensity={1.1}
-          metalness={0.9}
-          roughness={0.2}
-        />
-      </mesh>
-
-      {/* Floating wireframe icon above pedestal. */}
-      <group ref={iconRef} position={[0, 0.8, 0]}>
+      {/* Floating wireframe hologram icon above pedestal. */}
+      <group ref={iconRef} position={[0, ICON_Y, 0]}>
         <WireframeIcon kind={iconKind} />
       </group>
 
-      {/* Project name. */}
-      <Text
-        raycast={noRaycast}
-        ref={disableRaycast}
-        position={[0, 1.25, 0]}
-        fontSize={0.15}
-        color={palette.neonBright}
-        anchorX="center"
-        anchorY="middle"
-        letterSpacing={0.16}
-        outlineWidth={0.002}
-        outlineColor={palette.neonGreen}
-      >
-        {label.toUpperCase()}
-      </Text>
+      {/* Name label — Billboarded so it always faces camera. */}
+      <Billboard position={[0, NAME_Y, 0]}>
+        <Text
+          raycast={noRaycast}
+          ref={disableRaycast}
+          fontSize={0.16}
+          color={palette.neonBright}
+          anchorX="center"
+          anchorY="middle"
+          letterSpacing={0.16}
+          outlineWidth={0.0025}
+          outlineColor={palette.neonGreen}
+        >
+          {label.toUpperCase()}
+        </Text>
+      </Billboard>
 
-      {/* Subtitle. */}
-      <Text
-        raycast={noRaycast}
-        ref={disableRaycast}
-        position={[0, 1.10, 0]}
-        fontSize={0.055}
-        color={palette.textSecondary}
-        anchorX="center"
-        anchorY="middle"
-        letterSpacing={0.12}
-      >
-        {subtitle}
-      </Text>
+      {/* Subtitle — also Billboarded. */}
+      <Billboard position={[0, SUBTITLE_Y, 0]}>
+        <Text
+          raycast={noRaycast}
+          ref={disableRaycast}
+          fontSize={0.055}
+          color={palette.textSecondary}
+          anchorX="center"
+          anchorY="middle"
+          letterSpacing={0.12}
+        >
+          {subtitle}
+        </Text>
+      </Billboard>
 
-      {/* VIEW PROJECT button. */}
+      {/* VIEW PROJECT button — recessed rectangle on tier 3 front face. */}
       <group
-        position={[0, 0.92, 0]}
+        position={[0, BUTTON_Y, 0.56]}
         onPointerOver={handleOver}
         onPointerOut={handleOut}
         onClick={handleClick}
@@ -171,7 +185,7 @@ export function ProjectPedestal({ slug, label, subtitle, position, iconKind }: P
         <Text
           raycast={noRaycast}
           ref={disableRaycast}
-          position={[0, 0, 0.002]}
+          position={[0, 0, 0.003]}
           fontSize={0.04}
           color={palette.neonBright}
           anchorX="center"
@@ -185,21 +199,18 @@ export function ProjectPedestal({ slug, label, subtitle, position, iconKind }: P
   );
 }
 
-/**
- * Tiny procedural wireframe icons. All neon-green, single material.
- */
 function WireframeIcon({ kind }: { kind: 'leaf' | 'box' | 'globe' }) {
   const matProps = {
     color: palette.neonGreen,
     wireframe: true,
     emissive: palette.neonGreen,
-    emissiveIntensity: 1.0,
+    emissiveIntensity: 1.2,
   } as const;
 
   if (kind === 'box') {
     return (
       <mesh>
-        <boxGeometry args={[0.32, 0.32, 0.32]} />
+        <boxGeometry args={[0.34, 0.34, 0.34]} />
         <meshStandardMaterial {...matProps} />
       </mesh>
     );
@@ -207,15 +218,15 @@ function WireframeIcon({ kind }: { kind: 'leaf' | 'box' | 'globe' }) {
   if (kind === 'globe') {
     return (
       <mesh>
-        <sphereGeometry args={[0.22, 16, 12]} />
+        <sphereGeometry args={[0.24, 16, 12]} />
         <meshStandardMaterial {...matProps} />
       </mesh>
     );
   }
-  // 'leaf' — use an icosahedron as a stand-in for the procedural plant.
+  // 'leaf' — icosahedron stands in for the procedural plant.
   return (
     <mesh>
-      <icosahedronGeometry args={[0.22, 0]} />
+      <icosahedronGeometry args={[0.24, 0]} />
       <meshStandardMaterial {...matProps} />
     </mesh>
   );

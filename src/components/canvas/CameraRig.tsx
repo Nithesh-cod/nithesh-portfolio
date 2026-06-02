@@ -11,11 +11,13 @@ import { Vector3 } from 'three';
  * a "centerpiece" inside the dashboard HUD without stealing attention.
  */
 const ORBIT_RADIUS = 9.5;
-const ORBIT_HEIGHT = 2.6;
-const ORBIT_SPEED = 0.05; // rad/sec
+const ORBIT_HEIGHT = 3.2;   // V9.1 — lifted so the floor reads as flat
+const ORBIT_SPEED = 0.05;   // rad/sec
 const PARALLAX_X = 0.25;
 const PARALLAX_Y = 0.15;
-const TARGET = new Vector3(0, 1.8, 0);
+// V9.1 — target dropped to y=1.4 (capsule body centre) so the camera
+// tilts ~10° downward — the hex floor now reads as ground, not a wall.
+const TARGET = new Vector3(0, 1.4, 0);
 
 export function CameraRig() {
   const { camera } = useThree();

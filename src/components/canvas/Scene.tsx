@@ -26,9 +26,9 @@ import { palette } from '@/lib/palette';
 const FPS_DOWNGRADE_HOLD_MS = 3000;
 
 const PROJECTS = [
-  { slug: 'cropai',        label: 'CropAI',        subtitle: 'AI CROP ADVISOR SYSTEM',                  position: [-3.5, 0, 2.5], iconKind: 'leaf' },
-  { slug: 'smart-canteen', label: 'Smart Canteen', subtitle: 'AI · AUTOMATION · IoT CAPSTONE PROJECT', position: [0,    0, 4.0], iconKind: 'box' },
-  { slug: 'testai',        label: 'TestAI',        subtitle: 'AI EXAM PROCTORING SYSTEM',               position: [3.5,  0, 2.5], iconKind: 'globe' },
+  { slug: 'cropai',        label: 'CropAI',        subtitle: 'AI CROP ADVISOR SYSTEM',                  position: [-3.5, 0, 2.5], iconKind: 'leaf',  phase: 0 },
+  { slug: 'smart-canteen', label: 'Smart Canteen', subtitle: 'AI · AUTOMATION · IoT CAPSTONE PROJECT', position: [0,    0, 4.0], iconKind: 'box',   phase: 1.4 },
+  { slug: 'testai',        label: 'TestAI',        subtitle: 'AI EXAM PROCTORING SYSTEM',               position: [3.5,  0, 2.5], iconKind: 'globe', phase: 2.8 },
 ] as const;
 
 /**
@@ -85,6 +85,7 @@ export function Scene() {
           subtitle={p.subtitle}
           position={p.position}
           iconKind={p.iconKind}
+          phase={p.phase}
         />
       ))}
 
