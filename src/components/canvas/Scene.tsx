@@ -11,12 +11,13 @@ import {
   SpotLight,
 } from '@react-three/drei';
 import { useEffect, useRef, useState } from 'react';
-import type { Mesh } from 'three';
+import type { Mesh, PointLight } from 'three';
 import { Lab } from '@/components/canvas/Lab';
 import { HexFloor } from '@/components/canvas/HexFloor';
 import { HoloCapsule } from '@/components/canvas/HoloCapsule';
-import { ProjectPedestal } from '@/components/canvas/ProjectPedestal';
-import { VolumetricBeam } from '@/components/canvas/VolumetricBeam';
+import { ProjectStation } from '@/components/canvas/ProjectStation';
+import { WallCertRack } from '@/components/canvas/WallCertRack';
+import { RoomShell } from '@/components/canvas/RoomShell';
 import { FloatingDataGlyphs } from '@/components/canvas/FloatingDataGlyphs';
 import { CameraRig } from '@/components/canvas/CameraRig';
 import { PostFX } from '@/components/canvas/PostFX';
@@ -27,17 +28,15 @@ import { palette } from '@/lib/palette';
 const FPS_DOWNGRADE_HOLD_MS = 3000;
 
 const PROJECTS = [
-  { slug: 'cropai',        label: 'CropAI',        subtitle: 'AI CROP ADVISOR SYSTEM',                  position: [-3.5, 0, 2.5], iconKind: 'leaf',  phase: 0 },
-  { slug: 'smart-canteen', label: 'Smart Canteen', subtitle: 'AI · AUTOMATION · IoT CAPSTONE PROJECT', position: [0,    0, 4.0], iconKind: 'box',   phase: 1.4 },
-  { slug: 'testai',        label: 'TestAI',        subtitle: 'AI EXAM PROCTORING SYSTEM',               position: [3.5,  0, 2.5], iconKind: 'globe', phase: 2.8 },
+  { slug: 'cropai',        label: 'CropAI',        subtitle: 'AI CROP ADVISOR SYSTEM',                  position: [-4, 0, 3.5], yaw:  0.3, iconKind: 'leaf',  phase: 0 },
+  { slug: 'smart-canteen', label: 'Smart Canteen', subtitle: 'AI · AUTOMATION · IoT CAPSTONE PROJECT', position: [0, 0, 4.5], yaw:  0.0, iconKind: 'box',   phase: 1.4 },
+  { slug: 'testai',        label: 'TestAI',        subtitle: 'AI EXAM PROCTORING SYSTEM',               position: [4, 0, 3.5], yaw: -0.3, iconKind: 'globe', phase: 2.8 },
 ] as const;
 
 export function Scene() {
   const setPerfMode = usePortfolioStore((s) => s.setPerfMode);
   const isMobile = useIsMobile();
   const [dpr, setDpr] = useState<[number, number]>([1, 2]);
-  // Sun mesh ref — capsule mounts an invisible bright sphere, PostFX uses
-  // it as the GodRays source.
   const sunRef = useRef<Mesh | null>(null);
 
   useEffect(() => {
@@ -57,7 +56,7 @@ export function Scene() {
         depth: true,
         alpha: false,
       }}
-      camera={{ position: [0, 3.2, 9], fov: 38, near: 0.1, far: 120 }}
+      camera={{ position: [0, 3.0, 11], fov: 42, near: 0.1, far: 120 }}
       onCreated={({ gl }) => gl.setClearColor(palette.bgBase, 1)}
     >
       <PerformanceTier
@@ -67,42 +66,46 @@ export function Scene() {
         }}
       />
 
-      <fog attach="fog" args={[palette.bgBase, 8, 30]} />
-      <Environment preset="night" background={false} environmentIntensity={0.4} />
+      <fog attach="fog" args={[palette.bgBase, 10, 36]} />
+      <Environment preset="city" background={false} environmentIntensity={0.4} />
 
       <Lights />
+
+      {/* Environment shell. */}
       <Lab />
       <HexFloor />
+      <RoomShell />
+
+      {/* Central exhibit. */}
       <HoloCapsule ref={sunRef} />
 
+      {/* 3 project stations in a curved arc in front. */}
       {PROJECTS.map((p) => (
-        <ProjectPedestal
+        <ProjectStation
           key={p.slug}
           slug={p.slug}
           label={p.label}
           subtitle={p.subtitle}
           position={p.position}
+          yaw={p.yaw}
           iconKind={p.iconKind}
           phase={p.phase}
         />
       ))}
 
-      {/* 4 volumetric beams. */}
-      <VolumetricBeam position={[-2.5, 8, 1]}  rotation={[0, 0,  0.05]} color="#CCFFDD" intensity={0.85} seed={0} />
-      <VolumetricBeam position={[-0.8, 8, -1]} rotation={[0, 0, -0.03]} color="#AAFFCC" intensity={0.7}  seed={1.3} />
-      <VolumetricBeam position={[ 0.8, 8, -1]} rotation={[0, 0,  0.04]} color="#AAFFCC" intensity={0.7}  seed={2.6} />
-      <VolumetricBeam position={[ 2.5, 8, 1]}  rotation={[0, 0, -0.05]} color="#CCFFDD" intensity={0.85} seed={3.9} />
+      {/* Cert rack mounted on the back wall. */}
+      <WallCertRack />
 
       <FloatingDataGlyphs />
 
       <Sparkles
-        count={100}
-        scale={[12, 8, 12]}
+        count={200}
+        scale={[16, 6, 16]}
         size={1.2}
         speed={0.15}
         opacity={0.4}
         color="#88FFCC"
-        position={[0, 2, 0]}
+        position={[0, 2.5, 0]}
       />
 
       <CameraRig />
@@ -115,14 +118,45 @@ export function Scene() {
   );
 }
 
+/**
+ * V10.0 — 5 ceiling spotlights aimed at the key exhibit positions:
+ * 1 over the capsule (centre), 3 over each project station, 1 over the
+ * cert rack at the back wall.
+ */
 function Lights() {
   return (
     <>
-      <ambientLight intensity={0.10} color="#0A1014" />
-      <SpotLight position={[-2.5, 7, 2]} target-position={[0, 0, 0]} intensity={2.5} angle={0.35} penumbra={0.7} color="#CCFFDD" distance={20} decay={1.5} castShadow />
-      <SpotLight position={[ 2.5, 7, 2]} target-position={[0, 0, 0]} intensity={2.5} angle={0.35} penumbra={0.7} color="#CCFFDD" distance={20} decay={1.5} />
-      <SpotLight position={[-2,   7, -1.5]} target-position={[0, 0, 0]} intensity={1.8} angle={0.4} penumbra={0.8} color="#AAFFCC" distance={20} decay={1.5} />
-      <SpotLight position={[ 2,   7, -1.5]} target-position={[0, 0, 0]} intensity={1.8} angle={0.4} penumbra={0.8} color="#AAFFCC" distance={20} decay={1.5} />
+      <ambientLight intensity={0.15} color="#1A2A22" />
+
+      {/* Capsule key. */}
+      <SpotLight position={[0, 5.7, 0]} target-position={[0, 0, 0]} intensity={2.0}
+        angle={0.5} penumbra={0.8} color="#DDFFEE" distance={12} decay={1.4} castShadow />
+      {/* Project stations. */}
+      <SpotLight position={[-4, 5.7, -2]} target-position={[-4, 0, 3.5]} intensity={1.5}
+        angle={0.5} penumbra={0.8} color="#DDFFEE" distance={12} decay={1.4} />
+      <SpotLight position={[ 4, 5.7, -2]} target-position={[ 4, 0, 3.5]} intensity={1.5}
+        angle={0.5} penumbra={0.8} color="#DDFFEE" distance={12} decay={1.4} />
+      <SpotLight position={[-2, 5.7,  2]} target-position={[ 0, 0, 4.5]} intensity={1.5}
+        angle={0.5} penumbra={0.8} color="#DDFFEE" distance={12} decay={1.4} />
+      {/* Cert rack key. */}
+      <SpotLight position={[ 2, 5.7,  2]} target-position={[0, 2.5, -7]} intensity={1.5}
+        angle={0.5} penumbra={0.8} color="#DDFFEE" distance={16} decay={1.4} />
+
+      {/* Corner pillar point lights. */}
+      <pointLight position={[-7.8, 2, -7.8]} intensity={0.6} color={palette.neonGreen} distance={5} decay={2} />
+      <pointLight position={[ 7.8, 2, -7.8]} intensity={0.6} color={palette.neonGreen} distance={5} decay={2} />
+      <pointLight position={[-7.8, 2,  7]}   intensity={0.6} color={palette.neonGreen} distance={5} decay={2} />
+      <pointLight position={[ 7.8, 2,  7]}   intensity={0.6} color={palette.neonGreen} distance={5} decay={2} />
+
+      {/* Capsule rim — layer-1 only so glass + emissives catch it without lighting walls. */}
+      <pointLight
+        ref={(l: PointLight | null) => { if (l) l.layers.set(1); }}
+        position={[0, 2, 0]}
+        intensity={0.6}
+        color={palette.neonGreen}
+        distance={6}
+        decay={2}
+      />
     </>
   );
 }

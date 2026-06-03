@@ -1,35 +1,87 @@
 'use client';
 
-import { useFrame } from '@react-three/fiber';
-import { useRef } from 'react';
+import { useFrame, useThree } from '@react-three/fiber';
+import { OrbitControls } from '@react-three/drei';
+import gsap from 'gsap';
+import { useEffect, useRef } from 'react';
 import { Vector3 } from 'three';
+import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
+import { usePortfolioStore } from '@/lib/store';
 
-const BASE_X = 0;
-const BASE_Y = 3.2;
-const BASE_Z = 9;
-const TARGET = new Vector3(0, 1.4, 0);
+const AUTO_ROTATE_IDLE_MS = 10000;
+const FOCUS_DURATION = 0.8;
 
 /**
- * V9.3 — fixed camera with subtle breathing + mouse parallax.
- * No OrbitControls. Position lerps each frame toward a target derived
- * from time-driven sin/cos + the state.mouse.{x,y} R3F provides.
+ * V10.0 — OrbitControls museum-tour rig. Drag to rotate, scroll to zoom.
+ * Slow auto-rotate (0.15 rad/s) resumes after 10 s idle. Click-to-focus
+ * tween via GSAP wires through the store's focusOn action.
  */
 export function CameraRig() {
-  const target = useRef(new Vector3());
+  const controls = useRef<OrbitControlsImpl | null>(null);
+  const { camera } = useThree();
 
-  useFrame((state) => {
-    const t = state.clock.elapsedTime;
-    const mouseX = state.mouse.x;
-    const mouseY = state.mouse.y;
+  const focusTarget = usePortfolioStore((s) => s.focusTarget);
+  const lastInteractAt = usePortfolioStore((s) => s.lastInteractAt);
+  const markInteract = usePortfolioStore((s) => s.markInteract);
+  const tweening = useRef(false);
+  const lastRequestId = useRef(0);
 
-    target.current.set(
-      BASE_X + Math.sin(t * 0.3) * 0.15 + mouseX * 0.25,
-      BASE_Y + Math.cos(t * 0.4) * 0.08 + mouseY * 0.15,
-      BASE_Z + Math.sin(t * 0.2) * 0.10,
-    );
-    state.camera.position.lerp(target.current, 0.04);
-    state.camera.lookAt(TARGET);
+  useEffect(() => {
+    if (!focusTarget) return;
+    if (focusTarget.requestId === lastRequestId.current) return;
+    lastRequestId.current = focusTarget.requestId;
+    if (!controls.current) return;
+
+    const [tx, ty, tz] = focusTarget.lookAt;
+    const [px, py, pz] = focusTarget.position;
+    const finalCam = new Vector3(px, py, pz);
+
+    tweening.current = true;
+    gsap.killTweensOf(controls.current.target);
+    gsap.killTweensOf(camera.position);
+
+    gsap.to(controls.current.target, {
+      x: tx, y: ty, z: tz,
+      duration: FOCUS_DURATION,
+      ease: 'power2.inOut',
+      onUpdate: () => controls.current?.update(),
+    });
+    gsap.to(camera.position, {
+      x: finalCam.x, y: finalCam.y, z: finalCam.z,
+      duration: FOCUS_DURATION,
+      ease: 'power2.inOut',
+      onComplete: () => { tweening.current = false; },
+    });
+
+    markInteract();
+  }, [focusTarget, camera, markInteract]);
+
+  useFrame(() => {
+    if (!controls.current) return;
+    const c = controls.current as unknown as { autoRotate: boolean };
+    if (tweening.current) {
+      c.autoRotate = false;
+      return;
+    }
+    c.autoRotate = performance.now() - lastInteractAt > AUTO_ROTATE_IDLE_MS;
   });
 
-  return null;
+  return (
+    <OrbitControls
+      ref={controls}
+      enableDamping
+      dampingFactor={0.05}
+      enablePan={false}
+      enableZoom
+      minDistance={6}
+      maxDistance={15}
+      minPolarAngle={0.3}
+      maxPolarAngle={1.4}
+      target={[0, 1.5, 0]}
+      autoRotate
+      autoRotateSpeed={0.15}
+      onStart={() => markInteract()}
+      onChange={() => markInteract()}
+    />
+  );
 }
