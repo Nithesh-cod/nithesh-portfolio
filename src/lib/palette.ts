@@ -41,21 +41,21 @@ export const palette = {
   lightWarm: '#FFD9A8',
   lightCool: '#9CB5DD',
 
-  // ── V10.2 — Apple Vision Pro / JARVIS palette refresh ───────────
-  // Cooler glass tint, cleaner text whites, gold accent for featured
-  // featured certs. Tokens preserve V9 names so existing components
-  // pick up the new values automatically.
-  bgBase:        '#050505', // was #050810 — pure dark surface
-  bgPanel:       'rgba(13, 13, 13, 0.65)',
-  neonGreen:     '#00FF88', // primary green (unchanged)
-  neonBright:    '#33FFAA', // glass-border tint (was #4DFFAA)
-  neonDim:       '#00CC66', // secondary green (was #00AA55)
-  textPrimary:   '#F5F5F5', // clean off-white (was #DDFFEE)
-  textSecondary: '#B8B8B8', // neutral mid-grey (was #88CCAA)
-  textMono:      '#00FF88',
-  accentGold:    '#FFD700', // gold accent (used for featured cert)
-  darkSurface:   '#0D0D0D',
-  glassBorder:   '#33FFAA',
+  // ── V11.1 — Reference-image-exact palette ──────────────────────
+  // Source: user's reference (slightly cyan-leaning emerald). All
+  // existing V9/V10 token names re-pointed so downstream components
+  // pick the new values automatically.
+  bgBase:        '#050A12', // room ambient deep
+  bgPanel:       'rgba(8, 18, 14, 0.55)',
+  neonGreen:     '#00FF9D', // primary green
+  neonBright:    '#1AFFB0', // panel-border (bright cyan-green)
+  neonDim:       '#00CC7A', // secondary green
+  textPrimary:   '#E0FFE0',
+  textSecondary: '#8FB8A0',
+  textMono:      '#00FF9D',
+  accentGold:    '#FFD700',
+  darkSurface:   '#0D1812',
+  glassBorder:   '#1AFFB0',
 
   // ── Legacy aliases (re-pointed) ───────────────────────────────────
   // Same hex values as V7 canonical tokens above, but available under the

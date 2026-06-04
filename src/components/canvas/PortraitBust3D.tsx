@@ -39,22 +39,27 @@ uniform float uTime;
 uniform vec3 uCamPos;
 
 void main() {
-  // Fresnel — bright at grazing angles.
+  // Fresnel — sharper than V11.0 so the silhouette pops.
   vec3 viewDir = normalize(uCamPos - vWorldPos);
-  float fres = pow(1.0 - clamp(dot(normalize(vNormalW), viewDir), 0.0, 1.0), 2.5);
+  float fres = pow(1.0 - clamp(dot(normalize(vNormalW), viewDir), 0.0, 1.0), 2.0);
 
-  // Scrolling scanlines (vertical).
-  float scan = sin(vWorldPos.y * 38.0 - uTime * 3.0) * 0.5 + 0.5;
-  scan = pow(scan, 4.0);
+  // Fine, dense vertical scan lines (~80 cycles per world unit).
+  float scan = sin(vWorldPos.y * 80.0 + uTime * 2.0) * 0.5 + 0.5;
+  scan = pow(scan, 6.0); // sharp lines, not a smooth gradient
 
-  // Base hologram tint — saturated mint-green.
-  vec3 base = vec3(0.00, 1.00, 0.55);
-  vec3 col = base + scan * vec3(0.20, 0.30, 0.40);
-  // Edge glow.
-  col += fres * vec3(0.30, 1.00, 0.70) * 1.4;
+  // Slow vertical data-flow sweep band.
+  float sweep = abs(fract(vWorldPos.y * 0.30 - uTime * 0.15) - 0.5);
+  sweep = 1.0 - smoothstep(0.0, 0.05, sweep);
 
-  // Alpha — semi-transparent, brighter at edges + on scanline crests.
-  float alpha = 0.55 + fres * 0.45 + scan * 0.15;
+  // V11.1 palette: primary #00FF9D, edge tint slightly cyan.
+  vec3 baseColor = vec3(0.00, 1.00, 0.62);
+  vec3 edgeColor = vec3(0.60, 1.00, 0.85);
+  vec3 col = mix(baseColor, edgeColor, fres);
+  col += scan  * vec3(0.20, 0.40, 0.30);
+  col += sweep * vec3(0.30, 0.50, 0.40);
+
+  // Semi-transparent interior; opaque at silhouette edge.
+  float alpha = 0.45 + fres * 0.55 + scan * 0.10;
   alpha = clamp(alpha, 0.0, 1.0);
 
   gl_FragColor = vec4(col, alpha);
@@ -69,8 +74,8 @@ type Props = {
 };
 
 export function PortraitBust3D({
-  position = [0, 1.4, 0],
-  targetHeight = 1.6,
+  position = [0, 1.0, 0],
+  targetHeight = 2.4,
 }: Props) {
   const { scene } = useGLTF('/portait.glb');
   const groupRef = useRef<Group | null>(null);
@@ -133,14 +138,17 @@ export function PortraitBust3D({
     }
   }, [scene, holoMat, targetHeight]);
 
-  // Slow Y rotation + subtle bob.
+  // Slow Y rotation + subtle X-tilt sway + Y bob.
   useFrame((state, dt) => {
-    uniforms.uTime.value = state.clock.elapsedTime;
+    const t = state.clock.elapsedTime;
+    uniforms.uTime.value = t;
     uniforms.uCamPos.value.copy(state.camera.position);
     if (groupRef.current) {
-      groupRef.current.rotation.y += dt * 0.15;
-      groupRef.current.position.y =
-        position[1] + Math.sin(state.clock.elapsedTime * 0.6) * 0.05;
+      groupRef.current.rotation.y += dt * 0.20;
+      // Slight back-and-forth tilt around X (±0.05 rad, 8s period).
+      groupRef.current.rotation.x = Math.sin(t * (Math.PI * 2 / 8)) * 0.05;
+      // Subtle vertical bob.
+      groupRef.current.position.y = position[1] + Math.sin(t * 0.6) * 0.04;
     }
   });
 

@@ -20,6 +20,7 @@ import { ModernCertRack } from '@/components/canvas/ModernCertRack';
 import { WindowsWall } from '@/components/canvas/WindowsWall';
 import { RoomPanels } from '@/components/canvas/RoomPanels';
 import { TopCenterTitle } from '@/components/canvas/TopCenterTitle';
+import { ServicesPlaques } from '@/components/canvas/ServicesPlaques';
 import { FloatingDataGlyphs } from '@/components/canvas/FloatingDataGlyphs';
 import { CameraRig } from '@/components/canvas/CameraRig';
 import { PostFX } from '@/components/canvas/PostFX';
@@ -68,7 +69,7 @@ export function Scene() {
         }}
       />
 
-      {/* V11.0 — push fog far so the city backdrop still reads at x=±9.7. */}
+      {/* V11.1 — palette.bgBase now #050A12; fog still far so city reads. */}
       <fog attach="fog" args={[palette.bgBase, 14, 60]} />
       <Environment preset="city" background={false} environmentIntensity={0.4} />
 
@@ -100,8 +101,11 @@ export function Scene() {
       {/* V10.2 — freestanding cert rack replaces the back-wall vault. */}
       <ModernCertRack />
 
-      {/* V10.1 — all dashboard panels reborn as in-room 3D meshes. */}
+      {/* V11.1 — all dashboard panels as styled <Html transform> cards. */}
       <RoomPanels />
+
+      {/* V11.1 — 6 flat glass plaques on the floor. */}
+      <ServicesPlaques />
 
       <FloatingDataGlyphs />
 
@@ -145,8 +149,8 @@ function Lights() {
         angle={0.5} penumbra={0.8} color="#DDFFEE" distance={12} decay={1.4} />
       <SpotLight position={[-2, 5.7,  2]} target-position={[ 0, 0, 4.5]} intensity={1.5}
         angle={0.5} penumbra={0.8} color="#DDFFEE" distance={12} decay={1.4} />
-      {/* Cert rack key — V10.2 aimed at the new freestanding rack at [4,0,-4]. */}
-      <SpotLight position={[4, 5.5, -4]} target-position={[4, 2.2, -4]} intensity={1.5}
+      {/* Cert rack key — V11.1 aimed at the freestanding 3-slot tower at [3, 1.6, 1.0]. */}
+      <SpotLight position={[3, 5.6, 1.0]} target-position={[3, 1.8, 1.0]} intensity={1.6}
         angle={0.55} penumbra={0.85} color="#EAFFF4" distance={14} decay={1.4} />
 
       {/* Corner pillar point lights. */}

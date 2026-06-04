@@ -146,10 +146,10 @@ export function ProjectStation({ slug, label, subtitle, position, yaw = 0, iconK
         <WireframeIcon kind={iconKind} />
       </group>
 
-      {/* Project nameplate on front of tier 1. */}
+      {/* V11.1 — descriptive subtitle goes on the pedestal nameplate. */}
       <group position={[0, 0.125, 0.92]} rotation={[0, 0, 0]}>
         <mesh>
-          <planeGeometry args={[0.9, 0.18]} />
+          <planeGeometry args={[0.96, 0.18]} />
           <meshStandardMaterial color="#020608" emissive={palette.neonGreen} emissiveIntensity={0.10}
             metalness={0.6} roughness={0.4} />
         </mesh>
@@ -157,30 +157,34 @@ export function ProjectStation({ slug, label, subtitle, position, yaw = 0, iconK
           raycast={noRaycast}
           ref={disableRaycast}
           position={[0, 0, 0.003]}
-          fontSize={0.065}
+          fontSize={0.052}
           color={palette.neonBright}
           anchorX="center"
           anchorY="middle"
           letterSpacing={0.18}
           outlineWidth={0.0015}
           outlineColor={palette.neonGreen}
+          maxWidth={0.9}
         >
-          {label.toUpperCase()}
+          {subtitle}
         </Text>
       </group>
 
-      {/* Subtitle Billboard just above name. */}
+      {/* V11.1 — big short title BELOW the station (floor-level). */}
       <Text
         raycast={noRaycast}
         ref={disableRaycast}
-        position={[0, CASE_Y + CASE_H / 2 + 0.18, 0]}
-        fontSize={0.05}
-        color={palette.textSecondary}
+        position={[0, -0.18, 0.55]}
+        rotation={[-Math.PI * 0.45, 0, 0]}
+        fontSize={0.13}
+        color={palette.neonBright}
         anchorX="center"
         anchorY="middle"
-        letterSpacing={0.14}
+        letterSpacing={0.22}
+        outlineWidth={0.003}
+        outlineColor={palette.neonGreen}
       >
-        {subtitle}
+        {label.toUpperCase()}
       </Text>
 
       {/* VIEW PROJECT button on tier 2's front face. */}

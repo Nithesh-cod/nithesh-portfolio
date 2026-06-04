@@ -19,11 +19,11 @@ import { play } from '@/lib/audio';
 import { PortraitBust3D } from '@/components/canvas/PortraitBust3D';
 
 const POS: readonly [number, number, number] = [0, 0, 0];
-const CAPSULE_R = 0.78;
-const CAPSULE_H = 2.8;
-const CAPSULE_Y = 1.6;
+const CAPSULE_R = 0.95;
+const CAPSULE_H = 3.2;
+const CAPSULE_Y = 1.8;
 const CAGE_BARS = 12;
-const CAGE_RADIUS = 0.85;
+const CAGE_RADIUS = 1.02;
 
 /* Inner plasma shader. */
 const INNER_VERT = /* glsl */ `varying vec2 vUv;
@@ -249,9 +249,8 @@ export const HoloCapsule = forwardRef<Mesh>(function HoloCapsule(_p, sunRef) {
         </mesh>
       )}
 
-      {/* V11.0 — 3D portrait bust loaded from /portait.glb with a
-          holographic shader (fresnel edge glow + scrolling scanlines). */}
-      <PortraitBust3D position={[0, 0.85, 0]} targetHeight={1.6} />
+      {/* V11.1 — bust enlarged to fill ~70 % of the (now-wider) capsule. */}
+      <PortraitBust3D position={[0, 0.85, 0]} targetHeight={2.4} />
 
       <pointLight position={[0, CAPSULE_Y, 0]} intensity={2.0} color="#00FF88" distance={4} decay={2} />
 

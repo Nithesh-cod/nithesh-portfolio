@@ -1,13 +1,17 @@
 'use client';
 
 import { useFrame } from '@react-three/fiber';
+import { useTexture } from '@react-three/drei';
 import { useMemo, useRef } from 'react';
 import {
   AdditiveBlending,
   Color,
   DoubleSide,
+  RepeatWrapping,
+  SRGBColorSpace,
   type IUniform,
   type MeshStandardMaterial,
+  type Texture,
 } from 'three';
 import { palette } from '@/lib/palette';
 
@@ -183,12 +187,14 @@ function WindowsSideWall({ side }: { side: 'left' | 'right' }) {
 }
 
 /* ──────────────────────────── CITY BACKDROP ─────────────────────────
- * Procedural cyberpunk night skyline. Buildings as vertical columns
- * with random heights, grid of lit windows on each building, three
- * accent colours (warm orange, mint green, cold blue), occasional
- * flicker. Plane is 30w × 14h, mounted 1.7u outside each side wall
- * facing inward. Subtle atmospheric fog between wall + backdrop
- * (handled by Scene-level <fog>) gives the depth-perception sell.
+ * V11.1 — uses /city-backdrop.jpg (user-provided cyberpunk night
+ * photo). The shader applies:
+ *   • slow horizontal texture scroll (parallax-feel)
+ *   • subtle vertical-axis darken + horizon haze
+ *   • green ambient tint overlay (matches scene palette)
+ *   • mild box blur for "out the window" softness
+ * Mirrored: left side flips U so the same photo doesn't look like a
+ * mirror of itself across the room.
  */
 const CITY_VERT = /* glsl */ `
 varying vec2 vUv;
@@ -201,106 +207,83 @@ void main(){
 const CITY_FRAG = /* glsl */ `
 precision highp float;
 varying vec2 vUv;
+uniform sampler2D uMap;
 uniform float uTime;
+uniform float uFlip; // 0 or 1 — flip U for the right wall
+uniform vec3 uTint;
 
-float hash(float n){ return fract(sin(n) * 43758.5453); }
+vec3 sampleSoft(sampler2D tex, vec2 uv) {
+  vec2 px = vec2(1.0 / 1024.0);
+  vec3 c = vec3(0.0);
+  c += texture2D(tex, uv).rgb * 0.40;
+  c += texture2D(tex, uv + vec2( px.x,  0.0)).rgb * 0.10;
+  c += texture2D(tex, uv + vec2(-px.x,  0.0)).rgb * 0.10;
+  c += texture2D(tex, uv + vec2( 0.0,  px.y)).rgb * 0.10;
+  c += texture2D(tex, uv + vec2( 0.0, -px.y)).rgb * 0.10;
+  c += texture2D(tex, uv + vec2( px.x,  px.y)).rgb * 0.05;
+  c += texture2D(tex, uv + vec2(-px.x,  px.y)).rgb * 0.05;
+  c += texture2D(tex, uv + vec2( px.x, -px.y)).rgb * 0.05;
+  c += texture2D(tex, uv + vec2(-px.x, -px.y)).rgb * 0.05;
+  return c;
+}
 
 void main() {
-  // 36 buildings across the plane (×30w world). Roughly 1 building / 0.85u.
-  float BLDS = 36.0;
-  float bIdx = floor(vUv.x * BLDS);
-  float bLocalX = fract(vUv.x * BLDS); // 0..1 inside one building's "slot"
+  // Optional U flip (so the two side walls don't appear identical).
+  vec2 uv = vUv;
+  if (uFlip > 0.5) uv.x = 1.0 - uv.x;
+  // Slow horizontal scroll.
+  uv.x = fract(uv.x + uTime * 0.003);
 
-  // Per-building randomness.
-  float h0 = hash(bIdx * 17.13);
-  float h1 = hash(bIdx * 91.71);
+  // 9-tap soft-blur sample.
+  vec3 col = sampleSoft(uMap, uv);
 
-  // Building height (% of plane).
-  float bHeight = 0.18 + 0.62 * h0;
+  // Slight overall darken so it doesn't blow out the room.
+  col *= 0.85;
 
-  // Slim/wide silhouette — leave a vertical gap on either side of each
-  // building so silhouettes read as separate buildings.
-  float gapW = 0.08 + 0.10 * h1; // gap fraction
-  float bMask = step(gapW, bLocalX) * step(bLocalX, 1.0 - gapW);
+  // Green ambient tint overlay (subtle — 12 % toward palette green).
+  col = mix(col, col * uTint, 0.18);
 
-  // In-building mask: below building top AND inside silhouette.
-  float inBld = step(vUv.y, bHeight) * bMask;
+  // Horizon glow band — a thin warmer-greener strip near v=0.45.
+  float band = exp(-pow((vUv.y - 0.45) * 6.0, 2.0));
+  col += band * vec3(0.02, 0.10, 0.06);
 
-  // Building base colour — dark with vertical fade.
-  vec3 bldColor = mix(
-    vec3(0.012, 0.018, 0.030),
-    vec3(0.030, 0.044, 0.060),
-    smoothstep(0.0, bHeight, vUv.y)
-  );
+  // Vignette so the edges feel further away.
+  vec2 vc = vUv - 0.5;
+  float vig = 1.0 - dot(vc, vc) * 0.45;
+  col *= vig;
 
-  // Window grid inside the building.
-  // 8 columns × 22 rows depending on height.
-  float WIN_COLS = 8.0;
-  float WIN_ROWS = 22.0;
-  float winCol = floor(bLocalX * WIN_COLS);
-  float winRow = floor(vUv.y / bHeight * WIN_ROWS);
-  float winId = winCol + winRow * 23.0 + bIdx * 79.0;
-
-  // Slight gap between window cells so they read as cells.
-  float winLocalU = fract(bLocalX * WIN_COLS);
-  float winLocalV = fract(vUv.y / bHeight * WIN_ROWS);
-  float cellMask = step(0.18, winLocalU) * step(winLocalU, 0.82)
-                 * step(0.18, winLocalV) * step(winLocalV, 0.82);
-
-  // ~26 % of cells are lit.
-  float winRand = hash(winId * 1.13);
-  float winLit = step(0.74, winRand) * cellMask;
-
-  // Window colour — 3 tints.
-  float ch = hash(winId * 2.71);
-  vec3 winColor;
-  if (ch < 0.55)      winColor = vec3(1.00, 0.86, 0.50); // warm tungsten
-  else if (ch < 0.85) winColor = vec3(0.50, 1.00, 0.78); // mint green
-  else                winColor = vec3(0.55, 0.72, 1.00); // cold blue
-
-  // Flicker ~6 % of windows.
-  float flicker = 1.0;
-  if (hash(winId * 3.71) > 0.94) {
-    flicker = 0.45 + 0.55 * abs(sin(uTime * 6.0 + winId * 11.3));
-  }
-
-  // Sky gradient — vertical, deep blue at top, slight glow at horizon.
-  vec3 sky = mix(
-    vec3(0.020, 0.030, 0.060),
-    vec3(0.005, 0.010, 0.024),
-    smoothstep(0.40, 1.00, vUv.y)
-  );
-  // Horizon glow.
-  sky += smoothstep(0.55, 0.40, vUv.y) * vec3(0.020, 0.040, 0.080) * 0.6;
-
-  // Stars — very sparse white dots in upper sky.
-  float starId = floor(vUv.x * 200.0) + floor(vUv.y * 80.0) * 100.0;
-  float starR = hash(starId * 5.37);
-  float star = step(0.998, starR) * step(0.60, vUv.y);
-
-  vec3 final = mix(sky, bldColor, inBld);
-  final += winLit * winColor * 1.4 * flicker;
-  final += star * vec3(0.9, 0.95, 1.0);
-
-  // Distant haze near horizon (smooths city silhouettes).
-  float haze = smoothstep(0.0, 0.20, vUv.y) * (1.0 - smoothstep(0.20, 0.50, vUv.y));
-  final += haze * vec3(0.08, 0.12, 0.20) * 0.25;
-
-  gl_FragColor = vec4(final, 1.0);
+  gl_FragColor = vec4(col, 1.0);
 }
 `;
 
 function CityBackdrop({ side }: { side: 'left' | 'right' }) {
-  const uniforms = useMemo<{ uTime: IUniform<number> }>(
-    () => ({ uTime: { value: 0 } }),
-    [],
+  const tex = useTexture('/city-backdrop.jpg', (loaded) => {
+    if (!Array.isArray(loaded)) {
+      loaded.colorSpace = SRGBColorSpace;
+      loaded.wrapS = RepeatWrapping;
+      loaded.wrapT = RepeatWrapping;
+      loaded.anisotropy = 8;
+    }
+  }) as Texture;
+
+  const uniforms = useMemo<{
+    uMap: IUniform<Texture>;
+    uTime: IUniform<number>;
+    uFlip: IUniform<number>;
+    uTint: IUniform<Color>;
+  }>(
+    () => ({
+      uMap: { value: tex },
+      uTime: { value: 0 },
+      uFlip: { value: side === 'right' ? 1 : 0 },
+      uTint: { value: new Color('#A8FFD8') }, // very soft green tint
+    }),
+    [tex, side],
   );
   useFrame((state) => {
     uniforms.uTime.value = state.clock.elapsedTime;
   });
 
-  // Mount 1.7u outside the wall (x = ±9.7) facing inward, large enough
-  // to cover the full window aperture from any reasonable camera angle.
   const x = side === 'left' ? -ROOM_HALF - 1.7 : ROOM_HALF + 1.7;
   const rot: [number, number, number] =
     side === 'left' ? [0, Math.PI / 2, 0] : [0, -Math.PI / 2, 0];
