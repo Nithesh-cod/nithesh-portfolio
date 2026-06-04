@@ -85,7 +85,7 @@ function AboutMePanel() {
     <Html
       transform
       occlude={false}
-      position={[-3.5, 2.5, 1.5]}
+      position={[-3.5, 2.4, 1.0]}
       rotation={[0, 0.30, 0]}
       distanceFactor={HTML_DISTANCE_FACTOR}
       style={{ pointerEvents: 'auto' }}
@@ -117,7 +117,7 @@ function AchievementsPanel() {
     <Html
       transform
       occlude={false}
-      position={[-3.5, 1.0, 1.5]}
+      position={[-3.5, 0.5, 1.0]}
       rotation={[0, 0.30, 0]}
       distanceFactor={HTML_DISTANCE_FACTOR}
       style={{ pointerEvents: 'auto' }}
@@ -143,8 +143,8 @@ function PhilosophyPanel() {
     <Html
       transform
       occlude={false}
-      position={[4.5, 3.0, 0.5]}
-      rotation={[0, -0.35, 0]}
+      position={[3.5, 2.4, 1.0]}
+      rotation={[0, -0.30, 0]}
       distanceFactor={HTML_DISTANCE_FACTOR}
       style={{ pointerEvents: 'auto' }}
     >
@@ -186,8 +186,8 @@ function TechStackPanel() {
     <Html
       transform
       occlude={false}
-      position={[3.5, 2.5, 1.5]}
-      rotation={[0, -0.30, 0]}
+      position={[5.5, 2.5, -0.5]}
+      rotation={[0, -0.50, 0]}
       distanceFactor={HTML_DISTANCE_FACTOR}
       style={{ pointerEvents: 'auto' }}
     >
@@ -224,8 +224,8 @@ function SystemOverviewPanel() {
     <Html
       transform
       occlude={false}
-      position={[4.5, 1.0, 0.5]}
-      rotation={[0, -0.35, 0]}
+      position={[5.5, 0.8, -0.5]}
+      rotation={[0, -0.50, 0]}
       distanceFactor={HTML_DISTANCE_FACTOR}
       style={{ pointerEvents: 'auto' }}
     >

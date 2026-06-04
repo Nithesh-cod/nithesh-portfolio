@@ -24,10 +24,11 @@ import { play } from '@/lib/audio';
  * (4 rows × 3 columns), positioned center-back of the room so it sits
  * cleanly between the Tech Stack panel (right wall) and the capsule. */
 
-// V12.1 — moved to right-foreground freestanding position; rotated -π/4
-// so its face angles toward the centre of the room.
-const RACK_POS: [number, number, number] = [6.5, 1.5, 1.0];
-const RACK_ROT: [number, number, number] = [0, -Math.PI / 4, 0];
+// V12.4 — pushed further forward + right (Option B from V12.2 spec) so
+// the rack reads as the right-side feature without colliding with the
+// TestAI pedestal at [4.0, 0, 3.5].
+const RACK_POS: [number, number, number] = [6.8, 1.5, 1.5];
+const RACK_ROT: [number, number, number] = [0, -Math.PI / 4.5, 0];
 
 const ROWS = 4;
 const COLS = 3;

@@ -50,14 +50,15 @@ void main(){
 
   float hexAlpha = (edge * 0.55 + interior) * fade;
 
-  // ── V12.1 concentric accent rings under the capsule. ───────────
-  // Capsule sits at world (0, 0). Three rings at r = 2.5 / 3.5 / 4.5.
+  // ── V12.4 simplified capsule rings: 1 main + 1 inner pulse. ────
+  // Main ring at r=1.6 (matches outermost pedestal tier).
+  // Inner ring at r=1.2 with stronger pulse.
   float wr = worldRadius(vUv);
-  float ringW = 0.06; // ring width in world units
-  float ring1 = (1.0 - smoothstep(0.0, ringW, abs(wr - 2.5))) * (0.7 + 0.3 * sin(uTime * 1.2 + 0.0));
-  float ring2 = (1.0 - smoothstep(0.0, ringW, abs(wr - 3.5))) * (0.6 + 0.4 * sin(uTime * 1.0 + 1.5));
-  float ring3 = (1.0 - smoothstep(0.0, ringW, abs(wr - 4.5))) * (0.5 + 0.4 * sin(uTime * 0.8 + 3.0));
-  float ringsAlpha = (ring1 + ring2 + ring3) * 0.55;
+  float ringW = 0.05;
+  float ringMain  = (1.0 - smoothstep(0.0, ringW, abs(wr - 1.6))) * 0.80;
+  float ringInner = (1.0 - smoothstep(0.0, ringW * 0.6, abs(wr - 1.2)))
+                  * (0.40 + 0.50 * (0.5 + 0.5 * sin(uTime * 2.0)));
+  float ringsAlpha = (ringMain + ringInner) * 0.65;
 
   // ── V12.1 centre disc directly under the capsule (bright glow). ─
   float centreGlow = (1.0 - smoothstep(0.0, 1.5, wr)) * (0.4 + 0.2 * sin(uTime * 1.6));

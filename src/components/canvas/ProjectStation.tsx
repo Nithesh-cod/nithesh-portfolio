@@ -88,6 +88,18 @@ export function ProjectStation({ slug, label, subtitle, position, yaw = 0, iconK
 
   return (
     <group ref={groupRef} position={position} rotation={[0, yaw, 0]} scale={scale}>
+      {/* V12.4 — emissive floor interface disc beneath the pedestal. */}
+      <mesh raycast={noRaycast} position={[0, 0.001, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[0.95, 32]} />
+        <meshStandardMaterial
+          color={palette.neonGreen}
+          emissive={palette.neonGreen}
+          emissiveIntensity={0.30}
+          transparent
+          opacity={0.42}
+          toneMapped={false}
+        />
+      </mesh>
       {/* V12.1 — pedestal scaled up ~30 %. */}
       {/* Tier 1 (bottom disc). */}
       <mesh
@@ -186,12 +198,12 @@ export function ProjectStation({ slug, label, subtitle, position, yaw = 0, iconK
           raycast={noRaycast}
           ref={disableRaycast}
           position={[0, 0, 0.003]}
-          fontSize={0.048}
+          fontSize={0.060}
           color={palette.neonBright}
           anchorX="center"
           anchorY="middle"
           letterSpacing={0.18}
-          outlineWidth={0.0015}
+          outlineWidth={0.002}
           outlineColor={palette.neonGreen}
           maxWidth={1.00}
         >
@@ -293,13 +305,45 @@ function WireframeIcon({ kind }: { kind: 'leaf' | 'box' | 'globe' }) {
     color: palette.neonGreen,
     wireframe: true,
     emissive: palette.neonGreen,
-    emissiveIntensity: 1.2,
+    emissiveIntensity: 1.4,
+    toneMapped: false,
   } as const;
+  // V12.4 — distinct per-project shapes:
+  //   leaf  (CropAI)        → icosahedron with extra detail (organic AI brain).
+  //   box   (Smart Canteen) → TorusKnot (tightly-organized network/system).
+  //   globe (TestAI)        → sphere + inner inverted lattice (testing scanner).
   if (kind === 'box') {
-    return (<mesh><boxGeometry args={[0.34, 0.34, 0.34]} /><meshStandardMaterial {...matProps} /></mesh>);
+    return (
+      <group>
+        <mesh>
+          <torusKnotGeometry args={[0.22, 0.060, 96, 12, 2, 3]} />
+          <meshStandardMaterial {...matProps} />
+        </mesh>
+      </group>
+    );
   }
   if (kind === 'globe') {
-    return (<mesh><sphereGeometry args={[0.24, 16, 12]} /><meshStandardMaterial {...matProps} /></mesh>);
+    return (
+      <group>
+        <mesh>
+          <sphereGeometry args={[0.30, 18, 14]} />
+          <meshStandardMaterial {...matProps} />
+        </mesh>
+        {/* inner lattice — gives the "scanner" feel */}
+        <mesh scale={0.62} rotation={[Math.PI / 5, 0, Math.PI / 7]}>
+          <octahedronGeometry args={[0.34, 1]} />
+          <meshStandardMaterial {...matProps} emissiveIntensity={1.8} />
+        </mesh>
+      </group>
+    );
   }
-  return (<mesh><icosahedronGeometry args={[0.24, 0]} /><meshStandardMaterial {...matProps} /></mesh>);
+  // 'leaf' = CropAI → high-detail icosahedron.
+  return (
+    <group>
+      <mesh>
+        <icosahedronGeometry args={[0.30, 1]} />
+        <meshStandardMaterial {...matProps} />
+      </mesh>
+    </group>
+  );
 }

@@ -34,7 +34,7 @@ const FPS_DOWNGRADE_HOLD_MS = 3000;
 const PROJECTS = [
   // V12.1 — wider spacing, Smart Canteen pulled forward as hero project.
   { slug: 'cropai',        label: 'CropAI',        subtitle: 'AI CROP ADVISOR SYSTEM',                  position: [-4.0, 0, 3.5], yaw:  0.35, iconKind: 'leaf',  phase: 0,    scale: 1.0 },
-  { slug: 'smart-canteen', label: 'Smart Canteen', subtitle: 'AI · AUTOMATION · IoT CAPSTONE PROJECT', position: [ 0.0, 0, 5.0], yaw:  0.00, iconKind: 'box',   phase: 1.4,  scale: 1.10 },
+  { slug: 'smart-canteen', label: 'Smart Canteen', subtitle: 'AI · AUTOMATION · IoT', position: [ 0.0, 0, 5.0], yaw:  0.00, iconKind: 'box',   phase: 1.4,  scale: 1.10 },
   { slug: 'testai',        label: 'TestAI',        subtitle: 'AI EXAM PROCTORING SYSTEM',              position: [ 4.0, 0, 3.5], yaw: -0.35, iconKind: 'globe', phase: 2.8,  scale: 1.0 },
 ] as const;
 
@@ -151,28 +151,22 @@ function Lights() {
       {/* Cool back-fill (atmospheric blue spill from the city). */}
       <pointLight position={[0, 2.0, -6.0]} intensity={0.35} color="#6BB8FF" distance={12} decay={2} />
 
-      {/* V12.1 — spotlights retargeted at the actual exhibit positions
-          (Smart Canteen at z=5.0 hero, cert rack moved to [6.5, 1.5, 1.0]). */}
-      {/* Capsule key — bright hero light. */}
-      <SpotLight position={[0, 5.7, 0.5]} target-position={[0, 1.0, 0]} intensity={1.8}
-        angle={0.40} penumbra={0.80} color="#FFFFEE" distance={12} decay={1.4} castShadow />
-      {/* Project pedestals. */}
-      <SpotLight position={[-4.0, 5.5, 2.0]} target-position={[-4.0, 0.4, 3.5]} intensity={1.20}
-        angle={0.42} penumbra={0.75} color="#FFEEDD" distance={12} decay={1.4} />
-      <SpotLight position={[ 4.0, 5.5, 2.0]} target-position={[ 4.0, 0.4, 3.5]} intensity={1.20}
-        angle={0.42} penumbra={0.75} color="#FFEEDD" distance={12} decay={1.4} />
-      {/* Smart Canteen — hero project, brighter + tighter cone. */}
-      <SpotLight position={[0, 5.5, 4.0]} target-position={[0, 0.4, 5.0]} intensity={1.55}
-        angle={0.40} penumbra={0.75} color="#FFEEDD" distance={12} decay={1.4} />
-      {/* Cert rack key — V12.1 rack at [6.5, 1.5, 1.0]. */}
-      <SpotLight position={[6.0, 5.6, 1.5]} target-position={[6.5, 1.5, 1.0]} intensity={1.30}
-        angle={0.55} penumbra={0.85} color="#EAFFF4" distance={14} decay={1.4} />
-      {/* Left-panel wash. */}
-      <SpotLight position={[-5.5, 5.5, 1.0]} target-position={[-3.5, 2.0, 1.5]} intensity={0.95}
-        angle={0.55} penumbra={0.85} color="#DDFFDD" distance={12} decay={1.4} />
-      {/* Right-panel wash (Tech + Overview at x=4.5). */}
-      <SpotLight position={[4.5, 5.5, 1.0]} target-position={[3.8, 2.0, 1.0]} intensity={0.95}
-        angle={0.55} penumbra={0.85} color="#DDFFDD" distance={12} decay={1.4} />
+      {/* V12.4 — spotlights toned down (capsule 1.6, projects 1.0, panels 0.8). */}
+      <SpotLight position={[0, 5.7, 0.5]} target-position={[0, 1.0, 0]} intensity={1.6}
+        angle={0.40} penumbra={0.80} color="#DDEEDD" distance={12} decay={1.4} castShadow />
+      <SpotLight position={[-4.0, 5.5, 2.0]} target-position={[-4.0, 0.4, 3.5]} intensity={1.00}
+        angle={0.42} penumbra={0.80} color="#DDEEDD" distance={12} decay={1.4} />
+      <SpotLight position={[ 4.0, 5.5, 2.0]} target-position={[ 4.0, 0.4, 3.5]} intensity={1.00}
+        angle={0.42} penumbra={0.80} color="#DDEEDD" distance={12} decay={1.4} />
+      <SpotLight position={[0, 5.5, 4.0]} target-position={[0, 0.4, 5.0]} intensity={1.20}
+        angle={0.40} penumbra={0.80} color="#DDEEDD" distance={12} decay={1.4} />
+      {/* Cert rack key — V12.4 rack at [6.8, 1.5, 1.5]. */}
+      <SpotLight position={[6.2, 5.6, 1.8]} target-position={[6.8, 1.5, 1.5]} intensity={1.10}
+        angle={0.55} penumbra={0.85} color="#DDEEDD" distance={14} decay={1.4} />
+      <SpotLight position={[-5.5, 5.5, 0.5]} target-position={[-3.5, 2.0, 1.0]} intensity={0.80}
+        angle={0.55} penumbra={0.85} color="#DDEEDD" distance={12} decay={1.4} />
+      <SpotLight position={[5.5, 5.5, 0.5]} target-position={[5.5, 2.0, -0.5]} intensity={0.80}
+        angle={0.55} penumbra={0.85} color="#DDEEDD" distance={12} decay={1.4} />
 
       {/* Corner pillar point lights. */}
       <pointLight position={[-7.8, 2, -7.8]} intensity={0.6} color={palette.neonGreen} distance={5} decay={2} />

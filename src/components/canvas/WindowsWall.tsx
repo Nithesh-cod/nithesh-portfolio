@@ -98,7 +98,8 @@ void main() {
   vec3 col = uWall;
   // V12.0 — softer emissive on the frame (was 2.6 → 0.7 + 0.3 pulse).
   float pulse = 0.5 + 0.5 * sin(uTime * 0.8);
-  col = mix(col, uFrame * (0.7 + pulse * 0.3), frameEdge + mullion);
+  // V12.4 — even more subtle frames: 0.4 + 0.2 pulse (was 0.7 + 0.3).
+  col = mix(col, uFrame * (0.4 + pulse * 0.2), frameEdge + mullion);
 
   gl_FragColor = vec4(col, alpha);
 }
@@ -265,7 +266,8 @@ void main() {
   vec3 col = uWall;
   // V12.0 — softer emissive frames (was 2.6 → 0.7) so windows read as
   // physical frames not glowing bars.
-  col = mix(col, uFrame * (0.7 + pulse * 0.3), frameEdge + mullion);
+  // V12.4 — even more subtle frames: 0.4 + 0.2 pulse (was 0.7 + 0.3).
+  col = mix(col, uFrame * (0.4 + pulse * 0.2), frameEdge + mullion);
 
   gl_FragColor = vec4(col, alpha);
 }

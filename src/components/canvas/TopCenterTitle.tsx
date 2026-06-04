@@ -14,7 +14,7 @@ import { disableRaycast, noRaycast } from '@/lib/three-utils';
  *   Building Future.
  */
 
-const TITLE_Y = 5.0; // V12.1 — lower; capsule is now shorter (H=2.6, top ~2.8).
+const TITLE_Y = 5.8; // V12.4 — between capsule top (~3.0) and ceiling (6).
 
 export function TopCenterTitle() {
   // Bracketed badge "tick" pulse + faint vertical drift for life.
@@ -54,12 +54,12 @@ export function TopCenterTitle() {
         <Text
           raycast={noRaycast}
           ref={disableRaycast}
-          fontSize={0.36}
+          fontSize={0.32}
           color={palette.neonGreen}
           anchorX="center"
           anchorY="middle"
-          letterSpacing={0.20}
-          outlineWidth={0.006}
+          letterSpacing={0.18}
+          outlineWidth={0.005}
           outlineColor={palette.neonBright}
         >
           DIGITAL IDENTITY ENGINE
