@@ -47,17 +47,31 @@ function CoreExpertisePanel() {
         <ExpertiseRow icon={<TerminalSquare size={16} />} title="BACKEND" sub="Node.js, Python, Express" />
         <ExpertiseRow icon={<Database size={16} />} title="DATABASE" sub="MongoDB, PostgreSQL" />
         <ExpertiseRow icon={<Cloud size={16} />} title="CLOUD & DEVOPS" sub="AWS, Docker, Kubernetes" />
-        <ExpertiseRow icon={<BrainCircuit size={16} />} title="AI & AUTOMATION" sub="OpenAI, LangChain, n8n" />
+        <ExpertiseRow icon={<BrainCircuit size={16} />} title="AI & AUTOMATION" sub="OpenAI, LangChain, n8n" accent="warm" />
         <CtaButton label="VIEW FULL STACK" />
       </div>
     </Html>
   );
 }
 
-function ExpertiseRow({ icon, title, sub }: { icon: React.ReactNode; title: string; sub: string }) {
+function ExpertiseRow({
+  icon,
+  title,
+  sub,
+  accent,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  sub: string;
+  accent?: 'warm' | 'cool';
+}) {
+  const iconClass =
+    accent === 'warm' ? 'v11-row-icon v11-row-icon--warm' :
+    accent === 'cool' ? 'v11-row-icon v11-row-icon--cool' :
+    'v11-row-icon';
   return (
     <div className="v11-row">
-      <div className="v11-row-icon">{icon}</div>
+      <div className={iconClass}>{icon}</div>
       <div className="v11-row-text">
         <span className="v11-row-title">{title}</span>
         <span className="v11-row-sub">{sub}</span>
@@ -151,8 +165,8 @@ function PhilosophyPanel() {
           <span>MY PHILOSOPHY</span>
           <span className="bracket">]</span>
         </div>
-        <ExpertiseRow icon={<SparklesIcon size={16} />} title="INNOVATE" sub="Think Different. Build Better." />
-        <ExpertiseRow icon={<Users size={16} />} title="COLLABORATE" sub="Great Teams Create Magic." />
+        <ExpertiseRow icon={<SparklesIcon size={16} />} title="INNOVATE" sub="Think Different. Build Better." accent="warm" />
+        <ExpertiseRow icon={<Users size={16} />} title="COLLABORATE" sub="Great Teams Create Magic." accent="cool" />
         <ExpertiseRow icon={<TrendingUp size={16} />} title="ELEVATE" sub="Continuous Learning Always." />
         <div
           style={{

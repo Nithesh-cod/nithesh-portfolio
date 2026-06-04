@@ -51,12 +51,14 @@ void main() {
   float sweep = abs(fract(vWorldPos.y * 0.30 - uTime * 0.15) - 0.5);
   sweep = 1.0 - smoothstep(0.0, 0.05, sweep);
 
-  // V11.1 palette: primary #00FF9D, edge tint slightly cyan.
-  vec3 baseColor = vec3(0.00, 1.00, 0.62);
-  vec3 edgeColor = vec3(0.60, 1.00, 0.85);
+  // V11.2 palette: primary #2EFFB0 (cyan-shifted), warmer edge.
+  vec3 baseColor = vec3(0.18, 1.00, 0.70);
+  vec3 edgeColor = vec3(0.40, 1.00, 0.85);
   vec3 col = mix(baseColor, edgeColor, fres);
   col += scan  * vec3(0.20, 0.40, 0.30);
   col += sweep * vec3(0.30, 0.50, 0.40);
+  // Subtle warm tint on the brightest fresnel — breaks the all-green wash.
+  col += fres * vec3(0.10, 0.05, 0.00);
 
   // Semi-transparent interior; opaque at silhouette edge.
   float alpha = 0.45 + fres * 0.55 + scan * 0.10;

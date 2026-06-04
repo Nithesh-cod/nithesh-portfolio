@@ -41,21 +41,23 @@ export const palette = {
   lightWarm: '#FFD9A8',
   lightCool: '#9CB5DD',
 
-  // ── V11.1 — Reference-image-exact palette ──────────────────────
-  // Source: user's reference (slightly cyan-leaning emerald). All
-  // existing V9/V10 token names re-pointed so downstream components
-  // pick the new values automatically.
-  bgBase:        '#050A12', // room ambient deep
-  bgPanel:       'rgba(8, 18, 14, 0.55)',
-  neonGreen:     '#00FF9D', // primary green
-  neonBright:    '#1AFFB0', // panel-border (bright cyan-green)
-  neonDim:       '#00CC7A', // secondary green
-  textPrimary:   '#E0FFE0',
-  textSecondary: '#8FB8A0',
-  textMono:      '#00FF9D',
-  accentGold:    '#FFD700',
-  darkSurface:   '#0D1812',
-  glassBorder:   '#1AFFB0',
+  // ── V11.2 — refined balanced palette (cyan-shifted, less neon) ──
+  bgBase:        '#060912', // room ambient (slightly warmer dark)
+  bgSurface:     '#0A1018', // panel surface
+  bgPanel:       'rgba(8, 18, 26, 0.55)',
+  neonGreen:     '#2EFFB0', // primary — cyan-shifted, less saturated
+  neonBright:    '#5CFFC4', // green-soft (highlights + headers)
+  neonDim:       '#1FCC88', // secondary green
+  greenMuted:    '#1B8859',
+  warmAmber:     '#FFCC66',
+  coolBlue:      '#6BB8FF',
+  textPrimary:   '#DCEEDC',
+  textSecondary: '#A8C8B0',
+  textDim:       '#6B8278',
+  textMono:      '#2EFFB0',
+  accentGold:    '#FFCC66',
+  darkSurface:   '#0F1A18',
+  glassBorder:   '#2EFFB0',
 
   // ── Legacy aliases (re-pointed) ───────────────────────────────────
   // Same hex values as V7 canonical tokens above, but available under the

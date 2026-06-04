@@ -69,9 +69,9 @@ export function Scene() {
         }}
       />
 
-      {/* V11.1 — palette.bgBase now #050A12; fog still far so city reads. */}
-      <fog attach="fog" args={[palette.bgBase, 14, 60]} />
-      <Environment preset="city" background={false} environmentIntensity={0.4} />
+      {/* V11.2 — tightened fog (8 → 30) adds atmospheric depth, matches reference. */}
+      <fog attach="fog" args={[palette.bgBase, 8, 30]} />
+      <Environment preset="night" background={false} environmentIntensity={0.35} />
 
       <Lights />
 
@@ -137,20 +137,26 @@ export function Scene() {
 function Lights() {
   return (
     <>
-      <ambientLight intensity={0.15} color="#1A2A22" />
+      {/* V11.2 — slightly higher ambient, warmer tint. */}
+      <ambientLight intensity={0.20} color="#1A2A28" />
 
-      {/* Capsule key. */}
-      <SpotLight position={[0, 5.7, 0]} target-position={[0, 0, 0]} intensity={2.0}
+      {/* V11.2 — warm rim from above (fills the all-green wash). */}
+      <pointLight position={[0, 5.0, 4.0]} intensity={0.45} color="#FFCC88" distance={10} decay={2} />
+      {/* Cool back-fill (atmospheric blue spill from the city). */}
+      <pointLight position={[0, 2.0, -6.0]} intensity={0.35} color="#6BB8FF" distance={12} decay={2} />
+
+      {/* Capsule key — softened from 2.0 → 1.4. */}
+      <SpotLight position={[0, 5.7, 0]} target-position={[0, 0, 0]} intensity={1.4}
         angle={0.5} penumbra={0.8} color="#DDFFEE" distance={12} decay={1.4} castShadow />
       {/* Project stations. */}
-      <SpotLight position={[-4, 5.7, -2]} target-position={[-4, 0, 3.5]} intensity={1.5}
+      <SpotLight position={[-4, 5.7, -2]} target-position={[-4, 0, 3.5]} intensity={1.05}
         angle={0.5} penumbra={0.8} color="#DDFFEE" distance={12} decay={1.4} />
-      <SpotLight position={[ 4, 5.7, -2]} target-position={[ 4, 0, 3.5]} intensity={1.5}
+      <SpotLight position={[ 4, 5.7, -2]} target-position={[ 4, 0, 3.5]} intensity={1.05}
         angle={0.5} penumbra={0.8} color="#DDFFEE" distance={12} decay={1.4} />
-      <SpotLight position={[-2, 5.7,  2]} target-position={[ 0, 0, 4.5]} intensity={1.5}
+      <SpotLight position={[-2, 5.7,  2]} target-position={[ 0, 0, 4.5]} intensity={1.05}
         angle={0.5} penumbra={0.8} color="#DDFFEE" distance={12} decay={1.4} />
-      {/* Cert rack key — V11.1 aimed at the freestanding 3-slot tower at [3, 1.6, 1.0]. */}
-      <SpotLight position={[3, 5.6, 1.0]} target-position={[3, 1.8, 1.0]} intensity={1.6}
+      {/* Cert rack key — aimed at the V11.1 freestanding 3-slot tower at [3, 1.6, 1.0]. */}
+      <SpotLight position={[3, 5.6, 1.0]} target-position={[3, 1.8, 1.0]} intensity={1.20}
         angle={0.55} penumbra={0.85} color="#EAFFF4" distance={14} decay={1.4} />
 
       {/* Corner pillar point lights. */}

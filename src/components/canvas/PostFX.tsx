@@ -2,9 +2,11 @@
 
 import {
   Bloom,
+  BrightnessContrast,
   ChromaticAberration,
   EffectComposer,
   GodRays,
+  HueSaturation,
   ToneMapping,
 } from '@react-three/postprocessing';
 import { BlendFunction, KernelSize, ToneMappingMode } from 'postprocessing';
@@ -20,18 +22,19 @@ import { usePortfolioStore } from '@/lib/store';
  */
 export function PostFX({ sunRef }: { sunRef?: React.MutableRefObject<Mesh | null> | React.RefObject<Mesh> }) {
   const perfMode = usePortfolioStore((s) => s.perfMode);
-  const caOffset = useMemo(() => new Vector2(0.0005, 0.0005), []);
+  // V11.2 — chromatic aberration nearly off; reference is sharp.
+  const caOffset = useMemo(() => new Vector2(0.0001, 0.0001), []);
 
   if (perfMode === 'low') return null;
 
   const effects: ReactElement[] = [
     <Bloom
       key="bloom"
-      intensity={0.6}
-      luminanceThreshold={0.7}
-      luminanceSmoothing={0.4}
+      intensity={0.45}
+      luminanceThreshold={0.75}
+      luminanceSmoothing={0.40}
       mipmapBlur
-      kernelSize={KernelSize.LARGE}
+      kernelSize={KernelSize.MEDIUM}
     />,
     sunRef?.current ? (
       <GodRays
@@ -46,6 +49,9 @@ export function PostFX({ sunRef }: { sunRef?: React.MutableRefObject<Mesh | null
         blendFunction={BlendFunction.SCREEN}
       />
     ) : null,
+    // V11.2 — gentle colour grading. Saturation -8 %, contrast +12 %.
+    <HueSaturation key="hs" saturation={-0.08} hue={0.02} />,
+    <BrightnessContrast key="bc" brightness={-0.02} contrast={0.12} />,
     <ChromaticAberration
       key="ca"
       offset={caOffset}

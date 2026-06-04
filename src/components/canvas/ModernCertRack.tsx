@@ -1,8 +1,9 @@
 'use client';
 
-import { Text, useTexture } from '@react-three/drei';
+import { Html, Text, useTexture } from '@react-three/drei';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import gsap from 'gsap';
+import { ArrowRight } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import {
   AdditiveBlending,
@@ -19,30 +20,45 @@ import { usePortfolioStore } from '@/lib/store';
 import { disableRaycast, noRaycast } from '@/lib/three-utils';
 import { play } from '@/lib/audio';
 
-/* V11.1 — vertical 3-slot cert tower (replaces the V10.2 grid rack).
- * Matches the reference image: a tall thin frame with three large
- * cert slabs stacked top-to-bottom and "CERTIFICATIONS &
- * ACHIEVEMENTS" header floating above. The remaining 9 certs are
- * surfaced via a small "VIEW ALL" badge below the tower. */
+/* V11.2 — Cert rack rebuilt to match reference image:
+ *   • Outer mounting frame (2 vertical posts + 2 cross-bars + caps)
+ *   • 3 large CertDisplay blocks stacked vertically. Each:
+ *       - Solid dark metal frame (boxGeometry)
+ *       - Inner neon rim tubes (4 emissive bars)
+ *       - Cert PNG mapped onto a plane (clearly visible)
+ *       - Faint physical-glass cover for a subtle highlight
+ *       - Small cert-title strip BELOW the frame (drei <Text>)
+ *   • <Html> "CERTIFICATIONS & ACHIEVEMENTS" header above
+ *   • <Html> "VIEW ALL 12 CERTIFICATES →" button below
+ *   • Vertical sweep scanline + per-slot breathing animation. */
 
-const RACK_POS: [number, number, number] = [3, 1.6, 1.0];
+const RACK_POS: [number, number, number] = [2.8, 1.5, 0.8];
 const RACK_ROT: [number, number, number] = [0, -0.40, 0];
 
-const FRAME_W = 1.5;
-const FRAME_H = 3.4;
-const SLAB_W = 1.20;
-const SLAB_H = 0.85;
-const SLAB_GAP = 1.05; // vertical centre-to-centre between slabs
+const FRAME_W = 1.55; // mounting-frame width
+const FRAME_H = 3.10; // mounting-frame height
+const CERT_W = 1.35;
+const CERT_H = 0.80;
+const SLOT_GAP = 0.95; // vertical centre-to-centre
 
-const FEATURED_IDS = ['applied-gen-ai', 'ai-first-software-engineering', 'front-end-web-dev'] as const;
+const FEATURED_IDS = [
+  'applied-gen-ai',
+  'ai-first-software-engineering',
+  'front-end-web-dev',
+] as const;
+
+/** Short uppercase strip label shown beneath each cert frame. */
+const CERT_SHORT: Record<string, string> = {
+  'applied-gen-ai': 'APPLIED GEN AI · CERTIFICATION',
+  'ai-first-software-engineering': 'AI-FIRST · SOFTWARE ENGINEERING',
+  'front-end-web-dev': 'FRONT-END · WEB DEVELOPER',
+};
 
 export function ModernCertRack() {
   const allCerts: readonly Certificate[] = certificateGroups.flatMap((g) => g.certs);
   const featured: Certificate[] = FEATURED_IDS
     .map((id) => allCerts.find((c) => c.id === id))
     .filter((c): c is Certificate => Boolean(c));
-  // If any featured id was missing from content, top up with the
-  // first available certs so we always render exactly 3 slabs.
   while (featured.length < 3) {
     const fallback = allCerts.find((c) => !featured.includes(c));
     if (!fallback) break;
@@ -51,119 +67,100 @@ export function ModernCertRack() {
 
   return (
     <group position={RACK_POS} rotation={RACK_ROT}>
-      {/* Title floating above the frame. */}
-      <RackTitle />
+      {/* Floating header — DOM, matches v11-card typography. */}
+      <Html
+        transform
+        occlude="blending"
+        position={[0, FRAME_H / 2 + 0.30, 0]}
+        distanceFactor={2.4}
+        style={{ pointerEvents: 'none' }}
+      >
+        <div className="cert-rack-title">CERTIFICATIONS &amp; ACHIEVEMENTS</div>
+      </Html>
 
-      {/* Outer frame — thin metal box with neon emissive trim. */}
+      {/* Outer mounting frame. */}
       <RackFrame />
 
-      {/* 3 large cert slabs stacked. */}
-      {featured.slice(0, 3).map((cert, i) => {
-        const y = SLAB_GAP * (1 - i); // top, middle, bottom
-        return <CertSlab key={cert.id} cert={cert} y={y} phase={i * 0.5} />;
-      })}
+      {/* 3 cert displays stacked vertically (top, middle, bottom). */}
+      {featured.slice(0, 3).map((cert, i) => (
+        <CertDisplay
+          key={cert.id}
+          cert={cert}
+          y={SLOT_GAP * (1 - i)}
+          phase={i * 0.5}
+        />
+      ))}
 
-      {/* Mounting struts between slabs (decorative shelves). */}
-      <Strut y={SLAB_GAP - SLAB_H / 2 - 0.10} />
-      <Strut y={-SLAB_GAP + SLAB_H / 2 + 0.10} />
+      {/* VIEW ALL 12 CERTIFICATES button. */}
+      <ViewAllButton />
 
-      {/* VIEW ALL CERTIFICATES badge below the tower. */}
-      <ViewAllBadge />
-
-      {/* Vertical sweep scanline traversing the front face. */}
+      {/* Vertical sweep scanline traversing the rack face. */}
       <SweepScanline />
     </group>
   );
 }
 
-/* ────────────────────── TITLE ────────────────────── */
-
-function RackTitle() {
-  const dotRef = useRef<Mesh | null>(null);
-  useFrame((state) => {
-    if (!dotRef.current) return;
-    const pulse = 0.5 + 0.5 * Math.sin(state.clock.elapsedTime * 2.2);
-    (dotRef.current.material as MeshBasicMaterial).opacity = 0.5 + pulse * 0.5;
-  });
-  return (
-    <group position={[0, FRAME_H / 2 + 0.30, 0]}>
-      <Text
-        raycast={noRaycast}
-        ref={disableRaycast}
-        fontSize={0.10}
-        color={palette.neonBright}
-        anchorX="center"
-        anchorY="middle"
-        letterSpacing={0.20}
-        outlineWidth={0.003}
-        outlineColor={palette.neonGreen}
-      >
-        [ CERTIFICATIONS & ACHIEVEMENTS ]
-      </Text>
-      <mesh ref={dotRef} raycast={noRaycast} position={[-0.95, 0, 0]}>
-        <circleGeometry args={[0.020, 16]} />
-        <meshBasicMaterial color={palette.neonGreen} transparent toneMapped={false} />
-      </mesh>
-    </group>
-  );
-}
-
-/* ────────────────────── FRAME ────────────────────── */
+/* ────────────────────── MOUNTING FRAME ────────────────────── */
 
 function RackFrame() {
-  const mat = (
+  const postMat = (
     <meshStandardMaterial
-      color={palette.neonGreen}
+      color="#0F1A18"
+      metalness={0.85}
+      roughness={0.22}
       emissive={palette.neonGreen}
-      emissiveIntensity={2.0}
-      metalness={0.9}
-      roughness={0.20}
+      emissiveIntensity={0.10}
+      toneMapped={false}
+    />
+  );
+  const strutMat = (
+    <meshStandardMaterial
+      color="#0F1A18"
+      metalness={0.85}
+      roughness={0.22}
+      emissive={palette.neonGreen}
+      emissiveIntensity={0.15}
       toneMapped={false}
     />
   );
   return (
     <group>
-      {/* 4 corner verticals. */}
-      <mesh raycast={noRaycast} position={[-FRAME_W / 2, 0, 0]}>
-        <boxGeometry args={[0.035, FRAME_H, 0.035]} />
-        {mat}
+      {/* Vertical posts (left + right). */}
+      <mesh raycast={noRaycast} position={[-FRAME_W / 2, 0, -0.05]}>
+        <boxGeometry args={[0.04, FRAME_H + 0.4, 0.04]} />
+        {postMat}
       </mesh>
-      <mesh raycast={noRaycast} position={[FRAME_W / 2, 0, 0]}>
-        <boxGeometry args={[0.035, FRAME_H, 0.035]} />
-        {mat}
+      <mesh raycast={noRaycast} position={[FRAME_W / 2, 0, -0.05]}>
+        <boxGeometry args={[0.04, FRAME_H + 0.4, 0.04]} />
+        {postMat}
       </mesh>
-      {/* Top + bottom horizontals. */}
-      <mesh raycast={noRaycast} position={[0, FRAME_H / 2, 0]}>
-        <boxGeometry args={[FRAME_W + 0.04, 0.035, 0.035]} />
-        {mat}
+
+      {/* Horizontal cross-bars between cert displays. */}
+      <mesh raycast={noRaycast} position={[0, SLOT_GAP / 2, -0.04]}>
+        <boxGeometry args={[FRAME_W, 0.03, 0.03]} />
+        {strutMat}
       </mesh>
-      <mesh raycast={noRaycast} position={[0, -FRAME_H / 2, 0]}>
-        <boxGeometry args={[FRAME_W + 0.04, 0.035, 0.035]} />
-        {mat}
+      <mesh raycast={noRaycast} position={[0, -SLOT_GAP / 2, -0.04]}>
+        <boxGeometry args={[FRAME_W, 0.03, 0.03]} />
+        {strutMat}
+      </mesh>
+
+      {/* Top + bottom caps. */}
+      <mesh raycast={noRaycast} position={[0, FRAME_H / 2 + 0.15, -0.04]}>
+        <boxGeometry args={[FRAME_W + 0.08, 0.08, 0.06]} />
+        <meshStandardMaterial color="#0F1A18" metalness={0.85} roughness={0.22} />
+      </mesh>
+      <mesh raycast={noRaycast} position={[0, -FRAME_H / 2 - 0.15, -0.04]}>
+        <boxGeometry args={[FRAME_W + 0.08, 0.08, 0.06]} />
+        <meshStandardMaterial color="#0F1A18" metalness={0.85} roughness={0.22} />
       </mesh>
     </group>
   );
 }
 
-function Strut({ y }: { y: number }) {
-  return (
-    <mesh raycast={noRaycast} position={[0, y, 0]}>
-      <boxGeometry args={[FRAME_W - 0.05, 0.018, 0.025]} />
-      <meshStandardMaterial
-        color={palette.darkSurface}
-        emissive={palette.neonGreen}
-        emissiveIntensity={1.4}
-        metalness={0.85}
-        roughness={0.25}
-        toneMapped={false}
-      />
-    </mesh>
-  );
-}
+/* ────────────────────── CERT DISPLAY ────────────────────── */
 
-/* ────────────────────── CERT SLAB ────────────────────── */
-
-function CertSlab({
+function CertDisplay({
   cert,
   y,
   phase,
@@ -172,8 +169,9 @@ function CertSlab({
   y: number;
   phase: number;
 }) {
-  const meshRef = useRef<Mesh | null>(null);
-  const matRef = useRef<MeshStandardMaterial | null>(null);
+  const groupRef = useRef<Group | null>(null);
+  const frameMatRef = useRef<MeshStandardMaterial | null>(null);
+  const rimRefs = useRef<(MeshStandardMaterial | null)[]>([]);
   const [hovered, setHovered] = useState(false);
   const openProgress = useRef({ value: 0 });
   const animating = useRef(false);
@@ -194,7 +192,7 @@ function CertSlab({
       gsap.killTweensOf(openProgress.current);
       gsap.to(openProgress.current, {
         value: 0,
-        duration: 0.4,
+        duration: 0.40,
         ease: 'power2.in',
         onComplete: () => {
           animating.current = false;
@@ -204,17 +202,23 @@ function CertSlab({
   }, [lightboxCertId, cert.id]);
 
   useFrame((_, dt) => {
-    if (!meshRef.current) return;
-    const t = (meshRef.current.userData.t ?? 0) + dt;
-    meshRef.current.userData.t = t;
-    const hoverZ = hovered ? 0.08 : 0;
+    if (!groupRef.current) return;
+    const t = (groupRef.current.userData.t ?? 0) + dt;
+    groupRef.current.userData.t = t;
+    // Hover lift + open-tween push.
+    const hoverZ = hovered ? 0.04 : 0;
     const op = openProgress.current.value;
-    meshRef.current.position.z = hoverZ + op * 0.5;
-    if (matRef.current) {
-      // Per-slab breathing emissive.
-      matRef.current.emissiveIntensity =
-        0.40 + Math.sin(t * 1.4 + phase) * 0.20 + (hovered ? 0.6 : 0) + op * 0.7;
+    groupRef.current.position.z = hoverZ + op * 0.30;
+
+    // Frame metal brightens on hover.
+    if (frameMatRef.current) {
+      frameMatRef.current.emissiveIntensity = hovered ? 0.40 : 0.15;
     }
+    // Rim tubes pulse with phase + jump on hover.
+    const rimBase = hovered ? 3.0 : 2.0;
+    rimRefs.current.forEach((m) => {
+      if (m) m.emissiveIntensity = rimBase + Math.sin(t * 1.4 + phase) * 0.25;
+    });
   });
 
   const handleOver = (e: ThreeEvent<PointerEvent>) => {
@@ -236,7 +240,7 @@ function CertSlab({
     gsap.killTweensOf(openProgress.current);
     gsap.to(openProgress.current, {
       value: 1,
-      duration: 0.55,
+      duration: 0.60,
       ease: 'power2.out',
       onComplete: () => {
         openCertificate(cert.id);
@@ -244,126 +248,149 @@ function CertSlab({
     });
   };
 
+  const shortTitle = CERT_SHORT[cert.id] ?? cert.title.toUpperCase();
+
   return (
-    <group position={[0, y, 0.06]}>
-      {/* Cert image slab. */}
+    <group ref={groupRef} position={[0, y, 0]}>
+      {/* OUTER METAL FRAME (dark border). */}
+      <mesh raycast={noRaycast}>
+        <boxGeometry args={[CERT_W, CERT_H, 0.08]} />
+        <meshStandardMaterial
+          ref={frameMatRef}
+          color="#1A2A28"
+          metalness={0.70}
+          roughness={0.30}
+          emissive={palette.neonGreen}
+          emissiveIntensity={0.15}
+        />
+      </mesh>
+
+      {/* INNER NEON RIM (4 emissive tubes). */}
+      <RimTubes
+        w={CERT_W - 0.05}
+        h={CERT_H - 0.05}
+        d={0.08}
+        registerRef={(m, i) => { rimRefs.current[i] = m; }}
+      />
+
+      {/* CERT IMAGE — front-face plane, clickable. */}
       <mesh
-        ref={meshRef}
+        position={[0, 0, 0.045]}
         onPointerOver={handleOver}
         onPointerOut={handleOut}
         onClick={handleClick}
       >
-        <planeGeometry args={[SLAB_W, SLAB_H]} />
-        <meshStandardMaterial
-          ref={matRef}
-          map={tex}
+        <planeGeometry args={[CERT_W - 0.15, CERT_H - 0.12]} />
+        <meshBasicMaterial map={tex} transparent toneMapped={false} />
+      </mesh>
+
+      {/* Subtle physical-glass cover for a slight reflective highlight. */}
+      <mesh raycast={noRaycast} position={[0, 0, 0.051]}>
+        <planeGeometry args={[CERT_W - 0.15, CERT_H - 0.12]} />
+        <meshPhysicalMaterial
+          transmission={0.95}
+          roughness={0.05}
+          thickness={0.01}
           color="#FFFFFF"
-          emissive={palette.neonGreen}
-          emissiveIntensity={0.50}
-          roughness={0.30}
-          metalness={0.15}
+          transparent
+          opacity={0.10}
         />
       </mesh>
-      {/* Neon-edge frame around the slab. */}
-      <SlabFrame />
+
+      {/* SHORT TITLE STRIP below the frame. */}
+      <Text
+        raycast={noRaycast}
+        ref={disableRaycast}
+        position={[0, -CERT_H / 2 - 0.08, 0.06]}
+        fontSize={0.040}
+        color={palette.textSecondary}
+        anchorX="center"
+        anchorY="middle"
+        letterSpacing={0.18}
+        maxWidth={CERT_W * 0.95}
+        outlineWidth={0.001}
+        outlineColor={palette.bgBase}
+      >
+        {shortTitle}
+      </Text>
     </group>
   );
 }
 
-function SlabFrame() {
-  const T = 0.014;
-  const mat = (
+function RimTubes({
+  w,
+  h,
+  d,
+  registerRef,
+}: {
+  w: number;
+  h: number;
+  d: number;
+  registerRef: (m: MeshStandardMaterial | null, i: number) => void;
+}) {
+  const T = 0.015;
+  const z = d / 2 + 0.002;
+  const mat = (i: number) => (
     <meshStandardMaterial
-      color={palette.neonBright}
-      emissive={palette.neonBright}
-      emissiveIntensity={2.8}
+      ref={(m) => { registerRef(m as MeshStandardMaterial | null, i); }}
+      color={palette.neonGreen}
+      emissive={palette.neonGreen}
+      emissiveIntensity={2.0}
       toneMapped={false}
     />
   );
   return (
-    <>
-      <mesh raycast={noRaycast} position={[0, SLAB_H / 2, 0.005]}>
-        <boxGeometry args={[SLAB_W + 0.02, T, 0.01]} />
-        {mat}
+    <group>
+      <mesh raycast={noRaycast} position={[0, h / 2, z]}>
+        <boxGeometry args={[w, T, T]} />
+        {mat(0)}
       </mesh>
-      <mesh raycast={noRaycast} position={[0, -SLAB_H / 2, 0.005]}>
-        <boxGeometry args={[SLAB_W + 0.02, T, 0.01]} />
-        {mat}
+      <mesh raycast={noRaycast} position={[0, -h / 2, z]}>
+        <boxGeometry args={[w, T, T]} />
+        {mat(1)}
       </mesh>
-      <mesh raycast={noRaycast} position={[SLAB_W / 2, 0, 0.005]}>
-        <boxGeometry args={[T, SLAB_H, 0.01]} />
-        {mat}
+      <mesh raycast={noRaycast} position={[-w / 2, 0, z]}>
+        <boxGeometry args={[T, h, T]} />
+        {mat(2)}
       </mesh>
-      <mesh raycast={noRaycast} position={[-SLAB_W / 2, 0, 0.005]}>
-        <boxGeometry args={[T, SLAB_H, 0.01]} />
-        {mat}
+      <mesh raycast={noRaycast} position={[w / 2, 0, z]}>
+        <boxGeometry args={[T, h, T]} />
+        {mat(3)}
       </mesh>
-    </>
+    </group>
   );
 }
 
-/* ────────────────────── VIEW ALL BADGE ────────────────────── */
+/* ────────────────────── VIEW ALL BUTTON ────────────────────── */
 
-function ViewAllBadge() {
-  const [hovered, setHovered] = useState(false);
-  const matRef = useRef<MeshStandardMaterial | null>(null);
-  const openCert = usePortfolioStore((s) => s.openCertificate);
+function ViewAllButton() {
+  const openCertificate = usePortfolioStore((s) => s.openCertificate);
   const allCerts = certificateGroups.flatMap((g) => g.certs);
-  const setCursor = usePortfolioStore((s) => s.setCursorState);
-
-  useFrame((state) => {
-    if (matRef.current) {
-      matRef.current.emissiveIntensity =
-        (hovered ? 1.4 : 0.6) + Math.sin(state.clock.elapsedTime * 1.8) * 0.20;
-    }
-  });
 
   return (
-    <group position={[0, -FRAME_H / 2 - 0.22, 0.05]}>
-      <mesh
-        onPointerOver={(e) => {
-          e.stopPropagation();
-          setHovered(true);
-          setCursor('interactive');
-          play('hover');
-        }}
-        onPointerOut={(e) => {
-          e.stopPropagation();
-          setHovered(false);
-          setCursor('idle');
-        }}
+    <Html
+      transform
+      occlude="blending"
+      position={[0, -FRAME_H / 2 - 0.55, 0]}
+      distanceFactor={2.4}
+      style={{ pointerEvents: 'auto' }}
+    >
+      <button
+        type="button"
+        className="view-all-certs"
+        onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
           play('click_primary');
-          // Open the 4th cert as a starting point — user can navigate.
-          if (allCerts[3]) openCert(allCerts[3].id);
+          // Open the first non-featured cert as a starting point.
+          const fallback = allCerts.find((c) => !FEATURED_IDS.includes(c.id as typeof FEATURED_IDS[number]));
+          if (fallback) openCertificate(fallback.id);
         }}
       >
-        <planeGeometry args={[1.0, 0.22]} />
-        <meshStandardMaterial
-          ref={matRef}
-          color={palette.neonGreen}
-          emissive={palette.neonGreen}
-          emissiveIntensity={0.7}
-          transparent
-          opacity={0.30}
-        />
-      </mesh>
-      <Text
-        raycast={noRaycast}
-        ref={disableRaycast}
-        position={[0, 0, 0.012]}
-        fontSize={0.058}
-        color={palette.textPrimary}
-        anchorX="center"
-        anchorY="middle"
-        letterSpacing={0.22}
-        outlineWidth={0.002}
-        outlineColor={palette.neonGreen}
-      >
-        VIEW ALL CERTIFICATES
-      </Text>
-    </group>
+        VIEW ALL 12 CERTIFICATES
+        <ArrowRight size={12} style={{ marginLeft: 6 }} />
+      </button>
+    </Html>
   );
 }
 
@@ -380,16 +407,16 @@ function SweepScanline() {
     const top = FRAME_H / 2 - 0.05;
     const bot = -FRAME_H / 2 + 0.05;
     ref.current.position.y = top + (bot - top) * phase;
-    matRef.current.opacity = 0.10 + Math.sin(phase * Math.PI) * 0.50;
+    matRef.current.opacity = 0.08 + Math.sin(phase * Math.PI) * 0.45;
   });
   return (
-    <mesh ref={ref} raycast={noRaycast} position={[0, FRAME_H / 2 - 0.05, 0.08]}>
-      <planeGeometry args={[FRAME_W * 0.97, 0.024]} />
+    <mesh ref={ref} raycast={noRaycast} position={[0, FRAME_H / 2 - 0.05, 0.10]}>
+      <planeGeometry args={[FRAME_W * 0.97, 0.022]} />
       <meshBasicMaterial
         ref={matRef}
         color={palette.neonBright}
         transparent
-        opacity={0.4}
+        opacity={0.40}
         blending={AdditiveBlending}
         depthWrite={false}
         toneMapped={false}

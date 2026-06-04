@@ -176,32 +176,42 @@ html.lenis-stopped {
 /* ──────────────────────── V11.1 — reference-style HUD card system ──────────────────────── */
 
 :root {
-  --v11-bg-deep:      #050A12;
-  --v11-primary:      #00FF9D;
-  --v11-secondary:    #00CC7A;
-  --v11-panel-border: #1AFFB0;
-  --v11-text-prim:    #E0FFE0;
-  --v11-text-dim:     #8FB8A0;
-  --v11-icon-bg:      rgba(20, 50, 30, 0.4);
-  --v11-button-bg:    rgba(0, 255, 157, 0.15);
-  --v11-dark-glass:   rgba(8, 18, 14, 0.65);
+  /* V11.2 — refined cyan-shifted palette. */
+  --v11-bg-deep:      #060912;
+  --v11-bg-surface:   #0A1018;
+  --v11-primary:      #2EFFB0;
+  --v11-secondary:    #1FCC88;
+  --v11-green-soft:   #5CFFC4;
+  --v11-green-muted:  #1B8859;
+  --v11-warm-amber:   #FFCC66;
+  --v11-cool-blue:    #6BB8FF;
+  --v11-panel-border: #2EFFB0;
+  --v11-text-prim:    #DCEEDC;
+  --v11-text-soft:    #A8C8B0;
+  --v11-text-dim:     #6B8278;
+  --v11-icon-bg:      rgba(20, 50, 40, 0.45);
+  --v11-button-bg:    rgba(46, 255, 176, 0.15);
+  --v11-dark-glass:   rgba(8, 18, 26, 0.55);
+  --v11-glass-border-soft: rgba(46, 255, 176, 0.35);
 }
 
 /* Shared card chrome — every HUD panel uses these classes. */
 .v11-card {
   width: 280px;
   background: var(--v11-dark-glass);
-  backdrop-filter: blur(20px) saturate(150%);
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
-  border: 1.5px solid var(--v11-panel-border);
+  backdrop-filter: blur(24px) saturate(135%);
+  -webkit-backdrop-filter: blur(24px) saturate(135%);
+  border: 1px solid var(--v11-glass-border-soft);
   border-radius: 4px;
   padding: 16px;
   font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   color: var(--v11-text-prim);
   position: relative;
+  /* V11.2 — softer outer halo + deeper drop-shadow for depth. */
   box-shadow:
-    0 0 30px rgba(0, 255, 157, 0.16),
-    inset 0 0 30px rgba(0, 255, 157, 0.04);
+    0 0 24px rgba(46, 255, 176, 0.08),
+    inset 0 0 40px rgba(46, 255, 176, 0.03),
+    0 30px 60px rgba(0, 0, 0, 0.50);
   pointer-events: auto;
   user-select: none;
 }
@@ -235,12 +245,13 @@ html.lenis-stopped {
   justify-content: center;
   gap: 6px;
   margin-bottom: 14px;
-  color: var(--v11-primary);
+  color: var(--v11-green-soft);
   font-family: 'Orbitron', 'JetBrains Mono', monospace;
-  font-size: 12px;
-  letter-spacing: 0.22em;
-  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  font-weight: 600;
   text-transform: uppercase;
+  text-shadow: 0 0 8px rgba(46, 255, 176, 0.5);
 }
 .v11-card-header .bracket {
   color: var(--v11-primary);
@@ -261,14 +272,49 @@ html.lenis-stopped {
 .v11-row-icon {
   width: 30px;
   height: 30px;
-  background: var(--v11-icon-bg);
-  border: 1px solid rgba(0, 255, 157, 0.4);
+  border: 1px solid rgba(46, 255, 176, 0.40);
   border-radius: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--v11-primary);
   flex-shrink: 0;
+  /* V11.2 — subtle warm-toward-green diagonal gradient (breaks the
+     all-green monotony slightly). */
+  background-image: linear-gradient(
+    135deg,
+    rgba(46, 255, 176, 0.15) 0%,
+    rgba(255, 204, 102, 0.05) 100%
+  );
+  box-shadow:
+    0 0 8px rgba(46, 255, 176, 0.20),
+    inset 0 0 4px rgba(46, 255, 176, 0.10);
+}
+/* V11.2 — per-icon accent modifiers for the Philosophy + AI &
+   Automation rows. */
+.v11-row-icon--warm {
+  color: var(--v11-warm-amber);
+  border-color: rgba(255, 204, 102, 0.55);
+  background-image: linear-gradient(
+    135deg,
+    rgba(255, 204, 102, 0.18) 0%,
+    rgba(46, 255, 176, 0.06) 100%
+  );
+  box-shadow:
+    0 0 10px rgba(255, 204, 102, 0.25),
+    inset 0 0 4px rgba(255, 204, 102, 0.12);
+}
+.v11-row-icon--cool {
+  color: var(--v11-cool-blue);
+  border-color: rgba(107, 184, 255, 0.55);
+  background-image: linear-gradient(
+    135deg,
+    rgba(107, 184, 255, 0.18) 0%,
+    rgba(46, 255, 176, 0.06) 100%
+  );
+  box-shadow:
+    0 0 10px rgba(107, 184, 255, 0.25),
+    inset 0 0 4px rgba(107, 184, 255, 0.12);
 }
 .v11-row-text {
   display: flex;
@@ -367,7 +413,9 @@ html.lenis-stopped {
 .v11-bar-head .val {
   color: var(--v11-primary);
   font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
   font-weight: 700;
+  text-shadow: 0 0 4px rgba(46, 255, 176, 0.40);
 }
 .v11-bar-track {
   height: 5px;
@@ -490,6 +538,57 @@ html.lenis-stopped {
 .v11-ticker-cta:hover {
   background: rgba(0, 255, 157, 0.28);
   box-shadow: 0 0 14px rgba(0, 255, 157, 0.45);
+}
+
+/* V11.2 — cert rack chrome (used by ModernCertRack <Html>). */
+.cert-rack-title {
+  color: var(--v11-green-soft);
+  font-family: 'Orbitron', 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-shadow: 0 0 12px rgba(46, 255, 176, 0.60);
+  white-space: nowrap;
+  padding: 6px 16px;
+  border-top: 1px solid var(--v11-glass-border-soft);
+  border-bottom: 1px solid var(--v11-glass-border-soft);
+  background: rgba(8, 18, 26, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  pointer-events: none;
+  user-select: none;
+}
+.cert-card-title {
+  color: var(--v11-text-soft);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-align: center;
+  pointer-events: none;
+  user-select: none;
+  text-shadow: 0 0 6px rgba(46, 255, 176, 0.25);
+}
+.view-all-certs {
+  background: var(--v11-button-bg);
+  border: 1px solid var(--v11-primary);
+  border-radius: 2px;
+  color: var(--v11-primary);
+  padding: 8px 20px;
+  font-family: 'Orbitron', 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.20em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+  white-space: nowrap;
+  pointer-events: auto;
+}
+.view-all-certs:hover {
+  background: rgba(46, 255, 176, 0.28);
+  box-shadow: 0 0 16px rgba(46, 255, 176, 0.45);
 }
 
 /* Legacy V10.1 panel classes — re-pointed at V11 tokens so anything

@@ -232,20 +232,29 @@ void main() {
   vec2 uv = vUv;
   if (uFlip > 0.5) uv.x = 1.0 - uv.x;
   // Slow horizontal scroll.
-  uv.x = fract(uv.x + uTime * 0.003);
+  uv.x = fract(uv.x + uTime * 0.0008);
 
   // 9-tap soft-blur sample.
   vec3 col = sampleSoft(uMap, uv);
 
-  // Slight overall darken so it doesn't blow out the room.
-  col *= 0.85;
+  // V11.2 — push the overall image toward deep navy (matches reference).
+  col = mix(col, col * vec3(0.60, 0.80, 1.20), 0.30);
 
-  // Green ambient tint overlay (subtle — 12 % toward palette green).
-  col = mix(col, col * uTint, 0.18);
+  // Preserve warm pixel highlights (don't desaturate window lights).
+  float luma = dot(col, vec3(0.299, 0.587, 0.114));
+  if (luma > 0.5) {
+    col = mix(col, col * vec3(1.10, 1.00, 0.90), 0.40);
+  }
+
+  // Subtle green ambient mixing from the room (very small share).
+  col = mix(col, col * vec3(0.85, 1.05, 0.95), 0.18);
+
+  // Reduce overall brightness — city is in the distance.
+  col *= 0.75;
 
   // Horizon glow band — a thin warmer-greener strip near v=0.45.
   float band = exp(-pow((vUv.y - 0.45) * 6.0, 2.0));
-  col += band * vec3(0.02, 0.10, 0.06);
+  col += band * vec3(0.02, 0.08, 0.05);
 
   // Vignette so the edges feel further away.
   vec2 vc = vUv - 0.5;
