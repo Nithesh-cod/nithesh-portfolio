@@ -8,6 +8,7 @@ import { Terminal } from '@/components/ui/Terminal';
 import { CertificateLightbox } from '@/components/ui/CertificateLightbox';
 import { ResumeViewer } from '@/components/ui/ResumeViewer';
 import { CategoryDetailModal } from '@/components/ui/CategoryDetailModal';
+import { AllCertsModal } from '@/components/ui/AllCertsModal';
 import { TopBar } from '@/components/hud/Dashboard';
 import { CursorTrackerMount } from '@/components/hud/CursorTrackerMount';
 import { BottomTicker } from '@/components/ui/BottomTicker';
@@ -39,6 +40,7 @@ export default function Page() {
       <CertificateLightbox />
       <ResumeViewer />
       <CategoryDetailModal />
+      <AllCertsModal />
       <AudioController />
       <Terminal />
       <Intro />

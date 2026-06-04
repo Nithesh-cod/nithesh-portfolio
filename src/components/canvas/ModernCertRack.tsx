@@ -310,8 +310,7 @@ function RimTubes({
 /* ────────────────────── VIEW ALL BUTTON ────────────────────── */
 
 function ViewAllButton() {
-  const openCertificate = usePortfolioStore((s) => s.openCertificate);
-  const allCerts = certificateGroups.flatMap((g) => g.certs);
+  const openAllCerts = usePortfolioStore((s) => s.openAllCerts);
 
   return (
     <Html
@@ -328,7 +327,7 @@ function ViewAllButton() {
         onClick={(e) => {
           e.stopPropagation();
           play('click_primary');
-          if (allCerts[0]) openCertificate(allCerts[0].id);
+          openAllCerts();
         }}
       >
         VIEW DETAILED CERTIFICATES

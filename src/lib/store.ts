@@ -57,6 +57,11 @@ type PortfolioStore = {
   openSkillCategory: (id: SkillCategoryId) => void;
   closeSkillCategory: () => void;
 
+  /** V12.1 — All-certs 4×3 grid modal. */
+  allCertsOpen: boolean;
+  openAllCerts: () => void;
+  closeAllCerts: () => void;
+
   /** V8.0 — cursor-driven camera focus. CameraRig listens to focusTarget
    *  changes and tweens OrbitControls toward the requested pose. */
   focusTarget: FocusTarget | null;
@@ -111,6 +116,10 @@ export const usePortfolioStore = create<PortfolioStore>((set) => ({
   activeSkillCategory: null,
   openSkillCategory: (id) => set({ activeSkillCategory: id }),
   closeSkillCategory: () => set({ activeSkillCategory: null }),
+
+  allCertsOpen: false,
+  openAllCerts: () => set({ allCertsOpen: true }),
+  closeAllCerts: () => set({ allCertsOpen: false }),
 
   focusTarget: null,
   focusOn: (position, lookAt) =>

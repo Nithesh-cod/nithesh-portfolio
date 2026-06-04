@@ -75,48 +75,74 @@ export function ProjectStation({ slug, label, subtitle, position, yaw = 0, iconK
     openProject(slug, slug);
   };
 
-  // Hex base — 2 tiers.
-  const TIERS = [
-    { y: 0.125, radius: 0.9, h: 0.25 },
-    { y: 0.35, radius: 0.7, h: 0.20 },
-  ];
-
-  // Display case sits on top of tier 2.
-  const CASE_W = 1.0;
-  const CASE_H = 0.8;
-  const CASE_D = 0.6;
-  const CASE_Y = 0.45 + CASE_H / 2;
+  // V12.1 — round LED-ring pedestal (replaces 2-tier hex).
+  // Tier 1 (bottom): r 0.70 → 0.65 stepped disc, h 0.10
+  // LED ring on top edge of tier 1 (torus glowing brightly)
+  // Tier 2: r 0.55 stepped disc, h 0.10
+  const CASE_W = 0.9;
+  const CASE_H = 0.7;
+  const CASE_D = 0.7;
+  const CASE_Y = 0.25 + CASE_H / 2 + 0.04; // tier 2 top (0.25) + small gap + half height
 
   return (
     <group ref={groupRef} position={position} rotation={[0, yaw, 0]}>
-      {/* 2 hex tiers. */}
-      {TIERS.map((tier, i) => (
-        <group key={i}>
-          <mesh
-            position={[0, tier.y, 0]}
-            rotation={[0, Math.PI / 6, 0]}
-            onPointerOver={handleOver}
-            onPointerOut={handleOut}
-            onClick={handleClick}
-          >
-            <cylinderGeometry args={[tier.radius, tier.radius * 1.04, tier.h, HEX_SIDES]} />
-            <meshStandardMaterial color="#1A1A2A" metalness={0.8} roughness={0.3}
-              emissive={palette.neonGreen} emissiveIntensity={0.04} />
-          </mesh>
-          <mesh position={[0, tier.y + tier.h / 2, 0]} rotation={[Math.PI / 2, 0, Math.PI / 6]}>
-            <torusGeometry args={[tier.radius, 0.008, 8, 6 * 8]} />
-            <meshStandardMaterial
-              ref={(m) => { trimRefs.current[i] = m; }}
-              color={palette.neonGreen}
-              emissive={palette.neonGreen}
-              emissiveIntensity={1.0}
-              metalness={0.9}
-              roughness={0.2}
-              toneMapped={false}
-            />
-          </mesh>
-        </group>
-      ))}
+      {/* Tier 1 (bottom disc). */}
+      <mesh
+        position={[0, 0.05, 0]}
+        onPointerOver={handleOver}
+        onPointerOut={handleOut}
+        onClick={handleClick}
+      >
+        <cylinderGeometry args={[0.65, 0.70, 0.10, 32]} />
+        <meshStandardMaterial
+          color="#0D1812"
+          metalness={0.90}
+          roughness={0.30}
+          emissive={palette.neonGreen}
+          emissiveIntensity={0.15}
+        />
+      </mesh>
+
+      {/* LED ring on the top edge of tier 1 — pulses on hover. */}
+      <mesh position={[0, 0.11, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.55, 0.015, 16, 64]} />
+        <meshStandardMaterial
+          ref={(m) => { trimRefs.current[0] = m; }}
+          color={palette.neonGreen}
+          emissive={palette.neonGreen}
+          emissiveIntensity={2.5}
+          toneMapped={false}
+        />
+      </mesh>
+
+      {/* Tier 2 (upper disc the case sits on). */}
+      <mesh
+        position={[0, 0.20, 0]}
+        onPointerOver={handleOver}
+        onPointerOut={handleOut}
+        onClick={handleClick}
+      >
+        <cylinderGeometry args={[0.55, 0.60, 0.10, 32]} />
+        <meshStandardMaterial
+          color="#0D1812"
+          metalness={0.90}
+          roughness={0.30}
+          emissive={palette.neonGreen}
+          emissiveIntensity={0.10}
+        />
+      </mesh>
+
+      {/* Secondary thin LED line around tier 2. */}
+      <mesh position={[0, 0.26, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.50, 0.010, 12, 48]} />
+        <meshStandardMaterial
+          ref={(m) => { trimRefs.current[1] = m; }}
+          color={palette.neonBright}
+          emissive={palette.neonBright}
+          emissiveIntensity={1.6}
+          toneMapped={false}
+        />
+      </mesh>
 
       {/* GLASS DISPLAY CASE on top of tier 2. */}
       <mesh
@@ -146,10 +172,10 @@ export function ProjectStation({ slug, label, subtitle, position, yaw = 0, iconK
         <WireframeIcon kind={iconKind} />
       </group>
 
-      {/* V11.1 — descriptive subtitle goes on the pedestal nameplate. */}
-      <group position={[0, 0.125, 0.92]} rotation={[0, 0, 0]}>
+      {/* V12.1 — descriptive subtitle on a strip at tier 1 front edge. */}
+      <group position={[0, 0.05, 0.70]} rotation={[0, 0, 0]}>
         <mesh>
-          <planeGeometry args={[0.96, 0.18]} />
+          <planeGeometry args={[0.85, 0.10]} />
           <meshStandardMaterial color="#020608" emissive={palette.neonGreen} emissiveIntensity={0.10}
             metalness={0.6} roughness={0.4} />
         </mesh>
@@ -157,14 +183,14 @@ export function ProjectStation({ slug, label, subtitle, position, yaw = 0, iconK
           raycast={noRaycast}
           ref={disableRaycast}
           position={[0, 0, 0.003]}
-          fontSize={0.052}
+          fontSize={0.038}
           color={palette.neonBright}
           anchorX="center"
           anchorY="middle"
           letterSpacing={0.18}
           outlineWidth={0.0015}
           outlineColor={palette.neonGreen}
-          maxWidth={0.9}
+          maxWidth={0.80}
         >
           {subtitle}
         </Text>
@@ -189,7 +215,7 @@ export function ProjectStation({ slug, label, subtitle, position, yaw = 0, iconK
 
       {/* VIEW PROJECT button on tier 2's front face. */}
       <group
-        position={[0, 0.35, 0.72]}
+        position={[0, 0.20, 0.56]}
         onPointerOver={handleOver}
         onPointerOut={handleOut}
         onClick={handleClick}

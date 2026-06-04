@@ -19,6 +19,7 @@ const FRAG = /* glsl */ `
 precision highp float;
 uniform float uTime;
 varying vec2 vUv;
+
 vec2 hexCoord(vec2 p){
   p *= 20.0;
   vec2 r = vec2(1.0, 1.7320508);
@@ -27,7 +28,16 @@ vec2 hexCoord(vec2 p){
   vec2 b = mod(p - h, r) - h;
   return dot(a, a) < dot(b, b) ? a : b;
 }
+
+// World-space distance from centre (UV 0.5,0.5). Plane is 40×40, so
+// 0.5 UV = 20 world units. Returns world-radius from centre.
+float worldRadius(vec2 uv) {
+  vec2 p = (uv - 0.5) * 40.0;
+  return length(p);
+}
+
 void main(){
+  // ── Hex tile pattern. ──────────────────────────────────────────
   vec2 hex = hexCoord(vUv - 0.5);
   float dist = length(hex);
   float edge = smoothstep(0.42, 0.45, dist) - smoothstep(0.45, 0.48, dist);
@@ -37,8 +47,23 @@ void main(){
   float pulse = sin(uTime * 1.5 + rand * 6.28) * 0.5 + 0.5;
   float interior = (1.0 - smoothstep(0.0, 0.4, dist)) * active * pulse * 0.18;
   float fade = 1.0 - smoothstep(0.3, 0.5, length(vUv - 0.5));
-  vec3 color = vec3(0.0, 1.0, 0.5);
-  float alpha = (edge * 0.85 + interior) * fade;
+
+  float hexAlpha = (edge * 0.55 + interior) * fade;
+
+  // ── V12.1 concentric accent rings under the capsule. ───────────
+  // Capsule sits at world (0, 0). Three rings at r = 2.5 / 3.5 / 4.5.
+  float wr = worldRadius(vUv);
+  float ringW = 0.06; // ring width in world units
+  float ring1 = (1.0 - smoothstep(0.0, ringW, abs(wr - 2.5))) * (0.7 + 0.3 * sin(uTime * 1.2 + 0.0));
+  float ring2 = (1.0 - smoothstep(0.0, ringW, abs(wr - 3.5))) * (0.6 + 0.4 * sin(uTime * 1.0 + 1.5));
+  float ring3 = (1.0 - smoothstep(0.0, ringW, abs(wr - 4.5))) * (0.5 + 0.4 * sin(uTime * 0.8 + 3.0));
+  float ringsAlpha = (ring1 + ring2 + ring3) * 0.55;
+
+  // ── V12.1 centre disc directly under the capsule (bright glow). ─
+  float centreGlow = (1.0 - smoothstep(0.0, 1.5, wr)) * (0.4 + 0.2 * sin(uTime * 1.6));
+
+  vec3 color = vec3(0.18, 1.00, 0.70); // V11.2 cyan-shifted primary
+  float alpha = hexAlpha + ringsAlpha + centreGlow * 0.5;
   gl_FragColor = vec4(color * alpha, alpha);
 }`;
 

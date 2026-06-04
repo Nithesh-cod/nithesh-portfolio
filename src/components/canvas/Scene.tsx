@@ -21,6 +21,7 @@ import { WindowsWall } from '@/components/canvas/WindowsWall';
 import { RoomPanels } from '@/components/canvas/RoomPanels';
 import { TopCenterTitle } from '@/components/canvas/TopCenterTitle';
 import { ServicesPlaques } from '@/components/canvas/ServicesPlaques';
+import { PanelStands } from '@/components/canvas/PanelStands';
 import { FloatingDataGlyphs } from '@/components/canvas/FloatingDataGlyphs';
 import { CameraRig } from '@/components/canvas/CameraRig';
 import { PostFX } from '@/components/canvas/PostFX';
@@ -103,6 +104,9 @@ export function Scene() {
 
       {/* V11.1 — all dashboard panels as styled <Html transform> cards. */}
       <RoomPanels />
+
+      {/* V12.1 — thin metal rod stands anchoring floating mid-air panels. */}
+      <PanelStands />
 
       {/* V11.1 — 6 flat glass plaques on the floor. */}
       <ServicesPlaques />
