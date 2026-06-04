@@ -16,7 +16,7 @@ import { Lab } from '@/components/canvas/Lab';
 import { HexFloor } from '@/components/canvas/HexFloor';
 import { HoloCapsule } from '@/components/canvas/HoloCapsule';
 import { ProjectStation } from '@/components/canvas/ProjectStation';
-import { WallCertRack } from '@/components/canvas/WallCertRack';
+import { ModernCertRack } from '@/components/canvas/ModernCertRack';
 import { RoomShell } from '@/components/canvas/RoomShell';
 import { RoomPanels } from '@/components/canvas/RoomPanels';
 import { FloatingDataGlyphs } from '@/components/canvas/FloatingDataGlyphs';
@@ -94,8 +94,8 @@ export function Scene() {
         />
       ))}
 
-      {/* Cert rack mounted on the back wall. */}
-      <WallCertRack />
+      {/* V10.2 — freestanding cert rack replaces the back-wall vault. */}
+      <ModernCertRack />
 
       {/* V10.1 — all dashboard panels reborn as in-room 3D meshes. */}
       <RoomPanels />
@@ -103,12 +103,12 @@ export function Scene() {
       <FloatingDataGlyphs />
 
       <Sparkles
-        count={200}
+        count={100}
         scale={[16, 6, 16]}
         size={1.2}
         speed={0.15}
-        opacity={0.4}
-        color="#88FFCC"
+        opacity={0.35}
+        color="#33FFAA"
         position={[0, 2.5, 0]}
       />
 
@@ -142,9 +142,9 @@ function Lights() {
         angle={0.5} penumbra={0.8} color="#DDFFEE" distance={12} decay={1.4} />
       <SpotLight position={[-2, 5.7,  2]} target-position={[ 0, 0, 4.5]} intensity={1.5}
         angle={0.5} penumbra={0.8} color="#DDFFEE" distance={12} decay={1.4} />
-      {/* Cert rack key. */}
-      <SpotLight position={[ 2, 5.7,  2]} target-position={[0, 2.5, -7]} intensity={1.5}
-        angle={0.5} penumbra={0.8} color="#DDFFEE" distance={16} decay={1.4} />
+      {/* Cert rack key — V10.2 aimed at the new freestanding rack at [4,0,-4]. */}
+      <SpotLight position={[4, 5.5, -4]} target-position={[4, 2.2, -4]} intensity={1.5}
+        angle={0.55} penumbra={0.85} color="#EAFFF4" distance={14} decay={1.4} />
 
       {/* Corner pillar point lights. */}
       <pointLight position={[-7.8, 2, -7.8]} intensity={0.6} color={palette.neonGreen} distance={5} decay={2} />

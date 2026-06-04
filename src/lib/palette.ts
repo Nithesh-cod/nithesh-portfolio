@@ -41,15 +41,21 @@ export const palette = {
   lightWarm: '#FFD9A8',
   lightCool: '#9CB5DD',
 
-  // ── V9.0 neon-green dashboard tokens ─────────────────────────────
-  bgBase:        '#050810',
-  bgPanel:       'rgba(8, 20, 12, 0.65)',
-  neonGreen:     '#00FF88',
-  neonBright:    '#4DFFAA',
-  neonDim:       '#00AA55',
-  textPrimary:   '#DDFFEE',
-  textSecondary: '#88CCAA',
+  // ── V10.2 — Apple Vision Pro / JARVIS palette refresh ───────────
+  // Cooler glass tint, cleaner text whites, gold accent for featured
+  // featured certs. Tokens preserve V9 names so existing components
+  // pick up the new values automatically.
+  bgBase:        '#050505', // was #050810 — pure dark surface
+  bgPanel:       'rgba(13, 13, 13, 0.65)',
+  neonGreen:     '#00FF88', // primary green (unchanged)
+  neonBright:    '#33FFAA', // glass-border tint (was #4DFFAA)
+  neonDim:       '#00CC66', // secondary green (was #00AA55)
+  textPrimary:   '#F5F5F5', // clean off-white (was #DDFFEE)
+  textSecondary: '#B8B8B8', // neutral mid-grey (was #88CCAA)
   textMono:      '#00FF88',
+  accentGold:    '#FFD700', // gold accent (used for featured cert)
+  darkSurface:   '#0D0D0D',
+  glassBorder:   '#33FFAA',
 
   // ── Legacy aliases (re-pointed) ───────────────────────────────────
   // Same hex values as V7 canonical tokens above, but available under the
@@ -88,7 +94,6 @@ export const palette = {
   slateLight:  '#1A1A2A',
   boneWarm:    '#F0EAD8',
   boneCool:    '#C8D0E0',
-  accentGold:  '#C9A961',
   accentMint:  '#7FE8B8',
   accentCoral: '#C9A961',   // collapsed onto gold per V7 restraint
   accentAzure: '#9CB5DD',

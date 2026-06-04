@@ -20,6 +20,9 @@ export type HUDPanel3DProps = {
   children?: React.ReactNode;
   title?: string;
   bob?: boolean;
+  /** Phase offset (in seconds) for the bob animation. Each panel
+   *  passes a unique phase so they don't oscillate in sync. */
+  phase?: number;
   color?: string;
 };
 
@@ -31,30 +34,34 @@ export function HUDPanel3D({
   children,
   title,
   bob = false,
-  color = palette.neonGreen,
+  phase = 0,
+  color = palette.glassBorder,
 }: HUDPanel3DProps) {
   const groupRef = useRef<Group | null>(null);
 
   useFrame((state) => {
     if (bob && groupRef.current) {
       groupRef.current.position.y =
-        position[1] + Math.sin(state.clock.elapsedTime * 0.5) * 0.04;
+        position[1] + Math.sin(state.clock.elapsedTime * 0.5 + phase) * 0.04;
     }
   });
 
   return (
     <group ref={groupRef} position={position} rotation={rotation}>
-      {/* Glass backing plate (transparent green-tinted). */}
+      {/* Glass backing plate — V10.2 cooler tint, more transparent.
+          attenuationDistance + lower opacity reads as a hovering pane. */}
       <mesh raycast={noRaycast}>
         <planeGeometry args={[width, height]} />
         <meshPhysicalMaterial
-          transmission={0.85}
+          transmission={0.95}
           thickness={0.05}
-          roughness={0.12}
+          roughness={0.10}
           metalness={0.1}
-          color="#88FFCC"
+          color="#C8FFE8"
+          attenuationColor="#88FFCC"
+          attenuationDistance={6.0}
           transparent
-          opacity={0.35}
+          opacity={0.25}
           side={DoubleSide}
         />
       </mesh>
@@ -104,19 +111,19 @@ function PanelFrame({
       {/* 4 emissive edges. */}
       <mesh raycast={noRaycast} position={[0, height / 2, 0.005]}>
         <boxGeometry args={[width + 0.02, T, 0.01]} />
-        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={2.5} toneMapped={false} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={3.5} toneMapped={false} />
       </mesh>
       <mesh raycast={noRaycast} position={[0, -height / 2, 0.005]}>
         <boxGeometry args={[width + 0.02, T, 0.01]} />
-        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={2.5} toneMapped={false} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={3.5} toneMapped={false} />
       </mesh>
       <mesh raycast={noRaycast} position={[width / 2, 0, 0.005]}>
         <boxGeometry args={[T, height, 0.01]} />
-        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={2.5} toneMapped={false} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={3.5} toneMapped={false} />
       </mesh>
       <mesh raycast={noRaycast} position={[-width / 2, 0, 0.005]}>
         <boxGeometry args={[T, height, 0.01]} />
-        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={2.5} toneMapped={false} />
+        <meshStandardMaterial color={color} emissive={color} emissiveIntensity={3.5} toneMapped={false} />
       </mesh>
       {/* Corner accents. */}
       {(

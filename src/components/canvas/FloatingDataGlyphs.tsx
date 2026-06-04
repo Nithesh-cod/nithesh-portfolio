@@ -11,7 +11,7 @@ const GLYPHS = [
   '0x7F', 'DATA', 'SYNC', 'AI', 'REACT', 'NEXT',
   'fn()', 'JWT', '200 OK', 'glsl', 'tsx', 'vec3',
 ] as const;
-const COUNT = 24;
+const COUNT = 16;
 
 function rand(a: number, b: number) { return a + Math.random() * (b - a); }
 

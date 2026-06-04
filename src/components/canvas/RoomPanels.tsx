@@ -28,8 +28,14 @@ import { play } from '@/lib/audio';
  * Floor strip (front): 6 services hexes                                   *
  * ──────────────────────────────────────────────────────────────────────── */
 
+// V10.2 — wall panels DETACHED from wall surfaces. They float in front
+// of the walls (offset 1.3u toward room interior), angled at ~63° (was 90°)
+// so they read as hovering panes rather than wall plaques. Each panel also
+// bobs gently with a unique phase offset.
 const ROOM_HALF = 8;
-const WALL_X = ROOM_HALF - 0.2; // 7.8
+const WALL_X = ROOM_HALF - 1.5; // 6.5 — pulled into the room
+const LEFT_ROT: [number, number, number] = [0, Math.PI * 0.35, 0];
+const RIGHT_ROT: [number, number, number] = [0, -Math.PI * 0.35, 0];
 
 // ─────────────────────────── LEFT WALL ───────────────────────────
 
@@ -49,10 +55,12 @@ function LeftWallNav() {
   return (
     <HUDPanel3D
       position={[-WALL_X, 4.0, -3]}
-      rotation={[0, Math.PI / 2, 0]}
+      rotation={LEFT_ROT}
       width={2.2}
       height={2.5}
       title="NAVIGATION"
+      bob
+      phase={0}
     >
       {navItems.slice(0, 7).map((item, i) => {
         const y = 0.85 - i * 0.22;
@@ -119,10 +127,12 @@ function LeftWallExpertise() {
   return (
     <HUDPanel3D
       position={[-WALL_X, 1.7, -3]}
-      rotation={[0, Math.PI / 2, 0]}
+      rotation={LEFT_ROT}
       width={2.2}
       height={1.8}
       title="CORE EXPERTISE"
+      bob
+      phase={1.2}
     >
       {coreExpertise.slice(0, 6).map((e, i) => {
         const col = i % 3;
@@ -210,10 +220,12 @@ function LeftWallTechStack() {
   return (
     <HUDPanel3D
       position={[-WALL_X, -0.4, -3]}
-      rotation={[0, Math.PI / 2, 0]}
+      rotation={LEFT_ROT}
       width={2.2}
       height={1.8}
       title="TECH STACK"
+      bob
+      phase={2.4}
     >
       <Html
         transform
@@ -280,10 +292,12 @@ function RightWallStatus() {
   return (
     <HUDPanel3D
       position={[WALL_X, 4.0, -3]}
-      rotation={[0, -Math.PI / 2, 0]}
+      rotation={RIGHT_ROT}
       width={2.2}
       height={1.8}
       title="SYSTEM STATUS"
+      bob
+      phase={0.6}
     >
       {systemStatus.slice(0, 5).map((row, i) => {
         const y = 0.55 - i * 0.20;
@@ -326,10 +340,12 @@ function RightWallMetrics() {
   return (
     <HUDPanel3D
       position={[WALL_X, 1.7, -3]}
-      rotation={[0, -Math.PI / 2, 0]}
+      rotation={RIGHT_ROT}
       width={2.2}
       height={2.0}
       title="SYSTEM OVERVIEW"
+      bob
+      phase={1.8}
     >
       {/* Stats list — top half. */}
       {[
@@ -432,10 +448,12 @@ function RightWallLiveFeed() {
   return (
     <HUDPanel3D
       position={[WALL_X, -0.5, -3]}
-      rotation={[0, -Math.PI / 2, 0]}
+      rotation={RIGHT_ROT}
       width={2.2}
       height={1.5}
       title="LIVE FEED"
+      bob
+      phase={3.0}
     >
       {liveFeed.slice(0, 5).map((row, i) => {
         const y = 0.40 - i * 0.18;
@@ -595,8 +613,11 @@ function FloatingStatus() {
         </Text>
       </group>
 
-      {/* Download Resume button. */}
-      <group position={[0, -0.35, 0]}>
+      {/* V10.2 — Download Resume button.
+          Hit mesh pushed forward by 0.05 to guarantee it raycasts ahead
+          of the glass backing. Background plane uses a brighter emissive
+          tile so it reads as a clickable affordance. */}
+      <group position={[0, -0.35, 0.05]}>
         <mesh
           onPointerOver={(e) => {
             e.stopPropagation();
@@ -609,28 +630,30 @@ function FloatingStatus() {
           }}
           onClick={(e) => {
             e.stopPropagation();
+            // eslint-disable-next-line no-console
+            console.log('[BUTTON] download-resume');
             play('click_primary');
             openResume();
           }}
         >
-          <planeGeometry args={[1.2, 0.22]} />
+          <planeGeometry args={[1.3, 0.26]} />
           <meshStandardMaterial
             color={palette.neonGreen}
             emissive={palette.neonGreen}
-            emissiveIntensity={0.6}
+            emissiveIntensity={1.0}
             transparent
-            opacity={0.25}
+            opacity={0.45}
           />
         </mesh>
         <Text
           raycast={noRaycast}
           ref={disableRaycast}
-          position={[0, 0, 0.01]}
-          fontSize={0.06}
-          color={palette.neonBright}
+          position={[0, 0, 0.02]}
+          fontSize={0.065}
+          color={palette.textPrimary}
           anchorX="center"
           anchorY="middle"
-          letterSpacing={0.2}
+          letterSpacing={0.22}
           outlineWidth={0.003}
           outlineColor={palette.neonGreen}
         >
@@ -683,7 +706,7 @@ function FloorServicesStrip() {
     { title: 'UI / UX DESIGN', sub: 'CRAFTED EXPERIENCES' },
   ];
   return (
-    <group position={[0, 0.05, 6]} rotation={[-Math.PI / 2 + 0.2, 0, 0]}>
+    <group position={[0, 0.4, 7]} rotation={[-Math.PI / 2 + 0.5, 0, 0]}>
       <Text
         raycast={noRaycast}
         ref={disableRaycast}
@@ -721,20 +744,34 @@ function ServiceHex({
   useFrame((state) => {
     if (!ref.current) return;
     const t = state.clock.elapsedTime + phase;
-    ref.current.position.z = 0.02 + Math.sin(t * 0.8) * 0.02;
+    // Strip is tilted up around X, so its local +Z is the "up" axis in
+    // world space — bob along Z to lift the icon off the strip surface.
+    ref.current.position.z = 0.08 + Math.sin(t * 0.8) * 0.03;
   });
   return (
-    <group ref={ref} position={[x, 0, 0.02]}>
+    <group ref={ref} position={[x, 0, 0.08]}>
+      {/* V10.2 pedestal disc under each icon. */}
+      <mesh raycast={noRaycast} position={[0, 0, -0.08]}>
+        <cylinderGeometry args={[0.30, 0.34, 0.05, 24]} />
+        <meshStandardMaterial
+          color={palette.darkSurface}
+          emissive={palette.neonGreen}
+          emissiveIntensity={0.25}
+          metalness={0.7}
+          roughness={0.35}
+        />
+      </mesh>
+      {/* Hex face. */}
       <mesh raycast={noRaycast}>
-        <cylinderGeometry args={[0.4, 0.4, 0.02, 6]} />
+        <cylinderGeometry args={[0.40, 0.40, 0.02, 6]} />
         <meshStandardMaterial
           color={palette.neonGreen}
           emissive={palette.neonGreen}
-          emissiveIntensity={0.4}
+          emissiveIntensity={0.5}
           metalness={0.6}
           roughness={0.3}
           transparent
-          opacity={0.35}
+          opacity={0.40}
         />
       </mesh>
       {/* Icon placeholder — small floating shape inside the hex. */}
