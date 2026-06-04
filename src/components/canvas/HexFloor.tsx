@@ -63,8 +63,27 @@ void main(){
   // ── V12.1 centre disc directly under the capsule (bright glow). ─
   float centreGlow = (1.0 - smoothstep(0.0, 1.5, wr)) * (0.4 + 0.2 * sin(uTime * 1.6));
 
+  // ── V12.5 walking-path lines from camera entry (z≈12) to capsule. ──
+  // Three subtle linear accents on the floor pointing toward the
+  // capsule from the camera side: one straight + two angled toward
+  // the project trio.
+  vec2 worldPos = (vUv - 0.5) * 40.0;
+  // Straight centre path — narrow band along x=0, restricted to z>0.
+  float centrePath = (1.0 - smoothstep(0.0, 0.10, abs(worldPos.x)))
+                   * smoothstep(0.0, 1.5, worldPos.y)
+                   * (1.0 - smoothstep(1.5, 10.0, worldPos.y));
+  // Two angled paths converging on the project pedestal arc.
+  // worldPos.x ≈ ±worldPos.y at ±45° → use abs(worldPos.x - 0.7*worldPos.y).
+  float diagL = (1.0 - smoothstep(0.0, 0.08, abs(worldPos.x + 0.55 * worldPos.y)))
+              * smoothstep(0.0, 1.5, worldPos.y)
+              * (1.0 - smoothstep(2.0, 8.0, worldPos.y));
+  float diagR = (1.0 - smoothstep(0.0, 0.08, abs(worldPos.x - 0.55 * worldPos.y)))
+              * smoothstep(0.0, 1.5, worldPos.y)
+              * (1.0 - smoothstep(2.0, 8.0, worldPos.y));
+  float pathAlpha = (centrePath * 0.15 + diagL * 0.08 + diagR * 0.08);
+
   vec3 color = vec3(0.18, 1.00, 0.70); // V11.2 cyan-shifted primary
-  float alpha = hexAlpha + ringsAlpha + centreGlow * 0.5;
+  float alpha = hexAlpha + ringsAlpha + centreGlow * 0.5 + pathAlpha;
   gl_FragColor = vec4(color * alpha, alpha);
 }`;
 

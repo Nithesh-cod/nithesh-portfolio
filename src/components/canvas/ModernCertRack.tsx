@@ -47,15 +47,15 @@ export function ModernCertRack() {
 
   return (
     <group position={RACK_POS} rotation={RACK_ROT}>
-      {/* Floating header. */}
+      {/* V12.5 — title text printed ON the top cantilever mount. */}
       <Html
         transform
         occlude={false}
-        position={[0, FRAME_H / 2 + 0.35, 0]}
+        position={[0, FRAME_H / 2 + 0.18, 0.085]}
         distanceFactor={2.4}
         style={{ pointerEvents: 'none' }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
           <div className="cert-rack-title">CERTIFICATIONS &amp; ACHIEVEMENTS</div>
           <div className="cert-rack-subtitle">12 / 12 VERIFIED · CONTINUOUSLY GROWING</div>
         </div>
@@ -84,7 +84,14 @@ export function ModernCertRack() {
   );
 }
 
-/* ────────────────────── MOUNTING FRAME ────────────────────── */
+/* ────────────────────── MOUNTING FRAME ────────────────────── *
+ * V12.5 — full cantilever rebuild per V12.2 spec:
+ *   • TOP HEADER MOUNT (thick bright cantilever box at top)
+ *   • SIDE MOUNTING RAILS (2 vertical posts)
+ *   • HORIZONTAL CROSS-STRUTS between rows
+ *   • BOTTOM HEADER MOUNT (matches top)
+ *   • FLOOR STAND CYLINDER beneath the rack
+ */
 
 function RackFrame() {
   const postMat = (
@@ -93,24 +100,50 @@ function RackFrame() {
       metalness={0.85}
       roughness={0.22}
       emissive={palette.neonGreen}
-      emissiveIntensity={0.10}
+      emissiveIntensity={0.15}
       toneMapped={false}
     />
   );
+  const mountMat = (
+    <meshStandardMaterial
+      color="#1A2A28"
+      metalness={0.90}
+      roughness={0.25}
+      emissive={palette.neonGreen}
+      emissiveIntensity={0.30}
+      toneMapped={false}
+    />
+  );
+
+  // Top + bottom cantilever Y positions (just above/below the cert grid).
+  const topY = FRAME_H / 2 + 0.18;
+  const botY = -FRAME_H / 2 - 0.18;
+
   return (
     <group>
-      {/* 4 vertical posts (between + at edges of the 3 cols). */}
+      {/* TOP HEADER MOUNT — cantilever where the title sits. */}
+      <mesh raycast={noRaycast} position={[0, topY, 0]}>
+        <boxGeometry args={[FRAME_W + 0.20, 0.12, 0.15]} />
+        {mountMat}
+      </mesh>
+
+      {/* BOTTOM HEADER MOUNT. */}
+      <mesh raycast={noRaycast} position={[0, botY, 0]}>
+        <boxGeometry args={[FRAME_W + 0.20, 0.12, 0.15]} />
+        {mountMat}
+      </mesh>
+
+      {/* SIDE MOUNTING RAILS — 2 vertical posts. */}
       {[-1, 1].map((s) => (
-        <mesh key={s} raycast={noRaycast} position={[(s * FRAME_W) / 2, 0, -0.06]}>
-          <boxGeometry args={[0.04, FRAME_H + 0.3, 0.04]} />
+        <mesh key={s} raycast={noRaycast} position={[(s * FRAME_W) / 2, 0, -0.04]}>
+          <boxGeometry args={[0.05, FRAME_H + 0.45, 0.05]} />
           {postMat}
         </mesh>
       ))}
 
-      {/* 3 horizontal struts between rows. */}
+      {/* HORIZONTAL CROSS-STRUTS between cert rows. */}
       {[1.5, 0.5, -0.5, -1.5].map((rowOffset, i) => {
         const y = rowOffset * (CERT_PITCH_Y / 2);
-        // Skip top + bottom edges that are caps below.
         if (i === 0 || i === 3) return null;
         return (
           <mesh key={i} raycast={noRaycast} position={[0, y, -0.05]}>
@@ -120,14 +153,54 @@ function RackFrame() {
         );
       })}
 
-      {/* Top + bottom caps. */}
-      <mesh raycast={noRaycast} position={[0, FRAME_H / 2 + 0.12, -0.05]}>
-        <boxGeometry args={[FRAME_W + 0.10, 0.08, 0.06]} />
-        <meshStandardMaterial color="#0F1A18" metalness={0.85} roughness={0.22} />
+      {/* FLOOR STAND — hexagonal disc that anchors the rack to the floor.
+          Mounted from rack-bottom down to the floor (RACK_POS.y = 1.5). */}
+      <FloorStand bottomY={botY} />
+    </group>
+  );
+}
+
+function FloorStand({ bottomY }: { bottomY: number }) {
+  // Distance from bottom-mount Y down to the floor in local space.
+  // RACK_POS.y is 1.5, so floor is at y = -1.5 in this group's local space.
+  const floorLocalY = -1.5;
+  const standY = (bottomY + floorLocalY) / 2;
+  const standH = bottomY - floorLocalY;
+  return (
+    <group>
+      {/* Vertical support column from bottom mount down. */}
+      <mesh raycast={noRaycast} position={[0, standY, -0.02]}>
+        <boxGeometry args={[0.20, standH, 0.20]} />
+        <meshStandardMaterial
+          color="#0F1A18"
+          metalness={0.88}
+          roughness={0.25}
+          emissive={palette.neonGreen}
+          emissiveIntensity={0.18}
+          toneMapped={false}
+        />
       </mesh>
-      <mesh raycast={noRaycast} position={[0, -FRAME_H / 2 - 0.12, -0.05]}>
-        <boxGeometry args={[FRAME_W + 0.10, 0.08, 0.06]} />
-        <meshStandardMaterial color="#0F1A18" metalness={0.85} roughness={0.22} />
+      {/* Hexagonal floor disc base. */}
+      <mesh raycast={noRaycast} position={[0, floorLocalY + 0.06, 0]}>
+        <cylinderGeometry args={[0.50, 0.62, 0.12, 6]} />
+        <meshStandardMaterial
+          color="#1A2A28"
+          metalness={0.90}
+          roughness={0.22}
+          emissive={palette.neonGreen}
+          emissiveIntensity={0.25}
+          toneMapped={false}
+        />
+      </mesh>
+      {/* Glowing torus trim around the floor disc top edge. */}
+      <mesh raycast={noRaycast} position={[0, floorLocalY + 0.12, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.50, 0.012, 8, 6]} />
+        <meshStandardMaterial
+          color={palette.neonGreen}
+          emissive={palette.neonGreen}
+          emissiveIntensity={2.4}
+          toneMapped={false}
+        />
       </mesh>
     </group>
   );
@@ -319,7 +392,7 @@ function ViewAllButton() {
     <Html
       transform
       occlude={false}
-      position={[0, -FRAME_H / 2 - 0.45, 0]}
+      position={[0, -FRAME_H / 2 - 0.18, 0.085]}
       distanceFactor={2.4}
       style={{ pointerEvents: 'auto' }}
     >

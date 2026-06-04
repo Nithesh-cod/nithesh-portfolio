@@ -313,11 +313,27 @@ function WireframeIcon({ kind }: { kind: 'leaf' | 'box' | 'globe' }) {
   //   box   (Smart Canteen) → TorusKnot (tightly-organized network/system).
   //   globe (TestAI)        → sphere + inner inverted lattice (testing scanner).
   if (kind === 'box') {
+    // V12.5 Smart Canteen — wireframe "tray stack": 3 thin flat boxes
+    // at increasing Y, each slightly smaller, suggests stacked food
+    // trays / a canteen counter.
     return (
       <group>
-        <mesh>
-          <torusKnotGeometry args={[0.22, 0.060, 96, 12, 2, 3]} />
+        <mesh position={[0, -0.12, 0]}>
+          <boxGeometry args={[0.50, 0.04, 0.32]} />
           <meshStandardMaterial {...matProps} />
+        </mesh>
+        <mesh position={[0, 0.0, 0]}>
+          <boxGeometry args={[0.44, 0.04, 0.28]} />
+          <meshStandardMaterial {...matProps} />
+        </mesh>
+        <mesh position={[0, 0.12, 0]}>
+          <boxGeometry args={[0.38, 0.04, 0.24]} />
+          <meshStandardMaterial {...matProps} />
+        </mesh>
+        {/* Vertical centre rod connecting the trays. */}
+        <mesh>
+          <cylinderGeometry args={[0.018, 0.018, 0.28, 8]} />
+          <meshStandardMaterial {...matProps} emissiveIntensity={1.8} />
         </mesh>
       </group>
     );
