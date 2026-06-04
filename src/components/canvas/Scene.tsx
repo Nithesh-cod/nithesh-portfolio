@@ -17,8 +17,9 @@ import { HexFloor } from '@/components/canvas/HexFloor';
 import { HoloCapsule } from '@/components/canvas/HoloCapsule';
 import { ProjectStation } from '@/components/canvas/ProjectStation';
 import { ModernCertRack } from '@/components/canvas/ModernCertRack';
-import { RoomShell } from '@/components/canvas/RoomShell';
+import { WindowsWall } from '@/components/canvas/WindowsWall';
 import { RoomPanels } from '@/components/canvas/RoomPanels';
+import { TopCenterTitle } from '@/components/canvas/TopCenterTitle';
 import { FloatingDataGlyphs } from '@/components/canvas/FloatingDataGlyphs';
 import { CameraRig } from '@/components/canvas/CameraRig';
 import { PostFX } from '@/components/canvas/PostFX';
@@ -67,18 +68,20 @@ export function Scene() {
         }}
       />
 
-      <fog attach="fog" args={[palette.bgBase, 10, 36]} />
+      {/* V11.0 — push fog far so the city backdrop still reads at x=±9.7. */}
+      <fog attach="fog" args={[palette.bgBase, 14, 60]} />
       <Environment preset="city" background={false} environmentIntensity={0.4} />
 
       <Lights />
 
-      {/* Environment shell. */}
+      {/* Environment shell — V11.0 windows + city backdrop replaces RoomShell. */}
       <Lab />
       <HexFloor />
-      <RoomShell />
+      <WindowsWall />
 
       {/* Central exhibit. */}
       <HoloCapsule ref={sunRef} />
+      <TopCenterTitle />
 
       {/* 3 project stations in a curved arc in front. */}
       {PROJECTS.map((p) => (

@@ -226,6 +226,15 @@ html.lenis-stopped {
   margin: 0 0 8px;
 }
 
+/* ──────────────────────── V11.0 bottom ticker marquee ──────────────────────── */
+.ticker-track {
+  animation: ticker-scroll 38s linear infinite;
+}
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-33.333%); }
+}
+
 /* ──────────────────────── V9.3 live HUD micro-animations ──────────────────────── */
 
 /* Status value pulse. */

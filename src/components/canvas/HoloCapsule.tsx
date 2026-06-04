@@ -1,7 +1,7 @@
 'use client';
 
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
-import { Billboard, Text, useTexture } from '@react-three/drei';
+import { Text } from '@react-three/drei';
 import { forwardRef, useMemo, useRef, useState } from 'react';
 import {
   AdditiveBlending,
@@ -11,12 +11,12 @@ import {
   type Group,
   type Mesh,
   type MeshStandardMaterial,
-  SRGBColorSpace,
 } from 'three';
 import { palette } from '@/lib/palette';
 import { usePortfolioStore } from '@/lib/store';
 import { disableRaycast, noRaycast } from '@/lib/three-utils';
 import { play } from '@/lib/audio';
+import { PortraitBust3D } from '@/components/canvas/PortraitBust3D';
 
 const POS: readonly [number, number, number] = [0, 0, 0];
 const CAPSULE_R = 0.78;
@@ -66,17 +66,10 @@ export const HoloCapsule = forwardRef<Mesh>(function HoloCapsule(_p, sunRef) {
   const ringTopRef = useRef<MeshStandardMaterial | null>(null);
   const ringBotRef = useRef<MeshStandardMaterial | null>(null);
   const rotateRingRef = useRef<Group | null>(null);
-  const portraitGroupRef = useRef<Group | null>(null);
-  const labelDotRef = useRef<MeshStandardMaterial | null>(null);
   const [hovered, setHovered] = useState(false);
   const t = useRef(0);
   const lowPerf = usePortfolioStore((s) => s.perfMode === 'low');
   const setCursor = usePortfolioStore((s) => s.setCursorState);
-
-  // V10.0 — pre-rendered 3D portrait (transparent PNG, no HSV mask needed).
-  const portrait = useTexture('/3dportait.png');
-  portrait.colorSpace = SRGBColorSpace;
-  portrait.anisotropy = 8;
 
   const innerUniforms = useMemo<{ uTime: IUniform<number> }>(
     () => ({ uTime: { value: 0 } }),
@@ -88,9 +81,7 @@ export const HoloCapsule = forwardRef<Mesh>(function HoloCapsule(_p, sunRef) {
     innerUniforms.uTime.value = t.current;
     if (ringTopRef.current) ringTopRef.current.emissiveIntensity = 2.5 + Math.sin(t.current * 2) * 0.8;
     if (ringBotRef.current) ringBotRef.current.emissiveIntensity = 2.5 + Math.sin(t.current * 2 + Math.PI) * 0.8;
-    if (labelDotRef.current) labelDotRef.current.emissiveIntensity = 1.4 + 0.4 * Math.sin(t.current * 3.5);
     if (rotateRingRef.current) rotateRingRef.current.rotation.y += dt * 0.4;
-    if (portraitGroupRef.current) portraitGroupRef.current.rotation.y += dt * (Math.PI / 180); // ~1°/s
   });
 
   const handleOver = (e: ThreeEvent<PointerEvent>) => {
@@ -258,14 +249,9 @@ export const HoloCapsule = forwardRef<Mesh>(function HoloCapsule(_p, sunRef) {
         </mesh>
       )}
 
-      {/* V10.0 — 3D portrait. Slow Y rotation. NOT billboarded so it
-          looks like an exhibit piece you can walk around. */}
-      <group ref={portraitGroupRef} position={[0, CAPSULE_Y - 0.05, 0]}>
-        <mesh>
-          <planeGeometry args={[1.2, 1.8]} />
-          <meshBasicMaterial map={portrait} transparent toneMapped={false} alphaTest={0.01} side={DoubleSide} />
-        </mesh>
-      </group>
+      {/* V11.0 — 3D portrait bust loaded from /portait.glb with a
+          holographic shader (fresnel edge glow + scrolling scanlines). */}
+      <PortraitBust3D position={[0, 0.85, 0]} targetHeight={1.6} />
 
       <pointLight position={[0, CAPSULE_Y, 0]} intensity={2.0} color="#00FF88" distance={4} decay={2} />
 
@@ -298,32 +284,8 @@ export const HoloCapsule = forwardRef<Mesh>(function HoloCapsule(_p, sunRef) {
         <meshBasicMaterial color="#FFFFFF" transparent opacity={0.001} toneMapped={false} />
       </mesh>
 
-      {/* DIGITAL IDENTITY label above. */}
-      <group position={[0, CAPSULE_Y + CAPSULE_H / 2 + 0.55, 0]}>
-        <Text
-          raycast={noRaycast}
-          ref={disableRaycast}
-          fontSize={0.15}
-          color={palette.neonBright}
-          anchorX="center"
-          anchorY="middle"
-          letterSpacing={0.2}
-          outlineWidth={0.002}
-          outlineColor={palette.neonGreen}
-        >
-          DIGITAL IDENTITY // ONLINE
-        </Text>
-        <mesh position={[-1.05, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.025, 0.025, 0.005, 14]} />
-          <meshStandardMaterial
-            ref={labelDotRef}
-            color={palette.neonBright}
-            emissive={palette.neonBright}
-            emissiveIntensity={1.4}
-            toneMapped={false}
-          />
-        </mesh>
-      </group>
+      {/* V11.0 — old DIGITAL IDENTITY // ONLINE label removed.
+          TopCenterTitle (Scene.tsx) renders the new title trio. */}
     </group>
   );
 });

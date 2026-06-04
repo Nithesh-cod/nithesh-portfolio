@@ -10,6 +10,7 @@ import { ResumeViewer } from '@/components/ui/ResumeViewer';
 import { CategoryDetailModal } from '@/components/ui/CategoryDetailModal';
 import { TopBar } from '@/components/hud/Dashboard';
 import { CursorTrackerMount } from '@/components/hud/CursorTrackerMount';
+import { BottomTicker } from '@/components/ui/BottomTicker';
 import { content } from '@/lib/content';
 
 const Scene = dynamic(() => import('@/components/canvas/Scene').then((m) => m.Scene), {
@@ -29,6 +30,7 @@ export default function Page() {
 
       <CursorTrackerMount />
       <TopBar />
+      <BottomTicker />
 
       <Cursor />
       <ProjectModal />
