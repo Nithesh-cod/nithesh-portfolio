@@ -8,7 +8,7 @@ import { Terminal } from '@/components/ui/Terminal';
 import { CertificateLightbox } from '@/components/ui/CertificateLightbox';
 import { ResumeViewer } from '@/components/ui/ResumeViewer';
 import { CategoryDetailModal } from '@/components/ui/CategoryDetailModal';
-import { TopBar, LeftRail, RightRail, CapsuleOverlays, ServicesStrip } from '@/components/hud/Dashboard';
+import { TopBar } from '@/components/hud/Dashboard';
 import { CursorTrackerMount } from '@/components/hud/CursorTrackerMount';
 import { NavPill } from '@/components/ui/NavPill';
 import { content } from '@/lib/content';
@@ -30,11 +30,7 @@ export default function Page() {
 
       <CursorTrackerMount />
       <TopBar />
-      <LeftRail />
-      <CapsuleOverlays />
-      <RightRail />
       <NavPill />
-      <ServicesStrip />
 
       <Cursor />
       <ProjectModal />

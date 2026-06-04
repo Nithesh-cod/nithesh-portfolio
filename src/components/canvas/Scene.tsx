@@ -18,6 +18,7 @@ import { HoloCapsule } from '@/components/canvas/HoloCapsule';
 import { ProjectStation } from '@/components/canvas/ProjectStation';
 import { WallCertRack } from '@/components/canvas/WallCertRack';
 import { RoomShell } from '@/components/canvas/RoomShell';
+import { RoomPanels } from '@/components/canvas/RoomPanels';
 import { FloatingDataGlyphs } from '@/components/canvas/FloatingDataGlyphs';
 import { CameraRig } from '@/components/canvas/CameraRig';
 import { PostFX } from '@/components/canvas/PostFX';
@@ -56,7 +57,7 @@ export function Scene() {
         depth: true,
         alpha: false,
       }}
-      camera={{ position: [0, 3.0, 11], fov: 42, near: 0.1, far: 120 }}
+      camera={{ position: [0, 3.0, 12], fov: 55, near: 0.1, far: 120 }}
       onCreated={({ gl }) => gl.setClearColor(palette.bgBase, 1)}
     >
       <PerformanceTier
@@ -95,6 +96,9 @@ export function Scene() {
 
       {/* Cert rack mounted on the back wall. */}
       <WallCertRack />
+
+      {/* V10.1 — all dashboard panels reborn as in-room 3D meshes. */}
+      <RoomPanels />
 
       <FloatingDataGlyphs />
 
