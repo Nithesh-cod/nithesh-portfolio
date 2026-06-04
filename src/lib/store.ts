@@ -65,6 +65,11 @@ type PortfolioStore = {
   /** Wall-clock of the last user interaction; auto-rotate idle gate. */
   lastInteractAt: number;
   markInteract: () => void;
+
+  /** V12.0 — WASD / arrow-pad camera pan. CameraRig consumes panRequest
+   *  and tweens the camera + OrbitControls target by (dx, dz). */
+  panRequest: { dx: number; dz: number; requestId: number } | null;
+  panCamera: (dx: number, dz: number) => void;
 };
 
 export const usePortfolioStore = create<PortfolioStore>((set) => ({
@@ -113,4 +118,8 @@ export const usePortfolioStore = create<PortfolioStore>((set) => ({
 
   lastInteractAt: 0,
   markInteract: () => set({ lastInteractAt: performance.now() }),
+
+  panRequest: null,
+  panCamera: (dx, dz) =>
+    set({ panRequest: { dx, dz, requestId: performance.now() } }),
 }));

@@ -558,6 +558,16 @@ html.lenis-stopped {
   pointer-events: none;
   user-select: none;
 }
+.cert-rack-subtitle {
+  color: var(--v11-text-dim);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
 .cert-card-title {
   color: var(--v11-text-soft);
   font-family: 'JetBrains Mono', monospace;
@@ -638,6 +648,57 @@ html.lenis-stopped {
   text-transform: uppercase;
   color: var(--v11-primary);
   margin: 0 0 8px;
+}
+
+/* ──────────────────────── V12.0 movement pad ──────────────────────── */
+.movement-pad {
+  position: fixed;
+  bottom: 50px; /* above the v11-ticker */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: rgba(8, 18, 26, 0.65);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  padding: 8px;
+  border: 1px solid var(--v11-glass-border-soft);
+  border-radius: 10px;
+  z-index: 35;
+  pointer-events: auto;
+  box-shadow:
+    0 0 20px rgba(46, 255, 176, 0.10),
+    0 12px 28px rgba(0, 0, 0, 0.45);
+}
+.movement-row {
+  display: flex;
+  gap: 3px;
+}
+.movement-arrow {
+  width: 32px;
+  height: 32px;
+  background: rgba(46, 255, 176, 0.10);
+  border: 1px solid rgba(46, 255, 176, 0.40);
+  border-radius: 4px;
+  color: var(--v11-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.10s ease;
+}
+.movement-arrow:hover {
+  background: rgba(46, 255, 176, 0.25);
+  box-shadow: 0 0 12px rgba(46, 255, 176, 0.45);
+}
+.movement-arrow:active {
+  transform: scale(0.94);
+}
+.mp-home {
+  background: rgba(46, 255, 176, 0.20);
+  border-color: rgba(46, 255, 176, 0.55);
 }
 
 /* ──────────────────────── V11.0 bottom ticker marquee ──────────────────────── */

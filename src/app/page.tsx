@@ -11,6 +11,7 @@ import { CategoryDetailModal } from '@/components/ui/CategoryDetailModal';
 import { TopBar } from '@/components/hud/Dashboard';
 import { CursorTrackerMount } from '@/components/hud/CursorTrackerMount';
 import { BottomTicker } from '@/components/ui/BottomTicker';
+import { MovementPad } from '@/components/ui/MovementPad';
 import { content } from '@/lib/content';
 
 const Scene = dynamic(() => import('@/components/canvas/Scene').then((m) => m.Scene), {
@@ -30,6 +31,7 @@ export default function Page() {
 
       <CursorTrackerMount />
       <TopBar />
+      <MovementPad />
       <BottomTicker />
 
       <Cursor />

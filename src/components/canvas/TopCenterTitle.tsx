@@ -14,7 +14,7 @@ import { disableRaycast, noRaycast } from '@/lib/three-utils';
  *   Building Future.
  */
 
-const TITLE_Y = 4.8; // sits above the capsule's top energy ring at ~4.2
+const TITLE_Y = 5.6; // higher, clears capsule cleanly
 
 export function TopCenterTitle() {
   // Bracketed badge "tick" pulse + faint vertical drift for life.
@@ -33,16 +33,16 @@ export function TopCenterTitle() {
   return (
     <Billboard position={[0, TITLE_Y, 0]} follow lockX={false} lockY={false} lockZ={false}>
       {/* Badge — [ WELCOME TO MY WORLD ]. */}
-      <group position={[0, 0.55, 0]}>
+      <group position={[0, 0.70, 0]}>
         <Text
           raycast={noRaycast}
           ref={disableRaycast}
-          fontSize={0.10}
+          fontSize={0.12}
           color={palette.neonBright}
           anchorX="center"
           anchorY="middle"
-          letterSpacing={0.28}
-          outlineWidth={0.002}
+          letterSpacing={0.30}
+          outlineWidth={0.003}
           outlineColor={palette.neonGreen}
         >
           [  WELCOME  TO  MY  WORLD  ]
@@ -50,17 +50,17 @@ export function TopCenterTitle() {
       </group>
 
       {/* Big title — DIGITAL IDENTITY ENGINE. */}
-      <group position={[0, 0.18, 0]}>
+      <group position={[0, 0.24, 0]}>
         <Text
           raycast={noRaycast}
           ref={disableRaycast}
-          fontSize={0.28}
-          color={palette.textPrimary}
+          fontSize={0.42}
+          color={palette.neonGreen}
           anchorX="center"
           anchorY="middle"
-          letterSpacing={0.22}
-          outlineWidth={0.004}
-          outlineColor={palette.neonGreen}
+          letterSpacing={0.20}
+          outlineWidth={0.008}
+          outlineColor={palette.neonBright}
         >
           DIGITAL IDENTITY ENGINE
         </Text>
@@ -88,15 +88,15 @@ export function TopCenterTitle() {
       </group>
 
       {/* Subtitle — Crafting Experiences. Building Future. */}
-      <group position={[0, -0.12, 0]}>
+      <group position={[0, -0.18, 0]}>
         <Text
           raycast={noRaycast}
           ref={disableRaycast}
-          fontSize={0.10}
+          fontSize={0.12}
           color={palette.textSecondary}
           anchorX="center"
           anchorY="middle"
-          letterSpacing={0.12}
+          letterSpacing={0.14}
         >
           Crafting Experiences. Building Future.
         </Text>

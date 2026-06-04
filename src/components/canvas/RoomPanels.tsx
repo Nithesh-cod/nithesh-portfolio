@@ -31,8 +31,8 @@ function CoreExpertisePanel() {
   return (
     <Html
       transform
-      occlude="blending"
-      position={[-5.5, 2.7, 0.5]}
+      occlude={false}
+      position={[-5.5, 3.0, 0.5]}
       rotation={[0, 0.35, 0]}
       distanceFactor={HTML_DISTANCE_FACTOR}
       style={{ pointerEvents: 'auto' }}
@@ -87,9 +87,9 @@ function AboutMePanel() {
   return (
     <Html
       transform
-      occlude="blending"
-      position={[-3, 2.2, 1.5]}
-      rotation={[0, 0.25, 0]}
+      occlude={false}
+      position={[-3.5, 2.5, 1.5]}
+      rotation={[0, 0.30, 0]}
       distanceFactor={HTML_DISTANCE_FACTOR}
       style={{ pointerEvents: 'auto' }}
     >
@@ -123,9 +123,9 @@ function AchievementsPanel() {
   return (
     <Html
       transform
-      occlude="blending"
-      position={[-3, 0.5, 1.5]}
-      rotation={[0, 0.25, 0]}
+      occlude={false}
+      position={[-3.5, 1.0, 1.5]}
+      rotation={[0, 0.30, 0]}
       distanceFactor={HTML_DISTANCE_FACTOR}
       style={{ pointerEvents: 'auto' }}
     >
@@ -153,8 +153,8 @@ function PhilosophyPanel() {
   return (
     <Html
       transform
-      occlude="blending"
-      position={[3, 2.5, 0.6]}
+      occlude={false}
+      position={[5.5, 3.0, 0.5]}
       rotation={[0, -0.35, 0]}
       distanceFactor={HTML_DISTANCE_FACTOR}
       style={{ pointerEvents: 'auto' }}
@@ -200,9 +200,9 @@ function TechStackPanel() {
   return (
     <Html
       transform
-      occlude="blending"
-      position={[5.5, 2.7, 0.5]}
-      rotation={[0, -0.35, 0]}
+      occlude={false}
+      position={[3.5, 2.5, 1.5]}
+      rotation={[0, -0.30, 0]}
       distanceFactor={HTML_DISTANCE_FACTOR}
       style={{ pointerEvents: 'auto' }}
     >
@@ -242,8 +242,8 @@ function SystemOverviewPanel() {
   return (
     <Html
       transform
-      occlude="blending"
-      position={[5.5, 0.8, 0.5]}
+      occlude={false}
+      position={[5.5, 1.0, 0.5]}
       rotation={[0, -0.35, 0]}
       distanceFactor={HTML_DISTANCE_FACTOR}
       style={{ pointerEvents: 'auto' }}

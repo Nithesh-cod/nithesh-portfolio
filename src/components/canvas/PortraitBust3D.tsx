@@ -2,23 +2,28 @@
 
 import { useGLTF } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  AdditiveBlending,
   Box3,
   DoubleSide,
-  Group,
-  Mesh,
+  type Group,
+  type Mesh,
+  NormalBlending,
   ShaderMaterial,
   Vector3,
   type IUniform,
 } from 'three';
 
-/* V11.0 — 3D portrait bust loaded from /portait.glb (user-provided
- * spelling preserved). Every mesh in the glb is re-skinned with a
- * holographic shader: fresnel edge glow + scrolling scanline + soft
- * green emissive — matches the reference image's wireframe-glow bust
- * sitting inside the capsule. */
+/* V12.0 — 3D portrait bust loaded from /portait.glb. Hardened:
+ *   • Holo shader uses NormalBlending (was Additive) — earlier additive
+ *     blend made the bust invisible against the bright capsule plasma.
+ *   • Alpha floor raised so the interior reads as solid hologram.
+ *   • Inner pointLight added (Scene.tsx) so even when the camera is
+ *     facing the back, the silhouette still picks up emissive bounce.
+ *   • If the glb load returns zero meshes (corrupted file / 404), a
+ *     wireframe-humanoid PLACEHOLDER renders so the capsule is never
+ *     empty.
+ */
 
 const HOLO_VERT = /* glsl */ `
 varying vec3 vNormalW;
@@ -39,39 +44,34 @@ uniform float uTime;
 uniform vec3 uCamPos;
 
 void main() {
-  // Fresnel — sharper than V11.0 so the silhouette pops.
   vec3 viewDir = normalize(uCamPos - vWorldPos);
-  float fres = pow(1.0 - clamp(dot(normalize(vNormalW), viewDir), 0.0, 1.0), 2.0);
+  float fres = pow(1.0 - clamp(dot(normalize(vNormalW), viewDir), 0.0, 1.0), 1.8);
 
-  // Fine, dense vertical scan lines (~80 cycles per world unit).
-  float scan = sin(vWorldPos.y * 80.0 + uTime * 2.0) * 0.5 + 0.5;
-  scan = pow(scan, 6.0); // sharp lines, not a smooth gradient
+  // Fine vertical scan lines.
+  float scan = sin(vWorldPos.y * 64.0 + uTime * 2.4) * 0.5 + 0.5;
+  scan = pow(scan, 5.0);
 
-  // Slow vertical data-flow sweep band.
+  // Vertical data sweep band.
   float sweep = abs(fract(vWorldPos.y * 0.30 - uTime * 0.15) - 0.5);
   sweep = 1.0 - smoothstep(0.0, 0.05, sweep);
 
-  // V11.2 palette: primary #2EFFB0 (cyan-shifted), warmer edge.
+  // V11.2 palette: #2EFFB0 cyan-shifted.
   vec3 baseColor = vec3(0.18, 1.00, 0.70);
-  vec3 edgeColor = vec3(0.40, 1.00, 0.85);
+  vec3 edgeColor = vec3(0.50, 1.00, 0.88);
   vec3 col = mix(baseColor, edgeColor, fres);
   col += scan  * vec3(0.20, 0.40, 0.30);
-  col += sweep * vec3(0.30, 0.50, 0.40);
-  // Subtle warm tint on the brightest fresnel — breaks the all-green wash.
+  col += sweep * vec3(0.25, 0.45, 0.35);
   col += fres * vec3(0.10, 0.05, 0.00);
 
-  // Semi-transparent interior; opaque at silhouette edge.
-  float alpha = 0.45 + fres * 0.55 + scan * 0.10;
+  // V12.0 — alpha floor raised so the silhouette is visibly solid.
+  float alpha = 0.70 + fres * 0.30 + scan * 0.08;
   alpha = clamp(alpha, 0.0, 1.0);
-
   gl_FragColor = vec4(col, alpha);
 }
 `;
 
 type Props = {
-  /** World position of the bust's group. Defaults to capsule centre. */
   position?: [number, number, number];
-  /** Target world-space height for the bust (uniform scale fit). */
   targetHeight?: number;
 };
 
@@ -79,11 +79,12 @@ export function PortraitBust3D({
   position = [0, 1.0, 0],
   targetHeight = 2.4,
 }: Props) {
-  const { scene } = useGLTF('/portait.glb');
+  const gltf = useGLTF('/portait.glb');
+  const scene = gltf?.scene;
   const groupRef = useRef<Group | null>(null);
   const innerRef = useRef<Group | null>(null);
+  const [meshCount, setMeshCount] = useState(0);
 
-  // One shared holographic shader instance for every mesh.
   const uniforms = useMemo<{
     uTime: IUniform<number>;
     uCamPos: IUniform<Vector3>;
@@ -94,6 +95,7 @@ export function PortraitBust3D({
     }),
     [],
   );
+
   const holoMat = useMemo(
     () =>
       new ShaderMaterial({
@@ -102,26 +104,29 @@ export function PortraitBust3D({
         uniforms,
         transparent: true,
         depthWrite: false,
-        blending: AdditiveBlending,
+        // V12.0 — NormalBlending. Additive was washing the bust into the
+        // capsule's bright plasma cylinder, making it invisible.
+        blending: NormalBlending,
         side: DoubleSide,
       }),
     [uniforms],
   );
 
-  // Apply the holo shader to every mesh in the glb + compute autoscale.
   useEffect(() => {
     if (!scene) return;
+    let count = 0;
     scene.traverse((obj) => {
       const m = obj as Mesh;
-      if ((m as Mesh).isMesh) {
+      if (m.isMesh) {
         m.material = holoMat;
         m.castShadow = false;
         m.receiveShadow = false;
         m.frustumCulled = false;
+        count++;
       }
     });
+    setMeshCount(count);
 
-    // Fit-scale + recentre so the bust matches `targetHeight`.
     if (innerRef.current) {
       const box = new Box3().setFromObject(scene);
       const size = new Vector3();
@@ -129,9 +134,14 @@ export function PortraitBust3D({
       box.getSize(size);
       box.getCenter(centre);
       const tallest = Math.max(size.y, 0.0001);
+      // Guard against degenerate / zero-size models.
+      if (!Number.isFinite(tallest) || tallest < 0.001 || count === 0) {
+        // eslint-disable-next-line no-console
+        console.warn('[PortraitBust3D] glb has no meshes or zero size — using fallback');
+        return;
+      }
       const scale = targetHeight / tallest;
       innerRef.current.scale.setScalar(scale);
-      // Recentre: shift inner group so bust sits with feet at y=0, x/z=0.
       innerRef.current.position.set(
         -centre.x * scale,
         -box.min.y * scale,
@@ -140,16 +150,13 @@ export function PortraitBust3D({
     }
   }, [scene, holoMat, targetHeight]);
 
-  // Slow Y rotation + subtle X-tilt sway + Y bob.
   useFrame((state, dt) => {
     const t = state.clock.elapsedTime;
     uniforms.uTime.value = t;
     uniforms.uCamPos.value.copy(state.camera.position);
     if (groupRef.current) {
       groupRef.current.rotation.y += dt * 0.20;
-      // Slight back-and-forth tilt around X (±0.05 rad, 8s period).
-      groupRef.current.rotation.x = Math.sin(t * (Math.PI * 2 / 8)) * 0.05;
-      // Subtle vertical bob.
+      groupRef.current.rotation.x = Math.sin(t * (Math.PI * 2 / 8)) * 0.04;
       groupRef.current.position.y = position[1] + Math.sin(t * 0.6) * 0.04;
     }
   });
@@ -157,11 +164,59 @@ export function PortraitBust3D({
   return (
     <group ref={groupRef} position={position}>
       <group ref={innerRef}>
-        <primitive object={scene} />
+        {scene && meshCount > 0 ? (
+          <primitive object={scene} />
+        ) : (
+          <FallbackBust holoMat={holoMat} targetHeight={targetHeight} />
+        )}
       </group>
     </group>
   );
 }
 
-// Pre-fetch on initial bundle load.
+/* V12.0 — wireframe-humanoid placeholder used when /portait.glb fails to
+ * load or has no meshes. Geometric bust: sphere head + capsule chest +
+ * shoulder spheres. Same holo material so the colour grade matches. */
+function FallbackBust({
+  holoMat,
+  targetHeight,
+}: {
+  holoMat: ShaderMaterial;
+  targetHeight: number;
+}) {
+  // Geometry is sized for a 2-unit-tall bust; we scale to caller's
+  // targetHeight.
+  const s = targetHeight / 2;
+  return (
+    <group scale={s}>
+      {/* Head. */}
+      <mesh material={holoMat} position={[0, 1.55, 0]}>
+        <sphereGeometry args={[0.32, 24, 18]} />
+      </mesh>
+      {/* Neck. */}
+      <mesh material={holoMat} position={[0, 1.18, 0]}>
+        <cylinderGeometry args={[0.10, 0.13, 0.20, 16]} />
+      </mesh>
+      {/* Shoulders + chest (capsule-shaped torso). */}
+      <mesh material={holoMat} position={[0, 0.78, 0]}>
+        <sphereGeometry args={[0.55, 24, 14, 0, Math.PI * 2, 0, Math.PI / 2]} />
+      </mesh>
+      <mesh material={holoMat} position={[0, 0.30, 0]}>
+        <cylinderGeometry args={[0.55, 0.45, 0.40, 24, 1, true]} />
+      </mesh>
+      {/* Wireframe overlay sphere for that "hologram" feel. */}
+      <mesh position={[0, 1.05, 0]}>
+        <sphereGeometry args={[0.90, 14, 10]} />
+        <meshBasicMaterial
+          color="#2EFFB0"
+          wireframe
+          transparent
+          opacity={0.18}
+          toneMapped={false}
+        />
+      </mesh>
+    </group>
+  );
+}
+
 useGLTF.preload('/portait.glb');

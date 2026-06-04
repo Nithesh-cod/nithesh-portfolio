@@ -31,6 +31,7 @@ export function WindowsWall() {
   return (
     <group>
       <BackWall />
+      <BackCityBackdrop />
       <WindowsSideWall side="left" />
       <WindowsSideWall side="right" />
       <CityBackdrop side="left" />
@@ -42,18 +43,95 @@ export function WindowsWall() {
 }
 
 /* ──────────────────────────── BACK WALL ─────────────────────────────
- * Solid dark surface behind the capsule. Slight neon edge strip at
- * top + bottom and a vertical accent down the centre.
- */
+ * V12.0 — back wall now has 4 panoramic windows (2 left + 2 right of
+ * the central cert-rack region) plus solid dark fill everywhere else.
+ * Same shader pattern as the side walls but with 4 window slots
+ * centred at U = 0.13, 0.31, 0.69, 0.87 — leaves the middle 30 % of
+ * the wall solid for the cert rack + capsule backdrop. */
+
+const BACK_VERT = /* glsl */ `
+varying vec2 vUv;
+void main(){
+  vUv = uv;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+`;
+
+const BACK_FRAG = /* glsl */ `
+precision highp float;
+varying vec2 vUv;
+uniform vec3 uFrame;
+uniform vec3 uWall;
+uniform float uTime;
+
+void main() {
+  // 4 windows on horizontal axis at U = 0.13, 0.31, 0.69, 0.87.
+  // Half-width 0.075 each; vertical centre V = 0.55, half-H 0.30.
+  float u = vUv.x;
+  float d0 = abs(u - 0.13);
+  float d1 = abs(u - 0.31);
+  float d2 = abs(u - 0.69);
+  float d3 = abs(u - 0.87);
+  float du = u - 0.13;
+  float dMin = d0;
+  if (d1 < dMin) { dMin = d1; du = u - 0.31; }
+  if (d2 < dMin) { dMin = d2; du = u - 0.69; }
+  if (d3 < dMin) { dMin = d3; du = u - 0.87; }
+
+  float dv = vUv.y - 0.55;
+  float halfW = 0.075;
+  float halfH = 0.30;
+  float inWin = step(abs(du), halfW) * step(abs(dv), halfH);
+
+  float edgeU = halfW - abs(du);
+  float edgeV = halfH - abs(dv);
+  float edgeDist = min(edgeU, edgeV);
+  float frameEdge = inWin * (1.0 - smoothstep(0.0, 0.005, edgeDist));
+
+  // 1 vertical mullion per back-wall window.
+  float mullion = inWin * (1.0 - smoothstep(0.003, 0.006, abs(du)));
+
+  float alpha = (1.0 - inWin) * 1.0 + inWin * 0.04;
+  alpha = max(alpha, frameEdge);
+  alpha = max(alpha, mullion);
+
+  vec3 col = uWall;
+  // V12.0 — softer emissive on the frame (was 2.6 → 0.7 + 0.3 pulse).
+  float pulse = 0.5 + 0.5 * sin(uTime * 0.8);
+  col = mix(col, uFrame * (0.7 + pulse * 0.3), frameEdge + mullion);
+
+  gl_FragColor = vec4(col, alpha);
+}
+`;
+
 function BackWall() {
+  const uniforms = useMemo<{
+    uFrame: IUniform<Color>;
+    uWall: IUniform<Color>;
+    uTime: IUniform<number>;
+  }>(
+    () => ({
+      uFrame: { value: new Color(palette.neonGreen) },
+      uWall: { value: new Color(palette.darkSurface) },
+      uTime: { value: 0 },
+    }),
+    [],
+  );
+  useFrame((state) => {
+    uniforms.uTime.value = state.clock.elapsedTime;
+  });
+
   return (
     <group position={[0, ROOM_HEIGHT / 2, -ROOM_HALF]}>
+      {/* Window-cutout shader plane. */}
       <mesh>
         <planeGeometry args={[ROOM_HALF * 2, ROOM_HEIGHT]} />
-        <meshStandardMaterial
-          color={palette.darkSurface}
-          metalness={0.40}
-          roughness={0.65}
+        <shaderMaterial
+          vertexShader={BACK_VERT}
+          fragmentShader={BACK_FRAG}
+          uniforms={uniforms}
+          transparent
+          depthWrite={false}
           side={DoubleSide}
         />
       </mesh>
@@ -67,6 +145,50 @@ function BackWall() {
         <meshBasicMaterial color={palette.neonGreen} toneMapped={false} />
       </mesh>
     </group>
+  );
+}
+
+/** Cyberpunk city plane mounted 1.7u BEHIND the back wall. Same shader
+ *  + texture as the side backdrops; just placed on the -Z side. */
+function BackCityBackdrop() {
+  const tex = useTexture('/city-backdrop.jpg', (loaded) => {
+    if (!Array.isArray(loaded)) {
+      loaded.colorSpace = SRGBColorSpace;
+      loaded.wrapS = RepeatWrapping;
+      loaded.wrapT = RepeatWrapping;
+      loaded.anisotropy = 8;
+    }
+  }) as Texture;
+
+  const uniforms = useMemo<{
+    uMap: IUniform<Texture>;
+    uTime: IUniform<number>;
+    uFlip: IUniform<number>;
+    uTint: IUniform<Color>;
+  }>(
+    () => ({
+      uMap: { value: tex },
+      uTime: { value: 0 },
+      uFlip: { value: 0 },
+      uTint: { value: new Color('#A8FFD8') },
+    }),
+    [tex],
+  );
+  useFrame((state) => {
+    uniforms.uTime.value = state.clock.elapsedTime;
+  });
+
+  return (
+    <mesh position={[0, ROOM_HEIGHT / 2, -ROOM_HALF - 1.7]}>
+      <planeGeometry args={[ROOM_HALF * 2 + 4, 14]} />
+      <shaderMaterial
+        vertexShader={CITY_VERT}
+        fragmentShader={CITY_FRAG}
+        uniforms={uniforms}
+        side={DoubleSide}
+        depthWrite={false}
+      />
+    </mesh>
   );
 }
 
@@ -141,7 +263,9 @@ void main() {
   //  – wall base = uWall (very dark)
   //  – frame + mullion = uFrame * 3.0 (bright neon)
   vec3 col = uWall;
-  col = mix(col, uFrame * (2.6 + pulse * 0.6), frameEdge + mullion);
+  // V12.0 — softer emissive frames (was 2.6 → 0.7) so windows read as
+  // physical frames not glowing bars.
+  col = mix(col, uFrame * (0.7 + pulse * 0.3), frameEdge + mullion);
 
   gl_FragColor = vec4(col, alpha);
 }
@@ -337,8 +461,10 @@ void main(){
   float rand = hash(cellId);
   float pulseCell = step(0.95, rand);
   float pulse = 0.4 + 0.5 * sin(uTime * 1.2 + rand * 6.28);
-  vec3 col = uColor * (edge * 0.5 + pulseCell * (1.0 - smoothstep(0.0, 0.42, dist)) * pulse * 0.35);
-  float a = edge * 0.45 + pulseCell * pulse * 0.16;
+  // V12.0 — ceiling toned down: edge intensity 0.5 → 0.22, pulse 0.35 → 0.18,
+  // alpha 0.45 → 0.20 so the ceiling reads as atmospheric, not competing.
+  vec3 col = uColor * (edge * 0.22 + pulseCell * (1.0 - smoothstep(0.0, 0.42, dist)) * pulse * 0.18);
+  float a = edge * 0.20 + pulseCell * pulse * 0.10;
   gl_FragColor = vec4(col, a);
 }`;
 
