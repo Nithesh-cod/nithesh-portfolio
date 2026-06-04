@@ -149,19 +149,30 @@ function Lights() {
       {/* Cool back-fill (atmospheric blue spill from the city). */}
       <pointLight position={[0, 2.0, -6.0]} intensity={0.35} color="#6BB8FF" distance={12} decay={2} />
 
-      {/* Capsule key — softened from 2.0 → 1.4. */}
-      <SpotLight position={[0, 5.7, 0]} target-position={[0, 0, 0]} intensity={1.4}
-        angle={0.5} penumbra={0.8} color="#DDFFEE" distance={12} decay={1.4} castShadow />
-      {/* Project stations. */}
-      <SpotLight position={[-4, 5.7, -2]} target-position={[-4, 0, 3.5]} intensity={1.05}
-        angle={0.5} penumbra={0.8} color="#DDFFEE" distance={12} decay={1.4} />
-      <SpotLight position={[ 4, 5.7, -2]} target-position={[ 4, 0, 3.5]} intensity={1.05}
-        angle={0.5} penumbra={0.8} color="#DDFFEE" distance={12} decay={1.4} />
-      <SpotLight position={[-2, 5.7,  2]} target-position={[ 0, 0, 4.5]} intensity={1.05}
-        angle={0.5} penumbra={0.8} color="#DDFFEE" distance={12} decay={1.4} />
-      {/* Cert rack key — aimed at the V11.1 freestanding 3-slot tower at [3, 1.6, 1.0]. */}
-      <SpotLight position={[3, 5.6, 1.0]} target-position={[3, 1.8, 1.0]} intensity={1.20}
+      {/* V12.2 — spotlights retargeted at the actual exhibit positions
+          (project pedestals at z=3.5/4.5, cert rack now at [0, 2.4, -5.5]
+          after the V12.0 4×3 grid move). */}
+      {/* Capsule key. */}
+      <SpotLight position={[0, 5.7, 0.5]} target-position={[0, 1.0, 0]} intensity={1.4}
+        angle={0.50} penumbra={0.80} color="#FFFFEE" distance={12} decay={1.4} castShadow />
+      {/* Project pedestal — CropAI left @ [-3.5, 0, 3]. */}
+      <SpotLight position={[-3.5, 5.5, 2.0]} target-position={[-3.5, 0.4, 3.0]} intensity={1.10}
+        angle={0.45} penumbra={0.75} color="#FFEEDD" distance={12} decay={1.4} />
+      {/* Project pedestal — TestAI right @ [3.5, 0, 3]. */}
+      <SpotLight position={[3.5, 5.5, 2.0]} target-position={[3.5, 0.4, 3.0]} intensity={1.10}
+        angle={0.45} penumbra={0.75} color="#FFEEDD" distance={12} decay={1.4} />
+      {/* Project pedestal — Smart Canteen centre @ [0, 0, 4.5]. */}
+      <SpotLight position={[0, 5.5, 3.5]} target-position={[0, 0.4, 4.5]} intensity={1.20}
+        angle={0.45} penumbra={0.75} color="#FFEEDD" distance={12} decay={1.4} />
+      {/* Cert rack key — V12.0 moved rack to [0, 2.4, -5.5]. */}
+      <SpotLight position={[0, 5.6, -4.5]} target-position={[0, 2.4, -5.5]} intensity={1.25}
         angle={0.55} penumbra={0.85} color="#EAFFF4" distance={14} decay={1.4} />
+      {/* Left-panel wash. */}
+      <SpotLight position={[-5.5, 5.5, 1.0]} target-position={[-4.5, 2.0, 1.0]} intensity={0.85}
+        angle={0.55} penumbra={0.85} color="#DDFFDD" distance={12} decay={1.4} />
+      {/* Right-panel wash. */}
+      <SpotLight position={[5.5, 5.5, 1.0]} target-position={[4.5, 2.0, 1.0]} intensity={0.85}
+        angle={0.55} penumbra={0.85} color="#DDFFDD" distance={12} decay={1.4} />
 
       {/* Corner pillar point lights. */}
       <pointLight position={[-7.8, 2, -7.8]} intensity={0.6} color={palette.neonGreen} distance={5} decay={2} />

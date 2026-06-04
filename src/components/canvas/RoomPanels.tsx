@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { usePortfolioStore } from '@/lib/store';
 import { play } from '@/lib/audio';
+import { PanelHeader } from '@/components/canvas/PanelHeader';
 
 /* ──────────────────────────────────────────────────────────────────── *
  * V11.1 — every wall + floating HUD panel is now a styled DOM card    *
@@ -38,11 +39,7 @@ function CoreExpertisePanel() {
       style={{ pointerEvents: 'auto' }}
     >
       <div className="v11-card" style={{ width: 270 }}>
-        <div className="v11-card-header">
-          <span className="bracket">[</span>
-          <span>CORE EXPERTISE</span>
-          <span className="bracket">]</span>
-        </div>
+        <PanelHeader>CORE EXPERTISE</PanelHeader>
         <ExpertiseRow icon={<Layout size={16} />} title="FRONTEND" sub="React, Next.js, TypeScript" />
         <ExpertiseRow icon={<TerminalSquare size={16} />} title="BACKEND" sub="Node.js, Python, Express" />
         <ExpertiseRow icon={<Database size={16} />} title="DATABASE" sub="MongoDB, PostgreSQL" />
@@ -94,11 +91,7 @@ function AboutMePanel() {
       style={{ pointerEvents: 'auto' }}
     >
       <div className="v11-card" style={{ width: 230 }}>
-        <div className="v11-card-header">
-          <span className="bracket">[</span>
-          <span>ABOUT ME</span>
-          <span className="bracket">]</span>
-        </div>
+        <PanelHeader>ABOUT ME</PanelHeader>
         <p className="v11-body">
           I build intelligent and scalable digital solutions that solve real-world problems using modern technologies and creative thinking.
         </p>
@@ -130,11 +123,7 @@ function AchievementsPanel() {
       style={{ pointerEvents: 'auto' }}
     >
       <div className="v11-card" style={{ width: 230 }}>
-        <div className="v11-card-header">
-          <span className="bracket">[</span>
-          <span>ACHIEVEMENTS</span>
-          <span className="bracket">]</span>
-        </div>
+        <PanelHeader>ACHIEVEMENTS</PanelHeader>
         <ul className="v11-list">
           <li>15+ SUCCESSFUL PROJECTS</li>
           <li>5+ HACKATHON AWARDS</li>
@@ -160,11 +149,7 @@ function PhilosophyPanel() {
       style={{ pointerEvents: 'auto' }}
     >
       <div className="v11-card" style={{ width: 250 }}>
-        <div className="v11-card-header">
-          <span className="bracket">[</span>
-          <span>MY PHILOSOPHY</span>
-          <span className="bracket">]</span>
-        </div>
+        <PanelHeader>MY PHILOSOPHY</PanelHeader>
         <ExpertiseRow icon={<SparklesIcon size={16} />} title="INNOVATE" sub="Think Different. Build Better." accent="warm" />
         <ExpertiseRow icon={<Users size={16} />} title="COLLABORATE" sub="Great Teams Create Magic." accent="cool" />
         <ExpertiseRow icon={<TrendingUp size={16} />} title="ELEVATE" sub="Continuous Learning Always." />
@@ -207,11 +192,7 @@ function TechStackPanel() {
       style={{ pointerEvents: 'auto' }}
     >
       <div className="v11-card" style={{ width: 270 }}>
-        <div className="v11-card-header">
-          <span className="bracket">[</span>
-          <span>TECH STACK</span>
-          <span className="bracket">]</span>
-        </div>
+        <PanelHeader>TECH STACK</PanelHeader>
         {bars.map((b, i) => (
           <TechBar key={b.label} {...b} delay={0.15 + i * 0.10} />
         ))}
@@ -249,11 +230,7 @@ function SystemOverviewPanel() {
       style={{ pointerEvents: 'auto' }}
     >
       <div className="v11-card" style={{ width: 250 }}>
-        <div className="v11-card-header">
-          <span className="bracket">[</span>
-          <span>SYSTEM OVERVIEW</span>
-          <span className="bracket">]</span>
-        </div>
+        <PanelHeader>SYSTEM OVERVIEW</PanelHeader>
         <div className="v11-gauges">
           <CircleGauge pct={75} value="15+" label="PROJECTS" />
           <CircleGauge pct={60} value="3+ YRS" label="EXPERIENCE" />

@@ -4,7 +4,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import gsap from 'gsap';
 import { useEffect, useRef } from 'react';
-import { Vector3 } from 'three';
+import { TOUCH, Vector3 } from 'three';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { usePortfolioStore } from '@/lib/store';
 
@@ -132,6 +132,9 @@ export function CameraRig() {
       autoRotateSpeed={0.15}
       onStart={() => markInteract()}
       onChange={() => markInteract()}
+      // V12.2 — mobile gestures: 1-finger ROTATE (default look), 2-finger
+      // PAN (move around the room), pinch ZOOM via DOLLY_PAN.
+      touches={{ ONE: TOUCH.ROTATE, TWO: TOUCH.DOLLY_PAN }}
     />
   );
 }
