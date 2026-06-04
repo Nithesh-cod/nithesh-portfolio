@@ -1,12 +1,13 @@
 'use client';
 
-import { useGLTF } from '@react-three/drei';
+import { useAnimations, useGLTF } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Box3,
   DoubleSide,
   type Group,
+  LoopRepeat,
   type Mesh,
   NormalBlending,
   ShaderMaterial,
@@ -63,8 +64,9 @@ void main() {
   col += sweep * vec3(0.25, 0.45, 0.35);
   col += fres * vec3(0.10, 0.05, 0.00);
 
-  // V12.0 — alpha floor raised so the silhouette is visibly solid.
-  float alpha = 0.70 + fres * 0.30 + scan * 0.08;
+  // V12.1 — alpha floor raised again so the bust reads even when the
+  // capsule plasma is on. 0.70 → 0.78 base + 0.22 fresnel ceiling.
+  float alpha = 0.78 + fres * 0.22 + scan * 0.06;
   alpha = clamp(alpha, 0.0, 1.0);
   gl_FragColor = vec4(col, alpha);
 }
@@ -77,13 +79,35 @@ type Props = {
 
 export function PortraitBust3D({
   position = [0, 1.0, 0],
-  targetHeight = 2.4,
+  targetHeight = 1.6,
 }: Props) {
   const gltf = useGLTF('/portait.glb');
   const scene = gltf?.scene;
+  const animations = gltf?.animations ?? [];
   const groupRef = useRef<Group | null>(null);
   const innerRef = useRef<Group | null>(null);
   const [meshCount, setMeshCount] = useState(0);
+
+  // V12.1 — play the first available glb animation if any (Idle / mixamo).
+  const { actions, names } = useAnimations(animations, innerRef);
+  useEffect(() => {
+    if (!names.length) {
+      // eslint-disable-next-line no-console
+      console.log('[PortraitBust3D] no glb animations — procedural idle only');
+      return;
+    }
+    // eslint-disable-next-line no-console
+    console.log('[PortraitBust3D] glb animations:', names);
+    const first = names[0]!;
+    const action = actions[first];
+    if (action) {
+      action.reset().fadeIn(0.5).play();
+      action.setLoop(LoopRepeat, Infinity);
+    }
+    return () => {
+      action?.fadeOut(0.3);
+    };
+  }, [actions, names]);
 
   const uniforms = useMemo<{
     uTime: IUniform<number>;
@@ -155,9 +179,13 @@ export function PortraitBust3D({
     uniforms.uTime.value = t;
     uniforms.uCamPos.value.copy(state.camera.position);
     if (groupRef.current) {
-      groupRef.current.rotation.y += dt * 0.20;
-      groupRef.current.rotation.x = Math.sin(t * (Math.PI * 2 / 8)) * 0.04;
-      groupRef.current.position.y = position[1] + Math.sin(t * 0.6) * 0.04;
+      // V12.1 — procedural "idle": gentle breathing bob + slow Y rotation
+      // sway + tiny head-tilt. Cancels the T-pose feel when the glb has
+      // no animation tracks. If a glb animation is playing, this just
+      // adds a subtle outer-group layer (still feels alive).
+      groupRef.current.rotation.y = Math.sin(t * 0.30) * 0.18 + dt * 0; // remove continuous spin
+      groupRef.current.rotation.x = Math.sin(t * 0.40) * 0.03;
+      groupRef.current.position.y = position[1] + Math.sin(t * 0.80) * 0.02;
     }
   });
 

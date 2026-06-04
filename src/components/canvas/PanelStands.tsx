@@ -17,10 +17,16 @@ type StandSpec = {
   topY: number; // bottom of the panel
 };
 
+// V12.1 — stands updated for the V12.1 panel layout:
+//   About Me / Achievements column @ x=-3.5 z=1.5 (left-front)
+//   Philosophy column            @ x=+3.5 z=1.5 (right-front)
+//   System Overview column       @ x=+4.5 z=0.5 (right-back, only the
+//                                                bottom one needs a stand)
 const STANDS: StandSpec[] = [
-  { x: -3.5, z: 1.5, topY: 1.0 - 0.55 }, // Achievements (panel y=1.0, half-height ≈0.55)
-  { x: -3.5, z: 1.5, topY: 2.5 - 0.55 }, // About Me     — overlaps the Achievements one in X/Z so they share a single visual column, second stand acts as a brace
-  { x:  3.5, z: 1.5, topY: 2.5 - 0.55 }, // Philosophy   (mid-right)
+  { x: -3.5, z: 1.5, topY: 1.0 - 0.55 }, // Achievements
+  { x: -3.5, z: 1.5, topY: 2.5 - 0.55 }, // About Me (column brace)
+  { x:  3.5, z: 1.5, topY: 2.5 - 0.55 }, // Philosophy
+  { x:  4.5, z: 0.5, topY: 1.0 - 0.55 }, // System Overview
 ];
 
 export function PanelStands() {

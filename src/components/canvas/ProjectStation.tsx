@@ -19,6 +19,8 @@ type Props = {
   yaw?: number;
   iconKind: 'leaf' | 'box' | 'globe';
   phase?: number;
+  /** Uniform multiplier on the entire station (1.0 = baseline). */
+  scale?: number;
 };
 
 const HEX_SIDES = 6;
@@ -28,7 +30,7 @@ const HEX_SIDES = 6;
  * case on top containing a rotating wireframe icon + nameplate on the
  * front of tier 1 + a VIEW PROJECT button on tier 2's front face.
  */
-export function ProjectStation({ slug, label, subtitle, position, yaw = 0, iconKind, phase = 0 }: Props) {
+export function ProjectStation({ slug, label, subtitle, position, yaw = 0, iconKind, phase = 0, scale = 1.0 }: Props) {
   const groupRef = useRef<Group | null>(null);
   const iconRef = useRef<Group | null>(null);
   const trimRefs = useRef<(MeshStandardMaterial | null)[]>([]);
@@ -79,21 +81,22 @@ export function ProjectStation({ slug, label, subtitle, position, yaw = 0, iconK
   // Tier 1 (bottom): r 0.70 → 0.65 stepped disc, h 0.10
   // LED ring on top edge of tier 1 (torus glowing brightly)
   // Tier 2: r 0.55 stepped disc, h 0.10
-  const CASE_W = 0.9;
-  const CASE_H = 0.7;
-  const CASE_D = 0.7;
-  const CASE_Y = 0.25 + CASE_H / 2 + 0.04; // tier 2 top (0.25) + small gap + half height
+  const CASE_W = 1.2;
+  const CASE_H = 0.95;
+  const CASE_D = 0.95;
+  const CASE_Y = 0.37 + CASE_H / 2 + 0.06; // tier 2 top (0.37) + small gap + half height
 
   return (
-    <group ref={groupRef} position={position} rotation={[0, yaw, 0]}>
+    <group ref={groupRef} position={position} rotation={[0, yaw, 0]} scale={scale}>
+      {/* V12.1 — pedestal scaled up ~30 %. */}
       {/* Tier 1 (bottom disc). */}
       <mesh
-        position={[0, 0.05, 0]}
+        position={[0, 0.075, 0]}
         onPointerOver={handleOver}
         onPointerOut={handleOut}
         onClick={handleClick}
       >
-        <cylinderGeometry args={[0.65, 0.70, 0.10, 32]} />
+        <cylinderGeometry args={[0.85, 0.92, 0.15, 32]} />
         <meshStandardMaterial
           color="#0D1812"
           metalness={0.90}
@@ -104,8 +107,8 @@ export function ProjectStation({ slug, label, subtitle, position, yaw = 0, iconK
       </mesh>
 
       {/* LED ring on the top edge of tier 1 — pulses on hover. */}
-      <mesh position={[0, 0.11, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[0.55, 0.015, 16, 64]} />
+      <mesh position={[0, 0.16, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.72, 0.018, 16, 64]} />
         <meshStandardMaterial
           ref={(m) => { trimRefs.current[0] = m; }}
           color={palette.neonGreen}
@@ -117,12 +120,12 @@ export function ProjectStation({ slug, label, subtitle, position, yaw = 0, iconK
 
       {/* Tier 2 (upper disc the case sits on). */}
       <mesh
-        position={[0, 0.20, 0]}
+        position={[0, 0.295, 0]}
         onPointerOver={handleOver}
         onPointerOut={handleOut}
         onClick={handleClick}
       >
-        <cylinderGeometry args={[0.55, 0.60, 0.10, 32]} />
+        <cylinderGeometry args={[0.72, 0.78, 0.15, 32]} />
         <meshStandardMaterial
           color="#0D1812"
           metalness={0.90}
@@ -133,8 +136,8 @@ export function ProjectStation({ slug, label, subtitle, position, yaw = 0, iconK
       </mesh>
 
       {/* Secondary thin LED line around tier 2. */}
-      <mesh position={[0, 0.26, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[0.50, 0.010, 12, 48]} />
+      <mesh position={[0, 0.38, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.65, 0.012, 12, 48]} />
         <meshStandardMaterial
           ref={(m) => { trimRefs.current[1] = m; }}
           color={palette.neonBright}
@@ -172,10 +175,10 @@ export function ProjectStation({ slug, label, subtitle, position, yaw = 0, iconK
         <WireframeIcon kind={iconKind} />
       </group>
 
-      {/* V12.1 — descriptive subtitle on a strip at tier 1 front edge. */}
-      <group position={[0, 0.05, 0.70]} rotation={[0, 0, 0]}>
+      {/* V12.1 — bigger descriptive nameplate strip. */}
+      <group position={[0, 0.075, 0.93]} rotation={[0, 0, 0]}>
         <mesh>
-          <planeGeometry args={[0.85, 0.10]} />
+          <planeGeometry args={[1.05, 0.13]} />
           <meshStandardMaterial color="#020608" emissive={palette.neonGreen} emissiveIntensity={0.10}
             metalness={0.6} roughness={0.4} />
         </mesh>
@@ -183,26 +186,26 @@ export function ProjectStation({ slug, label, subtitle, position, yaw = 0, iconK
           raycast={noRaycast}
           ref={disableRaycast}
           position={[0, 0, 0.003]}
-          fontSize={0.038}
+          fontSize={0.048}
           color={palette.neonBright}
           anchorX="center"
           anchorY="middle"
           letterSpacing={0.18}
           outlineWidth={0.0015}
           outlineColor={palette.neonGreen}
-          maxWidth={0.80}
+          maxWidth={1.00}
         >
           {subtitle}
         </Text>
       </group>
 
-      {/* V11.1 — big short title BELOW the station (floor-level). */}
+      {/* V12.1 — bigger label below station. */}
       <Text
         raycast={noRaycast}
         ref={disableRaycast}
-        position={[0, -0.18, 0.55]}
+        position={[0, -0.22, 0.70]}
         rotation={[-Math.PI * 0.45, 0, 0]}
-        fontSize={0.13}
+        fontSize={0.16}
         color={palette.neonBright}
         anchorX="center"
         anchorY="middle"
@@ -215,7 +218,7 @@ export function ProjectStation({ slug, label, subtitle, position, yaw = 0, iconK
 
       {/* VIEW PROJECT button on tier 2's front face. */}
       <group
-        position={[0, 0.20, 0.56]}
+        position={[0, 0.295, 0.76]}
         onPointerOver={handleOver}
         onPointerOut={handleOut}
         onClick={handleClick}

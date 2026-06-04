@@ -20,8 +20,8 @@ import { PortraitBust3D } from '@/components/canvas/PortraitBust3D';
 
 const POS: readonly [number, number, number] = [0, 0, 0];
 const CAPSULE_R = 0.95;
-const CAPSULE_H = 3.2;
-const CAPSULE_Y = 1.8;
+const CAPSULE_H = 2.6;   // V12.1 — shorter capsule to match new avatar fit
+const CAPSULE_Y = 1.5;
 const CAGE_BARS = 12;
 const CAGE_RADIUS = 1.02;
 
@@ -52,7 +52,8 @@ void main(){
   float energy = sin(vUv.y * 40.0 - uTime * 1.5) * 0.5 + 0.5;
   energy = pow(energy, 3.0);
   float plasma = vnoise(vec3(vUv * 6.0, uTime * 0.6)) * 0.5 + 0.5;
-  float alpha = vGrad * rGrad * (0.3 + energy * 0.4 + plasma * 0.3) * 0.7;
+  // V12.1 — alpha multiplier 0.7 → 0.35 so the avatar shows through.
+  float alpha = vGrad * rGrad * (0.3 + energy * 0.4 + plasma * 0.3) * 0.35;
   vec3 color = vec3(0.5, 1.0, 0.7) + vec3(0.0, 0.2, 0.1) * plasma;
   gl_FragColor = vec4(color, alpha);
 }`;
@@ -233,10 +234,10 @@ export const HoloCapsule = forwardRef<Mesh>(function HoloCapsule(_p, sunRef) {
         />
       </mesh>
 
-      {/* Inner plasma. */}
+      {/* Inner plasma — thinner column so it doesn't cover the bust. */}
       {!lowPerf && (
         <mesh position={[0, CAPSULE_Y, 0]}>
-          <cylinderGeometry args={[0.55, 0.55, CAPSULE_H * 0.96, 32, 1, true]} />
+          <cylinderGeometry args={[0.42, 0.42, CAPSULE_H * 0.96, 32, 1, true]} />
           <shaderMaterial
             vertexShader={INNER_VERT}
             fragmentShader={INNER_FRAG}
@@ -249,8 +250,8 @@ export const HoloCapsule = forwardRef<Mesh>(function HoloCapsule(_p, sunRef) {
         </mesh>
       )}
 
-      {/* V11.1 — bust enlarged to fill ~70 % of the (now-wider) capsule. */}
-      <PortraitBust3D position={[0, 0.85, 0]} targetHeight={2.4} />
+      {/* V12.1 — bust sized to fit the shorter capsule. */}
+      <PortraitBust3D position={[0, 0.85, 0]} targetHeight={1.6} />
 
       <pointLight position={[0, CAPSULE_Y, 0]} intensity={2.0} color="#00FF88" distance={4} decay={2} />
 

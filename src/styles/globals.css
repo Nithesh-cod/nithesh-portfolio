@@ -345,27 +345,31 @@ html.lenis-stopped {
 .v11-list li {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 4px;
-  font-size: 11px;
+  gap: 10px;
+  padding: 8px 4px;
+  font-size: 12px;
+  line-height: 1.60;
   letter-spacing: 0.10em;
-  color: var(--v11-text-prim);
+  color: rgba(220, 238, 220, 1.0);
   font-family: 'JetBrains Mono', ui-monospace, monospace;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
 }
 .v11-list li::before {
   content: '●';
   color: var(--v11-primary);
-  font-size: 10px;
+  font-size: 12px;
   flex-shrink: 0;
+  text-shadow: 0 0 6px rgba(46, 255, 176, 0.55);
 }
 
 /* Body paragraph (About Me). */
 .v11-body {
-  font-size: 11px;
-  line-height: 1.55;
-  color: var(--v11-text-prim);
+  font-size: 12px;
+  line-height: 1.60;
+  color: rgba(220, 238, 220, 1.0);
   margin: 0;
   letter-spacing: 0.01em;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
 }
 
 /* Full-width call-to-action button. */
@@ -538,6 +542,92 @@ html.lenis-stopped {
 .v11-ticker-cta:hover {
   background: rgba(0, 255, 157, 0.28);
   box-shadow: 0 0 14px rgba(0, 255, 157, 0.45);
+}
+
+/* V12.1 — polished top bar + status. */
+.v12-top-header {
+  position: fixed;
+  top: 18px;
+  left: 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  z-index: 50;
+  pointer-events: auto;
+}
+.v12-logo-hex {
+  width: 42px;
+  height: 42px;
+  background: linear-gradient(135deg, rgba(46, 255, 176, 0.22), rgba(46, 255, 176, 0.05));
+  border: 1.5px solid var(--v11-primary);
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  color: var(--v11-primary);
+  font-size: 13px;
+  box-shadow: 0 0 16px rgba(46, 255, 176, 0.40);
+}
+.v12-name-block { display: flex; flex-direction: column; line-height: 1; }
+.v12-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--v11-text-prim);
+}
+.v12-subtitle {
+  font-family: 'Inter', sans-serif;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: var(--v11-text-soft);
+  margin-top: 4px;
+}
+.v12-subtitle .divider {
+  color: var(--v11-primary);
+  margin: 0 6px;
+}
+
+.v12-top-status {
+  position: fixed;
+  top: 18px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  z-index: 50;
+  pointer-events: auto;
+}
+.v12-clock {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--v11-text-soft);
+  letter-spacing: 0.10em;
+  tabular-nums: 1;
+}
+.v12-status-pill {
+  background: rgba(46, 255, 176, 0.15);
+  border: 1px solid var(--v11-primary);
+  border-radius: 12px;
+  padding: 5px 12px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--v11-primary);
+  letter-spacing: 0.15em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.v12-status-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--v11-primary);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--v11-primary);
+  animation: v11-pulse 2s ease-in-out infinite;
 }
 
 /* V12.2 — unified detail-modal chrome.
@@ -832,8 +922,10 @@ html.lenis-stopped {
     0 12px 28px rgba(0, 0, 0, 0.45);
 }
 .movement-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 32px 32px;
   gap: 3px;
+  justify-content: center;
 }
 .movement-arrow {
   width: 32px;
@@ -854,10 +946,6 @@ html.lenis-stopped {
 }
 .movement-arrow:active {
   transform: scale(0.94);
-}
-.mp-home {
-  background: rgba(46, 255, 176, 0.20);
-  border-color: rgba(46, 255, 176, 0.55);
 }
 
 /* ──────────────────────── V11.0 bottom ticker marquee ──────────────────────── */

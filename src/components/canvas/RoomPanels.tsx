@@ -143,7 +143,7 @@ function PhilosophyPanel() {
     <Html
       transform
       occlude={false}
-      position={[5.5, 3.0, 0.5]}
+      position={[4.5, 3.0, 0.5]}
       rotation={[0, -0.35, 0]}
       distanceFactor={HTML_DISTANCE_FACTOR}
       style={{ pointerEvents: 'auto' }}
@@ -224,7 +224,7 @@ function SystemOverviewPanel() {
     <Html
       transform
       occlude={false}
-      position={[5.5, 1.0, 0.5]}
+      position={[4.5, 1.0, 0.5]}
       rotation={[0, -0.35, 0]}
       distanceFactor={HTML_DISTANCE_FACTOR}
       style={{ pointerEvents: 'auto' }}
