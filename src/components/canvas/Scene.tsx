@@ -71,8 +71,8 @@ export function Scene() {
         }}
       />
 
-      {/* V11.2 — tightened fog (8 → 30) adds atmospheric depth, matches reference. */}
-      <fog attach="fog" args={[palette.bgBase, 8, 30]} />
+      {/* V12.5 — slightly tighter fog (6 → 25) softens distant elements. */}
+      <fog attach="fog" args={[palette.bgBase, 6, 25]} />
       <Environment preset="night" background={false} environmentIntensity={0.35} />
 
       <Lights />

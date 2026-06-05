@@ -105,15 +105,15 @@ export function HexFloor() {
           blur={[300, 80]}
           resolution={1024}
           mixBlur={1.0}
-          mixStrength={1.4}
-          mirror={0.75}
-          metalness={0.6}
-          roughness={0.35}
+          mixStrength={1.5}
+          mirror={0.78}
+          metalness={0.65}
+          roughness={0.25}
           depthScale={1.2}
           minDepthThreshold={0.4}
           maxDepthThreshold={1.4}
-          color="#050810"
-          envMapIntensity={0.5}
+          color="#060912"
+          envMapIntensity={0.55}
         />
       </mesh>
 

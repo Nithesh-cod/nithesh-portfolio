@@ -24,21 +24,22 @@ import { play } from '@/lib/audio';
  * (4 rows × 3 columns), positioned center-back of the room so it sits
  * cleanly between the Tech Stack panel (right wall) and the capsule. */
 
-// V12.4 — pushed further forward + right (Option B from V12.2 spec) so
-// the rack reads as the right-side feature without colliding with the
-// TestAI pedestal at [4.0, 0, 3.5].
-const RACK_POS: [number, number, number] = [6.8, 1.5, 1.5];
-const RACK_ROT: [number, number, number] = [0, -Math.PI / 4.5, 0];
+// V12.5 — pulled forward into the foreground (z 1.5 → 5.0) so the
+// rack is unmistakably visible from the default camera view.
+const RACK_POS: [number, number, number] = [4.5, 1.4, 5.0];
+const RACK_ROT: [number, number, number] = [0, -Math.PI / 4, 0];
 
-const ROWS = 4;
+// V12.5 — 2×3 grid (6 hero certs) instead of 4×3 (12). The remaining 6
+// remain accessible via the VIEW DETAILED CERTIFICATES button → modal.
+const ROWS = 2;
 const COLS = 3;
 
 const FRAME_W = 2.6;   // outer frame width
-const FRAME_H = 2.4;   // outer frame height
+const FRAME_H = 1.4;   // outer frame height (shorter now that we have 2 rows)
 const CERT_W = 0.78;   // individual cert frame width
 const CERT_H = 0.50;   // individual cert frame height
 const CERT_GAP_X = 0.05;
-const CERT_GAP_Y = 0.05;
+const CERT_GAP_Y = 0.08;
 const CERT_PITCH_X = CERT_W + CERT_GAP_X;
 const CERT_PITCH_Y = CERT_H + CERT_GAP_Y;
 
@@ -141,10 +142,9 @@ function RackFrame() {
         </mesh>
       ))}
 
-      {/* HORIZONTAL CROSS-STRUTS between cert rows. */}
-      {[1.5, 0.5, -0.5, -1.5].map((rowOffset, i) => {
-        const y = rowOffset * (CERT_PITCH_Y / 2);
-        if (i === 0 || i === 3) return null;
+      {/* HORIZONTAL CROSS-STRUT between the 2 rows. */}
+      {[0].map((i) => {
+        const y = 0; // centre between the 2 cert rows
         return (
           <mesh key={i} raycast={noRaycast} position={[0, y, -0.05]}>
             <boxGeometry args={[FRAME_W, 0.028, 0.028]} />

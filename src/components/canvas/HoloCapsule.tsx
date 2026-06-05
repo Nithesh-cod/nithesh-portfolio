@@ -19,11 +19,11 @@ import { play } from '@/lib/audio';
 import { PortraitBust3D } from '@/components/canvas/PortraitBust3D';
 
 const POS: readonly [number, number, number] = [0, 0, 0];
-const CAPSULE_R = 1.10;   // V12.4 — 40 % wider so the bust has room
-const CAPSULE_H = 2.90;
-const CAPSULE_Y = 1.55;
+const CAPSULE_R = 1.40;   // V12.5 — widest yet so the bust is unmistakably visible
+const CAPSULE_H = 3.00;
+const CAPSULE_Y = 1.60;
 const CAGE_BARS = 12;
-const CAGE_RADIUS = 1.18;
+const CAGE_RADIUS = 1.48;
 
 /* Inner plasma shader. */
 const INNER_VERT = /* glsl */ `varying vec2 vUv;
@@ -52,8 +52,9 @@ void main(){
   float energy = sin(vUv.y * 40.0 - uTime * 1.5) * 0.5 + 0.5;
   energy = pow(energy, 3.0);
   float plasma = vnoise(vec3(vUv * 6.0, uTime * 0.6)) * 0.5 + 0.5;
-  // V12.4 — even more transparent plasma so the bust is fully visible.
-  float alpha = vGrad * rGrad * (0.3 + energy * 0.4 + plasma * 0.3) * 0.22;
+  // V12.5 — plasma essentially decorative now (multiplier 0.15) so the
+  // bust reads clearly through it.
+  float alpha = vGrad * rGrad * (0.3 + energy * 0.4 + plasma * 0.3) * 0.15;
   vec3 color = vec3(0.5, 1.0, 0.7) + vec3(0.0, 0.2, 0.1) * plasma;
   gl_FragColor = vec4(color, alpha);
 }`;
@@ -97,41 +98,42 @@ export const HoloCapsule = forwardRef<Mesh>(function HoloCapsule(_p, sunRef) {
     setCursor('idle');
   };
 
-  // 3-tier hex podium (each 0.3 tall).
-  // Tier 1 (floor level): radius 1.8, y 0.15
-  // Tier 2:               radius 1.4, y 0.45
-  // Tier 3 (capsule):     radius 1.0, y 0.75
+  // V12.5 — circular stepped 3-tier podium (was hex).
+  // Tier 1 (floor): r=2.0 disc, h=0.12, y=0.06
+  // Tier 2:        r=1.6 disc, h=0.12, y=0.24
+  // Tier 3 (stage):r=1.3 disc, h=0.15, y=0.42 — bright top ring
   const TIERS = [
-    { y: 0.15, radius: 1.8, h: 0.30, intensity: 0.04 },
-    { y: 0.45, radius: 1.4, h: 0.30, intensity: 0.08 },
-    { y: 0.75, radius: 1.0, h: 0.30, intensity: 0.14 },
+    { y: 0.06, rTop: 2.00, rBot: 2.10, h: 0.12, ringR: 2.05, ringIntensity: 1.6 },
+    { y: 0.24, rTop: 1.60, rBot: 1.70, h: 0.12, ringR: 1.65, ringIntensity: 1.8 },
+    { y: 0.42, rTop: 1.30, rBot: 1.40, h: 0.15, ringR: 1.35, ringIntensity: 2.4 },
   ];
 
   return (
     <group position={POS}>
-      {/* 3 hex tiers. */}
+      {/* 3 circular tiers + bright neon top-ring per tier. */}
       {TIERS.map((tier, i) => (
         <group key={i}>
-          <mesh position={[0, tier.y, 0]} rotation={[0, Math.PI / 6, 0]}>
-            <cylinderGeometry args={[tier.radius, tier.radius * 1.02, tier.h, 6]} />
+          <mesh position={[0, tier.y, 0]}>
+            <cylinderGeometry args={[tier.rTop, tier.rBot, tier.h, 64]} />
             <meshStandardMaterial
-              color="#0A1014"
+              color="#1A2A28"
               metalness={0.85}
-              roughness={0.35}
+              roughness={0.30}
               emissive={palette.neonGreen}
-              emissiveIntensity={tier.intensity}
+              emissiveIntensity={0.10 + i * 0.04}
             />
           </mesh>
-          {/* Top-edge trim ring on each tier. */}
-          <mesh position={[0, tier.y + tier.h / 2, 0]} rotation={[Math.PI / 2, 0, Math.PI / 6]}>
-            <torusGeometry args={[tier.radius, 0.012, 8, 6 * 8]} />
+          {/* Bright neon ring on top edge — the "stage" trim. */}
+          <mesh position={[0, tier.y + tier.h / 2 + 0.005, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[tier.ringR - 0.05, tier.ringR + 0.05, 96]} />
             <meshStandardMaterial
               color={palette.neonGreen}
               emissive={palette.neonGreen}
-              emissiveIntensity={1.0}
+              emissiveIntensity={tier.ringIntensity}
               metalness={0.9}
-              roughness={0.2}
+              roughness={0.20}
               toneMapped={false}
+              side={DoubleSide}
             />
           </mesh>
         </group>
@@ -234,10 +236,10 @@ export const HoloCapsule = forwardRef<Mesh>(function HoloCapsule(_p, sunRef) {
         />
       </mesh>
 
-      {/* Inner plasma — V12.4 wider column matching the bigger capsule. */}
+      {/* Inner plasma — V12.5 wider column matching the bigger capsule. */}
       {!lowPerf && (
         <mesh position={[0, CAPSULE_Y, 0]}>
-          <cylinderGeometry args={[0.85, 0.85, CAPSULE_H * 0.96, 32, 1, true]} />
+          <cylinderGeometry args={[1.10, 1.10, CAPSULE_H * 0.96, 32, 1, true]} />
           <shaderMaterial
             vertexShader={INNER_VERT}
             fragmentShader={INNER_FRAG}
@@ -250,11 +252,14 @@ export const HoloCapsule = forwardRef<Mesh>(function HoloCapsule(_p, sunRef) {
         </mesh>
       )}
 
-      {/* V12.4 — bust sized for the enlarged capsule, ~2.3u tall. */}
-      <PortraitBust3D position={[0, 0.85, 0]} targetHeight={2.3} />
+      {/* V12.5 — bust sized for the widest-yet capsule, ~2.4u tall.
+          Position raised slightly to align with capsule centre. */}
+      <PortraitBust3D position={[0, 0.90, 0]} targetHeight={2.4} />
 
-      {/* V12.4 — brighter internal light so the bust glows from within. */}
-      <pointLight position={[0, CAPSULE_Y, 0]} intensity={3.0} color={palette.neonGreen} distance={4} decay={2} />
+      {/* V12.5 — brighter internal light so the bust glows from within. */}
+      <pointLight position={[0, CAPSULE_Y, 0]} intensity={3.5} color={palette.neonGreen} distance={4} decay={2} />
+      {/* V12.5 — front-facing rim light makes features readable. */}
+      <pointLight position={[0, CAPSULE_Y - 0.5, 0.6]} intensity={1.5} color="#FFFFEE" distance={2.5} decay={2} />
 
       {/* Top energy ring. */}
       <mesh position={[0, CAPSULE_Y + CAPSULE_H / 2 + 0.05, 0]} rotation={[Math.PI / 2, 0, 0]}>

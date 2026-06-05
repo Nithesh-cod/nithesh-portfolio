@@ -375,8 +375,9 @@ void main() {
   // Subtle green ambient mixing from the room (very small share).
   col = mix(col, col * vec3(0.85, 1.05, 0.95), 0.18);
 
-  // Reduce overall brightness — city is in the distance.
-  col *= 0.75;
+  // V12.5 — brightness multiplier raised 0.75 → 1.10 so the city is
+  // clearly visible through the windows (no longer too dim).
+  col *= 1.10;
 
   // Horizon glow band — a thin warmer-greener strip near v=0.45.
   float band = exp(-pow((vUv.y - 0.45) * 6.0, 2.0));
@@ -463,10 +464,9 @@ void main(){
   float rand = hash(cellId);
   float pulseCell = step(0.95, rand);
   float pulse = 0.4 + 0.5 * sin(uTime * 1.2 + rand * 6.28);
-  // V12.0 — ceiling toned down: edge intensity 0.5 → 0.22, pulse 0.35 → 0.18,
-  // alpha 0.45 → 0.20 so the ceiling reads as atmospheric, not competing.
-  vec3 col = uColor * (edge * 0.22 + pulseCell * (1.0 - smoothstep(0.0, 0.42, dist)) * pulse * 0.18);
-  float a = edge * 0.20 + pulseCell * pulse * 0.10;
+  // V12.5 — ceiling subtler still: edge 0.22 → 0.12, alpha cap 0.20 → 0.10.
+  vec3 col = uColor * (edge * 0.12 + pulseCell * (1.0 - smoothstep(0.0, 0.42, dist)) * pulse * 0.10);
+  float a = edge * 0.10 + pulseCell * pulse * 0.06;
   gl_FragColor = vec4(col, a);
 }`;
 

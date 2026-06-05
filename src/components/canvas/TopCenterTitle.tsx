@@ -14,7 +14,7 @@ import { disableRaycast, noRaycast } from '@/lib/three-utils';
  *   Building Future.
  */
 
-const TITLE_Y = 5.8; // V12.4 — between capsule top (~3.0) and ceiling (6).
+const TITLE_Y = 4.0; // V12.5 — close to capsule top so it reads as the exhibit's title.
 
 export function TopCenterTitle() {
   // Bracketed badge "tick" pulse + faint vertical drift for life.
@@ -33,11 +33,11 @@ export function TopCenterTitle() {
   return (
     <Billboard position={[0, TITLE_Y, 0]} follow lockX={false} lockY={false} lockZ={false}>
       {/* Badge — [ WELCOME TO MY WORLD ]. */}
-      <group position={[0, 0.55, 0]}>
+      <group position={[0, 0.40, 0]}>
         <Text
           raycast={noRaycast}
           ref={disableRaycast}
-          fontSize={0.10}
+          fontSize={0.08}
           color={palette.neonBright}
           anchorX="center"
           anchorY="middle"
@@ -50,16 +50,16 @@ export function TopCenterTitle() {
       </group>
 
       {/* Big title — DIGITAL IDENTITY ENGINE. */}
-      <group position={[0, 0.20, 0]}>
+      <group position={[0, 0.16, 0]}>
         <Text
           raycast={noRaycast}
           ref={disableRaycast}
-          fontSize={0.32}
+          fontSize={0.28}
           color={palette.neonGreen}
           anchorX="center"
           anchorY="middle"
           letterSpacing={0.18}
-          outlineWidth={0.005}
+          outlineWidth={0.004}
           outlineColor={palette.neonBright}
         >
           DIGITAL IDENTITY ENGINE
@@ -88,11 +88,11 @@ export function TopCenterTitle() {
       </group>
 
       {/* Subtitle — Crafting Experiences. Building Future. */}
-      <group position={[0, -0.14, 0]}>
+      <group position={[0, -0.10, 0]}>
         <Text
           raycast={noRaycast}
           ref={disableRaycast}
-          fontSize={0.10}
+          fontSize={0.07}
           color={palette.textSecondary}
           anchorX="center"
           anchorY="middle"

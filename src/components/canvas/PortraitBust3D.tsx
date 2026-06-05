@@ -64,9 +64,9 @@ void main() {
   col += sweep * vec3(0.25, 0.45, 0.35);
   col += fres * vec3(0.10, 0.05, 0.00);
 
-  // V12.1 — alpha floor raised again so the bust reads even when the
-  // capsule plasma is on. 0.70 → 0.78 base + 0.22 fresnel ceiling.
-  float alpha = 0.78 + fres * 0.22 + scan * 0.06;
+  // V12.5 — alpha at 0.85 base + 0.15 fresnel ceiling — bust is now
+  // essentially solid against the capsule plasma.
+  float alpha = 0.85 + fres * 0.15 + scan * 0.04;
   alpha = clamp(alpha, 0.0, 1.0);
   gl_FragColor = vec4(col, alpha);
 }

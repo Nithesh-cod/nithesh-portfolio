@@ -49,8 +49,10 @@ export function ProjectStation({ slug, label, subtitle, position, yaw = 0, iconK
       groupRef.current.position.y = position[1] + bob + (hovered ? 0.06 : 0);
     }
     if (iconRef.current) {
-      iconRef.current.rotation.y += dt * 0.5;
-      iconRef.current.rotation.x += dt * 0.2;
+      // V12.5 — slightly faster, per-axis differentiation gives life.
+      iconRef.current.rotation.y += dt * 0.60;
+      iconRef.current.rotation.x += dt * 0.22;
+      iconRef.current.rotation.z += dt * 0.12;
     }
     trimRefs.current.forEach((m) => {
       if (m) m.emissiveIntensity = hovered ? 1.8 : 1.0;
@@ -301,11 +303,13 @@ function CaseEdgeTubes({ y }: { y: number }) {
 }
 
 function WireframeIcon({ kind }: { kind: 'leaf' | 'box' | 'globe' }) {
+  // V12.5 — wireframe scale ×1.5 + emissive intensity 1.4 → 2.5 so the
+  // icon fills the glass case and visibly glows from outside.
   const matProps = {
     color: palette.neonGreen,
     wireframe: true,
     emissive: palette.neonGreen,
-    emissiveIntensity: 1.4,
+    emissiveIntensity: 2.5,
     toneMapped: false,
   } as const;
   // V12.4 — distinct per-project shapes:
@@ -313,51 +317,52 @@ function WireframeIcon({ kind }: { kind: 'leaf' | 'box' | 'globe' }) {
   //   box   (Smart Canteen) → TorusKnot (tightly-organized network/system).
   //   globe (TestAI)        → sphere + inner inverted lattice (testing scanner).
   if (kind === 'box') {
-    // V12.5 Smart Canteen — wireframe "tray stack": 3 thin flat boxes
-    // at increasing Y, each slightly smaller, suggests stacked food
-    // trays / a canteen counter.
+    // V12.5 Smart Canteen — bigger 4-tray stack.
     return (
       <group>
-        <mesh position={[0, -0.12, 0]}>
-          <boxGeometry args={[0.50, 0.04, 0.32]} />
+        <mesh position={[0, -0.18, 0]}>
+          <boxGeometry args={[0.70, 0.05, 0.45]} />
           <meshStandardMaterial {...matProps} />
         </mesh>
-        <mesh position={[0, 0.0, 0]}>
-          <boxGeometry args={[0.44, 0.04, 0.28]} />
+        <mesh position={[0, -0.05, 0]}>
+          <boxGeometry args={[0.62, 0.05, 0.40]} />
           <meshStandardMaterial {...matProps} />
         </mesh>
-        <mesh position={[0, 0.12, 0]}>
-          <boxGeometry args={[0.38, 0.04, 0.24]} />
+        <mesh position={[0, 0.08, 0]}>
+          <boxGeometry args={[0.54, 0.05, 0.34]} />
           <meshStandardMaterial {...matProps} />
         </mesh>
-        {/* Vertical centre rod connecting the trays. */}
+        <mesh position={[0, 0.20, 0]}>
+          <boxGeometry args={[0.46, 0.05, 0.28]} />
+          <meshStandardMaterial {...matProps} />
+        </mesh>
         <mesh>
-          <cylinderGeometry args={[0.018, 0.018, 0.28, 8]} />
-          <meshStandardMaterial {...matProps} emissiveIntensity={1.8} />
+          <cylinderGeometry args={[0.022, 0.022, 0.44, 8]} />
+          <meshStandardMaterial {...matProps} emissiveIntensity={3.0} />
         </mesh>
       </group>
     );
   }
   if (kind === 'globe') {
+    // V12.5 TestAI — bigger sphere + inner lattice.
     return (
       <group>
         <mesh>
-          <sphereGeometry args={[0.30, 18, 14]} />
+          <sphereGeometry args={[0.42, 20, 16]} />
           <meshStandardMaterial {...matProps} />
         </mesh>
-        {/* inner lattice — gives the "scanner" feel */}
         <mesh scale={0.62} rotation={[Math.PI / 5, 0, Math.PI / 7]}>
-          <octahedronGeometry args={[0.34, 1]} />
-          <meshStandardMaterial {...matProps} emissiveIntensity={1.8} />
+          <octahedronGeometry args={[0.48, 1]} />
+          <meshStandardMaterial {...matProps} emissiveIntensity={3.0} />
         </mesh>
       </group>
     );
   }
-  // 'leaf' = CropAI → high-detail icosahedron.
+  // 'leaf' = CropAI — high-detail icosahedron, scaled up.
   return (
     <group>
       <mesh>
-        <icosahedronGeometry args={[0.30, 1]} />
+        <icosahedronGeometry args={[0.42, 1]} />
         <meshStandardMaterial {...matProps} />
       </mesh>
     </group>
