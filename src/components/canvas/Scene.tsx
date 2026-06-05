@@ -32,10 +32,10 @@ import { palette } from '@/lib/palette';
 const FPS_DOWNGRADE_HOLD_MS = 3000;
 
 const PROJECTS = [
-  // V12.1 — wider spacing, Smart Canteen pulled forward as hero project.
-  { slug: 'cropai',        label: 'CropAI',        subtitle: 'AI CROP ADVISOR SYSTEM',                  position: [-4.0, 0, 3.5], yaw:  0.35, iconKind: 'leaf',  phase: 0,    scale: 1.0 },
-  { slug: 'smart-canteen', label: 'Smart Canteen', subtitle: 'AI · AUTOMATION · IoT', position: [ 0.0, 0, 5.0], yaw:  0.00, iconKind: 'box',   phase: 1.4,  scale: 1.10 },
-  { slug: 'testai',        label: 'TestAI',        subtitle: 'AI EXAM PROCTORING SYSTEM',              position: [ 4.0, 0, 3.5], yaw: -0.35, iconKind: 'globe', phase: 2.8,  scale: 1.0 },
+  // V12.9 — clean foreground arc, all pedestals well clear of avatar at origin.
+  { slug: 'cropai',        label: 'CropAI',        subtitle: 'AI CROP ADVISOR SYSTEM',                  position: [-4.0, 0, 4.0], yaw:  0.35, iconKind: 'leaf',  phase: 0,    scale: 1.0 },
+  { slug: 'smart-canteen', label: 'Smart Canteen', subtitle: 'AI · AUTOMATION · IoT',                   position: [ 0.0, 0, 6.0], yaw:  0.00, iconKind: 'box',   phase: 1.4,  scale: 1.10 },
+  { slug: 'testai',        label: 'TestAI',        subtitle: 'AI EXAM PROCTORING SYSTEM',               position: [ 4.0, 0, 4.0], yaw: -0.35, iconKind: 'globe', phase: 2.8,  scale: 1.0 },
 ] as const;
 
 export function Scene() {
@@ -164,7 +164,7 @@ function Lights() {
         angle={0.42} penumbra={0.80} color="#DDEEDD" distance={12} decay={1.4} />
       <SpotLight position={[0, 5.5, 4.0]} target-position={[0, 0.4, 5.0]} intensity={0.72}
         angle={0.40} penumbra={0.80} color="#DDEEDD" distance={12} decay={1.4} />
-      <SpotLight position={[5.5, 5.6, 5.0]} target-position={[6.5, 1.4, 6.0]} intensity={0.66}
+      <SpotLight position={[5.5, 5.6, 3.5]} target-position={[6.5, 1.5, 4.5]} intensity={0.66}
         angle={0.55} penumbra={0.85} color="#DDEEDD" distance={14} decay={1.4} />
       <SpotLight position={[-5.5, 5.5, 0.5]} target-position={[-3.5, 2.0, 1.0]} intensity={0.48}
         angle={0.55} penumbra={0.85} color="#DDEEDD" distance={12} decay={1.4} />
