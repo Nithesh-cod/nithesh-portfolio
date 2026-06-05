@@ -33,8 +33,8 @@ import { PortraitBust3D } from '@/components/canvas/PortraitBust3D';
  * cage / top + bottom energy rings / capsule name plaque mesh that
  * V12.6 had are ALL DELETED. The GLB IS the centerpiece. */
 
-const AVATAR_HEIGHT = 2.8;
-const AVATAR_BASE_RADIUS = 1.6; // approximate radius of the glb's pedestal disc
+const AVATAR_HEIGHT = 3.0; // V12.8 — taller for full-body visibility
+const AVATAR_BASE_RADIUS = 1.7; // approximate radius of the glb's pedestal disc
 const CAGE_BARS = 10;
 const CAGE_RADIUS = 1.65;
 const CAGE_HEIGHT = 3.0;
@@ -77,29 +77,30 @@ export const HoloCapsule = forwardRef<Mesh>(function HoloCapsule(_p, sunRef) {
       {/* GLB avatar — includes its own pedestal. */}
       <PortraitBust3D position={[0, 0, 0]} targetHeight={AVATAR_HEIGHT} />
 
-      {/* FLOOR HALOS — 2 emissive rings around the pedestal base. */}
+      {/* V12.8 — bigger, brighter floor halos around the GLB pedestal. */}
       <mesh position={[0, 0.001, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[AVATAR_BASE_RADIUS + 0.15, AVATAR_BASE_RADIUS + 0.35, 96]} />
+        <ringGeometry args={[1.8, 2.2, 96]} />
         <meshStandardMaterial
           ref={haloRef}
           color={palette.neonGreen}
           emissive={palette.neonGreen}
-          emissiveIntensity={1.3}
+          emissiveIntensity={1.8}
           transparent
-          opacity={0.55}
+          opacity={0.70}
           toneMapped={false}
           side={DoubleSide}
         />
       </mesh>
+      {/* Inner pulsing ring (the "scanner" halo). */}
       <mesh position={[0, 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[AVATAR_BASE_RADIUS - 0.20, AVATAR_BASE_RADIUS - 0.10, 96]} />
+        <ringGeometry args={[1.34, 1.46, 96]} />
         <meshStandardMaterial
           ref={innerHaloRef}
           color={palette.neonBright}
           emissive={palette.neonBright}
-          emissiveIntensity={2.2}
+          emissiveIntensity={2.4}
           transparent
-          opacity={0.70}
+          opacity={0.80}
           toneMapped={false}
           side={DoubleSide}
         />

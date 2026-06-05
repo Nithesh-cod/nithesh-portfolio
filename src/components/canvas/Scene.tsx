@@ -153,21 +153,22 @@ function Lights() {
       {/* Cool back-fill (atmospheric blue spill from the city). */}
       <pointLight position={[0, 2.0, -6.0]} intensity={0.35} color="#6BB8FF" distance={12} decay={2} />
 
-      {/* V12.4 — spotlights toned down (capsule 1.6, projects 1.0, panels 0.8). */}
-      <SpotLight position={[0, 5.7, 0.5]} target-position={[0, 1.0, 0]} intensity={1.6}
+      {/* V12.8 — spotlights ×0.6 to tame the scene lighting; avatar lights
+          live in HoloCapsule and aren't reduced here. Cert rack retargeted
+          to [6.5, 1.4, 6.0]. */}
+      <SpotLight position={[0, 5.7, 0.5]} target-position={[0, 1.0, 0]} intensity={0.96}
         angle={0.40} penumbra={0.80} color="#DDEEDD" distance={12} decay={1.4} castShadow />
-      <SpotLight position={[-4.0, 5.5, 2.0]} target-position={[-4.0, 0.4, 3.5]} intensity={1.00}
+      <SpotLight position={[-4.0, 5.5, 2.0]} target-position={[-4.0, 0.4, 4.0]} intensity={0.60}
         angle={0.42} penumbra={0.80} color="#DDEEDD" distance={12} decay={1.4} />
-      <SpotLight position={[ 4.0, 5.5, 2.0]} target-position={[ 4.0, 0.4, 3.5]} intensity={1.00}
+      <SpotLight position={[ 4.0, 5.5, 2.0]} target-position={[ 4.0, 0.4, 4.0]} intensity={0.60}
         angle={0.42} penumbra={0.80} color="#DDEEDD" distance={12} decay={1.4} />
-      <SpotLight position={[0, 5.5, 4.0]} target-position={[0, 0.4, 5.0]} intensity={1.20}
+      <SpotLight position={[0, 5.5, 4.0]} target-position={[0, 0.4, 5.0]} intensity={0.72}
         angle={0.40} penumbra={0.80} color="#DDEEDD" distance={12} decay={1.4} />
-      {/* Cert rack key — V12.4 rack at [6.8, 1.5, 1.5]. */}
-      <SpotLight position={[6.2, 5.6, 1.8]} target-position={[6.8, 1.5, 1.5]} intensity={1.10}
+      <SpotLight position={[5.5, 5.6, 5.0]} target-position={[6.5, 1.4, 6.0]} intensity={0.66}
         angle={0.55} penumbra={0.85} color="#DDEEDD" distance={14} decay={1.4} />
-      <SpotLight position={[-5.5, 5.5, 0.5]} target-position={[-3.5, 2.0, 1.0]} intensity={0.80}
+      <SpotLight position={[-5.5, 5.5, 0.5]} target-position={[-3.5, 2.0, 1.0]} intensity={0.48}
         angle={0.55} penumbra={0.85} color="#DDEEDD" distance={12} decay={1.4} />
-      <SpotLight position={[5.5, 5.5, 0.5]} target-position={[5.5, 2.0, -0.5]} intensity={0.80}
+      <SpotLight position={[5.5, 5.5, 0.5]} target-position={[5.5, 2.0, -0.5]} intensity={0.48}
         angle={0.55} penumbra={0.85} color="#DDEEDD" distance={12} decay={1.4} />
 
       {/* Corner pillar point lights. */}

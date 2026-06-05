@@ -24,10 +24,10 @@ import { play } from '@/lib/audio';
  * (4 rows × 3 columns), positioned center-back of the room so it sits
  * cleanly between the Tech Stack panel (right wall) and the capsule. */
 
-// V12.5 — pulled forward into the foreground (z 1.5 → 5.0) so the
-// rack is unmistakably visible from the default camera view.
-const RACK_POS: [number, number, number] = [4.5, 1.4, 5.0];
-const RACK_ROT: [number, number, number] = [0, -Math.PI / 4, 0];
+// V12.8 — moved further right + further forward; cert rack now sits
+// well outside the avatar's central focal column.
+const RACK_POS: [number, number, number] = [6.5, 1.4, 6.0];
+const RACK_ROT: [number, number, number] = [0, -Math.PI / 3, 0];
 
 // V12.5 — 2×3 grid (6 hero certs) instead of 4×3 (12). The remaining 6
 // remain accessible via the VIEW DETAILED CERTIFICATES button → modal.

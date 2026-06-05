@@ -14,7 +14,7 @@ import { disableRaycast, noRaycast } from '@/lib/three-utils';
  *   Building Future.
  */
 
-const TITLE_Y = 4.5; // V12.7 — above GLB avatar head (~3.0), clears comfortably.
+const TITLE_Y = 5.0; // V12.8 — above 3.0-tall GLB avatar head, clears HUD panels.
 
 export function TopCenterTitle() {
   // Bracketed badge "tick" pulse + faint vertical drift for life.
@@ -54,7 +54,7 @@ export function TopCenterTitle() {
         <Text
           raycast={noRaycast}
           ref={disableRaycast}
-          fontSize={0.28}
+          fontSize={0.26}
           color={palette.neonGreen}
           anchorX="center"
           anchorY="middle"
@@ -92,7 +92,7 @@ export function TopCenterTitle() {
         <Text
           raycast={noRaycast}
           ref={disableRaycast}
-          fontSize={0.07}
+          fontSize={0.06}
           color={palette.textSecondary}
           anchorX="center"
           anchorY="middle"
