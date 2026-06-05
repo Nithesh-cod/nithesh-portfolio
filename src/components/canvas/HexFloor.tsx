@@ -102,18 +102,18 @@ export function HexFloor() {
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[40, 40]} />
         <MeshReflectorMaterial
-          blur={[300, 80]}
-          resolution={1024}
+          blur={[200, 60]}
+          resolution={2048}
           mixBlur={1.0}
-          mixStrength={1.5}
-          mirror={0.78}
-          metalness={0.65}
-          roughness={0.25}
+          mixStrength={2.0}
+          mirror={0.85}
+          metalness={0.70}
+          roughness={0.22}
           depthScale={1.2}
           minDepthThreshold={0.4}
           maxDepthThreshold={1.4}
           color="#060912"
-          envMapIntensity={0.55}
+          envMapIntensity={0.60}
         />
       </mesh>
 

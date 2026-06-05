@@ -73,7 +73,9 @@ export function Scene() {
 
       {/* V12.5 — slightly tighter fog (6 → 25) softens distant elements. */}
       <fog attach="fog" args={[palette.bgBase, 6, 25]} />
-      <Environment preset="night" background={false} environmentIntensity={0.35} />
+      {/* V12.7 — Environment "city" + higher intensity gives the GLB's
+          PBR suit + skin proper IBL reflections. */}
+      <Environment preset="city" background={false} environmentIntensity={0.6} />
 
       <Lights />
 

@@ -1,89 +1,63 @@
 'use client';
 
+import { Html, Sparkles } from '@react-three/drei';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
-import { Text } from '@react-three/drei';
-import { forwardRef, useMemo, useRef, useState } from 'react';
+import { forwardRef, useRef, useState } from 'react';
 import {
-  AdditiveBlending,
-  Color,
   DoubleSide,
-  type IUniform,
-  type Group,
   type Mesh,
+  type MeshBasicMaterial,
   type MeshStandardMaterial,
 } from 'three';
 import { palette } from '@/lib/palette';
 import { usePortfolioStore } from '@/lib/store';
-import { disableRaycast, noRaycast } from '@/lib/three-utils';
 import { play } from '@/lib/audio';
 import { PortraitBust3D } from '@/components/canvas/PortraitBust3D';
 
-const POS: readonly [number, number, number] = [0, 0, 0];
-const CAPSULE_R = 1.40;   // V12.5 — widest yet so the bust is unmistakably visible
-const CAPSULE_H = 3.00;
-const CAPSULE_Y = 1.60;
-const CAGE_BARS = 12;
-const CAGE_RADIUS = 1.48;
+/* V12.7 — central exhibit completely rebuilt around the GLB.
+ *
+ * The GLB ships its own black tiered pedestal + textured suited bust.
+ * We render that AS-IS in PortraitBust3D and surround it with a thin
+ * "showcase" of holographic accents — none of which touch the model
+ * geometry itself:
+ *
+ *   • 2 floor-halo emissive rings at the pedestal base
+ *   • 10 thin vertical scanner-cage beams in a circle around the bust
+ *   • 2 horizontal scanner rings (top above the head, mid at chest)
+ *   • A soft halo plane behind the bust for emerald glow
+ *   • drei <Sparkles> floating particles
+ *   • 4 lights (key + back-cool + front-warm + top-emerald)
+ *   • An Html name plaque in front of the pedestal
+ *
+ * The procedural 3-tier podium / outer glass / inner plasma / 12-bar
+ * cage / top + bottom energy rings / capsule name plaque mesh that
+ * V12.6 had are ALL DELETED. The GLB IS the centerpiece. */
 
-/* Inner plasma shader. */
-const INNER_VERT = /* glsl */ `varying vec2 vUv;
-void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
+const AVATAR_HEIGHT = 2.8;
+const AVATAR_BASE_RADIUS = 1.6; // approximate radius of the glb's pedestal disc
+const CAGE_BARS = 10;
+const CAGE_RADIUS = 1.65;
+const CAGE_HEIGHT = 3.0;
+const CAGE_Y = 1.55;
 
-const NOISE = /* glsl */ `
-float hash(vec3 p){ return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453123); }
-float vnoise(vec3 p){
-  vec3 i = floor(p); vec3 f = fract(p);
-  vec3 u = f * f * (3.0 - 2.0 * f);
-  return mix(mix(mix(hash(i + vec3(0,0,0)), hash(i + vec3(1,0,0)), u.x),
-                 mix(hash(i + vec3(0,1,0)), hash(i + vec3(1,1,0)), u.x), u.y),
-             mix(mix(hash(i + vec3(0,0,1)), hash(i + vec3(1,0,1)), u.x),
-                 mix(hash(i + vec3(0,1,1)), hash(i + vec3(1,1,1)), u.x), u.y), u.z);
-}`;
-
-const INNER_FRAG = /* glsl */ `
-precision highp float;
-uniform float uTime;
-varying vec2 vUv;
-${NOISE}
-void main(){
-  float vGrad = pow(sin(vUv.y * 3.14159), 0.6);
-  float dist = abs(vUv.x - 0.5) * 2.0;
-  float rGrad = pow(1.0 - dist, 1.2);
-  float energy = sin(vUv.y * 40.0 - uTime * 1.5) * 0.5 + 0.5;
-  energy = pow(energy, 3.0);
-  float plasma = vnoise(vec3(vUv * 6.0, uTime * 0.6)) * 0.5 + 0.5;
-  // V12.5 — plasma essentially decorative now (multiplier 0.15) so the
-  // bust reads clearly through it.
-  float alpha = vGrad * rGrad * (0.3 + energy * 0.4 + plasma * 0.3) * 0.15;
-  vec3 color = vec3(0.5, 1.0, 0.7) + vec3(0.0, 0.2, 0.1) * plasma;
-  gl_FragColor = vec4(color, alpha);
-}`;
-
-/**
- * V10.0 — central exhibit. 3-tier hex podium + glass capsule with the
- * pre-rendered 3D portrait inside + rotating ring + name plaque on the
- * front of tier 2.
- */
+// The "sun" mesh that GodRays in PostFX samples — invisible but with a
+// position. forwardRef so Scene.tsx can attach a Mesh ref.
 export const HoloCapsule = forwardRef<Mesh>(function HoloCapsule(_p, sunRef) {
-  const ringTopRef = useRef<MeshStandardMaterial | null>(null);
-  const ringBotRef = useRef<MeshStandardMaterial | null>(null);
-  const rotateRingRef = useRef<Group | null>(null);
+  const haloRef = useRef<MeshStandardMaterial | null>(null);
+  const innerHaloRef = useRef<MeshStandardMaterial | null>(null);
+  const ringTopRef = useRef<MeshBasicMaterial | null>(null);
+  const ringMidRef = useRef<MeshBasicMaterial | null>(null);
   const [hovered, setHovered] = useState(false);
-  const t = useRef(0);
-  const lowPerf = usePortfolioStore((s) => s.perfMode === 'low');
   const setCursor = usePortfolioStore((s) => s.setCursorState);
 
-  const innerUniforms = useMemo<{ uTime: IUniform<number> }>(
-    () => ({ uTime: { value: 0 } }),
-    [],
-  );
-
-  useFrame((_, dt) => {
-    t.current += dt;
-    innerUniforms.uTime.value = t.current;
-    if (ringTopRef.current) ringTopRef.current.emissiveIntensity = 2.5 + Math.sin(t.current * 2) * 0.8;
-    if (ringBotRef.current) ringBotRef.current.emissiveIntensity = 2.5 + Math.sin(t.current * 2 + Math.PI) * 0.8;
-    if (rotateRingRef.current) rotateRingRef.current.rotation.y += dt * 0.4;
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    // Floor halos breathe.
+    if (haloRef.current) haloRef.current.emissiveIntensity = 1.3 + 0.25 * Math.sin(t * 1.4);
+    if (innerHaloRef.current) innerHaloRef.current.emissiveIntensity = 2.2 + 0.4 * Math.sin(t * 1.8 + Math.PI);
+    // Scanner rings pulse.
+    if (ringTopRef.current) ringTopRef.current.opacity = 0.55 + 0.25 * Math.sin(t * 1.2);
+    if (ringMidRef.current) ringMidRef.current.opacity = 0.45 + 0.30 * Math.sin(t * 1.0 + 1.0);
   });
 
   const handleOver = (e: ThreeEvent<PointerEvent>) => {
@@ -98,200 +72,173 @@ export const HoloCapsule = forwardRef<Mesh>(function HoloCapsule(_p, sunRef) {
     setCursor('idle');
   };
 
-  // V12.5 — circular stepped 3-tier podium (was hex).
-  // Tier 1 (floor): r=2.0 disc, h=0.12, y=0.06
-  // Tier 2:        r=1.6 disc, h=0.12, y=0.24
-  // Tier 3 (stage):r=1.3 disc, h=0.15, y=0.42 — bright top ring
-  const TIERS = [
-    { y: 0.06, rTop: 2.00, rBot: 2.10, h: 0.12, ringR: 2.05, ringIntensity: 1.6 },
-    { y: 0.24, rTop: 1.60, rBot: 1.70, h: 0.12, ringR: 1.65, ringIntensity: 1.8 },
-    { y: 0.42, rTop: 1.30, rBot: 1.40, h: 0.15, ringR: 1.35, ringIntensity: 2.4 },
-  ];
-
   return (
-    <group position={POS}>
-      {/* 3 circular tiers + bright neon top-ring per tier. */}
-      {TIERS.map((tier, i) => (
-        <group key={i}>
-          <mesh position={[0, tier.y, 0]}>
-            <cylinderGeometry args={[tier.rTop, tier.rBot, tier.h, 64]} />
-            <meshStandardMaterial
-              color="#1A2A28"
-              metalness={0.85}
-              roughness={0.30}
-              emissive={palette.neonGreen}
-              emissiveIntensity={0.10 + i * 0.04}
-            />
-          </mesh>
-          {/* Bright neon ring on top edge — the "stage" trim. */}
-          <mesh position={[0, tier.y + tier.h / 2 + 0.005, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[tier.ringR - 0.05, tier.ringR + 0.05, 96]} />
-            <meshStandardMaterial
-              color={palette.neonGreen}
-              emissive={palette.neonGreen}
-              emissiveIntensity={tier.ringIntensity}
-              metalness={0.9}
-              roughness={0.20}
-              toneMapped={false}
-              side={DoubleSide}
-            />
-          </mesh>
-        </group>
-      ))}
+    <group position={[0, 0, 0]}>
+      {/* GLB avatar — includes its own pedestal. */}
+      <PortraitBust3D position={[0, 0, 0]} targetHeight={AVATAR_HEIGHT} />
 
-      {/* Rotating wide ring around tier 3. */}
-      <group ref={rotateRingRef}>
-        <mesh position={[0, 0.92, 0]} rotation={[Math.PI / 2, 0, 0]}>
-          <torusGeometry args={[1.25, 0.018, 12, 96]} />
-          <meshStandardMaterial
-            color={palette.neonBright}
-            emissive={palette.neonBright}
-            emissiveIntensity={1.4}
-            metalness={0.9}
-            roughness={0.18}
-            toneMapped={false}
-          />
-        </mesh>
-        {/* 6 emissive accent dots on the rotating ring. */}
-        {Array.from({ length: 6 }).map((_, i) => {
-          const a = (i / 6) * Math.PI * 2;
-          return (
-            <mesh key={i} position={[Math.cos(a) * 1.25, 0.92, Math.sin(a) * 1.25]} rotation={[Math.PI / 2, 0, 0]}>
-              <cylinderGeometry args={[0.04, 0.04, 0.01, 14]} />
-              <meshStandardMaterial color={palette.neonBright} emissive={palette.neonBright} emissiveIntensity={2.0} toneMapped={false} />
-            </mesh>
-          );
-        })}
-      </group>
-
-      {/* Name plaque on front of tier 2. */}
-      <group position={[0, 0.45, 1.42]} rotation={[0, 0, 0]}>
-        <mesh position={[0, 0, 0]}>
-          <planeGeometry args={[1.4, 0.22]} />
-          <meshStandardMaterial color="#020608" metalness={0.7} roughness={0.4}
-            emissive={palette.neonGreen} emissiveIntensity={0.12} side={DoubleSide} />
-        </mesh>
-        <Text
-          raycast={noRaycast}
-          ref={disableRaycast}
-          position={[0, 0.03, 0.003]}
-          fontSize={0.085}
-          color={palette.neonBright}
-          anchorX="center"
-          anchorY="middle"
-          letterSpacing={0.18}
-          outlineWidth={0.0015}
-          outlineColor={palette.neonGreen}
-        >
-          NITHESH RAMACHANDRAN
-        </Text>
-        <Text
-          raycast={noRaycast}
-          ref={disableRaycast}
-          position={[0, -0.06, 0.003]}
-          fontSize={0.038}
-          color={palette.textSecondary}
-          anchorX="center"
-          anchorY="middle"
-          letterSpacing={0.22}
-        >
-          FULL STACK · AI · CREATIVE TECH
-        </Text>
-      </group>
-
-      {/* Bottom energy ring. */}
-      <mesh position={[0, 0.92, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[CAPSULE_R, 0.025, 16, 64]} />
+      {/* FLOOR HALOS — 2 emissive rings around the pedestal base. */}
+      <mesh position={[0, 0.001, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[AVATAR_BASE_RADIUS + 0.15, AVATAR_BASE_RADIUS + 0.35, 96]} />
         <meshStandardMaterial
-          ref={ringBotRef}
-          color="#00FF88"
-          emissive="#00FF88"
-          emissiveIntensity={3.0}
+          ref={haloRef}
+          color={palette.neonGreen}
+          emissive={palette.neonGreen}
+          emissiveIntensity={1.3}
+          transparent
+          opacity={0.55}
           toneMapped={false}
+          side={DoubleSide}
+        />
+      </mesh>
+      <mesh position={[0, 0.002, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[AVATAR_BASE_RADIUS - 0.20, AVATAR_BASE_RADIUS - 0.10, 96]} />
+        <meshStandardMaterial
+          ref={innerHaloRef}
+          color={palette.neonBright}
+          emissive={palette.neonBright}
+          emissiveIntensity={2.2}
+          transparent
+          opacity={0.70}
+          toneMapped={false}
+          side={DoubleSide}
         />
       </mesh>
 
-      {/* Glass capsule. */}
+      {/* SCANNER CAGE — 10 thin vertical beams around the avatar. */}
+      <ScannerCage />
+
+      {/* SCANNER RINGS — horizontal accents at head + chest height. */}
+      <mesh position={[0, 3.10, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[1.40, 0.015, 16, 96]} />
+        <meshBasicMaterial
+          ref={ringTopRef}
+          color={palette.neonGreen}
+          transparent
+          opacity={0.55}
+          toneMapped={false}
+          depthWrite={false}
+        />
+      </mesh>
+      <mesh position={[0, 1.80, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[1.55, 0.012, 16, 96]} />
+        <meshBasicMaterial
+          ref={ringMidRef}
+          color={palette.neonGreen}
+          transparent
+          opacity={0.45}
+          toneMapped={false}
+          depthWrite={false}
+        />
+      </mesh>
+
+      {/* SOFT GLOW HALO PLANE behind avatar (additive emerald wash). */}
+      <mesh position={[0, 1.80, -0.40]}>
+        <planeGeometry args={[3.0, 4.2]} />
+        <meshBasicMaterial
+          color={palette.neonGreen}
+          transparent
+          opacity={0.10}
+          toneMapped={false}
+          depthWrite={false}
+        />
+      </mesh>
+
+      {/* FLOATING PARTICLES around the avatar. */}
+      <Sparkles
+        count={50}
+        scale={[2.5, 4.0, 2.5]}
+        position={[0, 1.6, 0]}
+        size={1.0}
+        speed={0.20}
+        opacity={0.50}
+        color={palette.neonGreen}
+      />
+
+      {/* NAME PLAQUE — DOM card mounted in front of the pedestal. */}
+      <Html
+        transform
+        occlude={false}
+        position={[0, 0.30, 1.70]}
+        distanceFactor={2.4}
+        style={{ pointerEvents: 'none' }}
+      >
+        <div className="avatar-name-plaque">
+          <div className="avatar-name">NITHESH RAMACHANDRAN</div>
+          <div className="avatar-subtitle">FULL STACK · AI · CREATIVE TECH</div>
+        </div>
+      </Html>
+
+      {/* HOVER PROXY — invisible mesh enabling cursor + audio on the
+          avatar zone. */}
       <mesh
-        position={[0, CAPSULE_Y, 0]}
+        position={[0, 1.6, 0]}
+        visible={false}
         onPointerOver={handleOver}
         onPointerOut={handleOut}
       >
-        <cylinderGeometry args={[CAPSULE_R, CAPSULE_R, CAPSULE_H, 64, 1, true]} />
-        <meshPhysicalMaterial
-          color="#88FFCC"
-          transmission={lowPerf ? 0 : 0.92}
-          thickness={0.15}
-          roughness={0.04}
-          ior={1.4}
-          attenuationColor={new Color('#88FFCC')}
-          attenuationDistance={2.0}
-          metalness={0.0}
-          transparent
-          opacity={0.30}
-          side={DoubleSide}
-          envMapIntensity={1.5}
-          emissive={palette.neonGreen}
-          emissiveIntensity={hovered ? 0.30 : 0.15}
-        />
+        <cylinderGeometry args={[1.2, 1.2, 3.0, 12]} />
       </mesh>
 
-      {/* Inner plasma — V12.5 wider column matching the bigger capsule. */}
-      {!lowPerf && (
-        <mesh position={[0, CAPSULE_Y, 0]}>
-          <cylinderGeometry args={[1.10, 1.10, CAPSULE_H * 0.96, 32, 1, true]} />
-          <shaderMaterial
-            vertexShader={INNER_VERT}
-            fragmentShader={INNER_FRAG}
-            uniforms={innerUniforms}
-            transparent
-            blending={AdditiveBlending}
-            side={DoubleSide}
-            depthWrite={false}
-          />
-        </mesh>
-      )}
-
-      {/* V12.5 — bust sized for the widest-yet capsule, ~2.4u tall.
-          Position raised slightly to align with capsule centre. */}
-      <PortraitBust3D position={[0, 0.90, 0]} targetHeight={2.4} />
-
-      {/* V12.5 — brighter internal light so the bust glows from within. */}
-      <pointLight position={[0, CAPSULE_Y, 0]} intensity={3.5} color={palette.neonGreen} distance={4} decay={2} />
-      {/* V12.5 — front-facing rim light makes features readable. */}
-      <pointLight position={[0, CAPSULE_Y - 0.5, 0.6]} intensity={1.5} color="#FFFFEE" distance={2.5} decay={2} />
-
-      {/* Top energy ring. */}
-      <mesh position={[0, CAPSULE_Y + CAPSULE_H / 2 + 0.05, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[CAPSULE_R, 0.025, 16, 64]} />
-        <meshStandardMaterial
-          ref={ringTopRef}
-          color="#00FF88"
-          emissive="#00FF88"
-          emissiveIntensity={3.0}
-          toneMapped={false}
-        />
-      </mesh>
-
-      {/* Light cage. */}
-      {Array.from({ length: CAGE_BARS }).map((_, i) => {
-        const a = (i / CAGE_BARS) * Math.PI * 2;
-        return (
-          <mesh key={i} position={[Math.cos(a) * CAGE_RADIUS, CAPSULE_Y, Math.sin(a) * CAGE_RADIUS]}>
-            <cylinderGeometry args={[0.005, 0.005, CAPSULE_H, 6]} />
-            <meshBasicMaterial color="#00FF88" transparent opacity={0.9} toneMapped={false} />
-          </mesh>
-        );
-      })}
-
-      {/* GodRays sun. */}
-      <mesh ref={sunRef as React.RefObject<Mesh>} position={[0, CAPSULE_Y, 0]}>
-        <sphereGeometry args={[0.3, 16, 16]} />
+      {/* GodRays sun — invisible, used by PostFX. Subtle pulse-out
+          when hovered. */}
+      <mesh
+        ref={sunRef as React.RefObject<Mesh>}
+        position={[0, 1.6, 0]}
+        scale={hovered ? 1.4 : 1.0}
+      >
+        <sphereGeometry args={[0.18, 16, 16]} />
         <meshBasicMaterial color="#FFFFFF" transparent opacity={0.001} toneMapped={false} />
       </mesh>
 
-      {/* V11.0 — old DIGITAL IDENTITY // ONLINE label removed.
-          TopCenterTitle (Scene.tsx) renders the new title trio. */}
+      {/* INTERNAL LIGHTING — 4 lights illuminating the avatar.
+          See spec FIX 4. */}
+      <spotLight
+        position={[2.5, 5.0, 3.0]}
+        target-position={[0, 1.5, 0]}
+        intensity={3.0}
+        angle={0.50}
+        penumbra={0.70}
+        color="#FFEEDD"
+        castShadow
+      />
+      <pointLight position={[-3, 2, -2]} intensity={1.5} color="#88FFCC" distance={6} decay={2} />
+      <pointLight position={[0, 0.5, 3]} intensity={0.8} color="#FFDDCC" distance={5} decay={2} />
+      <spotLight
+        position={[0, 6, 0]}
+        target-position={[0, 1.5, 0]}
+        intensity={1.4}
+        angle={0.35}
+        penumbra={0.80}
+        color={palette.neonGreen}
+      />
     </group>
   );
 });
+
+/* 10 thin vertical emissive beams arranged in a circle around the
+ * avatar — the "scanning cage" feel from the spec. */
+function ScannerCage() {
+  return (
+    <group>
+      {Array.from({ length: CAGE_BARS }).map((_, i) => {
+        const a = (i / CAGE_BARS) * Math.PI * 2;
+        return (
+          <mesh
+            key={i}
+            position={[Math.cos(a) * CAGE_RADIUS, CAGE_Y, Math.sin(a) * CAGE_RADIUS]}
+          >
+            <cylinderGeometry args={[0.012, 0.012, CAGE_HEIGHT, 6]} />
+            <meshBasicMaterial
+              color={palette.neonGreen}
+              transparent
+              opacity={0.55}
+              toneMapped={false}
+              depthWrite={false}
+            />
+          </mesh>
+        );
+      })}
+    </group>
+  );
+}

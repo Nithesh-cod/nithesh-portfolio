@@ -14,7 +14,7 @@ import { disableRaycast, noRaycast } from '@/lib/three-utils';
  *   Building Future.
  */
 
-const TITLE_Y = 4.0; // V12.5 — close to capsule top so it reads as the exhibit's title.
+const TITLE_Y = 4.5; // V12.7 — above GLB avatar head (~3.0), clears comfortably.
 
 export function TopCenterTitle() {
   // Bracketed badge "tick" pulse + faint vertical drift for life.
