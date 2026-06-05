@@ -69,20 +69,24 @@ export function PortraitBust3D({
     scene.position.z = -centre.z * scale;
     scene.position.y = -box.min.y * scale; // pedestal bottom flush to y=0
 
-    // PRESERVE original PBR materials. Just boost envMapIntensity so
-    // the suit + skin catch the scene's <Environment> IBL.
+    // V12.10 — preserve original PBR textures but soften reflectivity
+    // so the suit + skin don't blow out under the scene's lighting.
+    //   envMapIntensity 1.5 → 0.6  (softer IBL reflections)
+    //   roughness floor 0.4         (less specular highlights)
     scene.traverse((obj) => {
       const m = obj as Mesh;
       if (m.isMesh) {
         const mat = m.material as MeshStandardMaterial | MeshStandardMaterial[] | undefined;
+        const adjust = (mm: MeshStandardMaterial | undefined) => {
+          if (!mm) return;
+          if ('envMapIntensity' in mm) mm.envMapIntensity = 0.6;
+          if ('roughness' in mm) mm.roughness = Math.max(mm.roughness ?? 0, 0.40);
+          mm.needsUpdate = true;
+        };
         if (Array.isArray(mat)) {
-          mat.forEach((mm) => {
-            if (mm && 'envMapIntensity' in mm) mm.envMapIntensity = 1.5;
-            if (mm) mm.needsUpdate = true;
-          });
-        } else if (mat) {
-          if ('envMapIntensity' in mat) mat.envMapIntensity = 1.5;
-          mat.needsUpdate = true;
+          mat.forEach(adjust);
+        } else {
+          adjust(mat);
         }
         m.castShadow = true;
         m.receiveShadow = true;

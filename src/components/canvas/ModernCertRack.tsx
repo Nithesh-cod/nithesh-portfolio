@@ -1,23 +1,21 @@
 'use client';
 
-import { Html, Text, useTexture } from '@react-three/drei';
+import { Html } from '@react-three/drei';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import gsap from 'gsap';
 import { ArrowRight } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import {
   AdditiveBlending,
-  SRGBColorSpace,
   type Group,
   type Mesh,
   type MeshBasicMaterial,
   type MeshStandardMaterial,
-  type Texture,
 } from 'three';
 import { certificateGroups, type Certificate } from '@/lib/content';
 import { palette } from '@/lib/palette';
 import { usePortfolioStore } from '@/lib/store';
-import { disableRaycast, noRaycast } from '@/lib/three-utils';
+import { noRaycast } from '@/lib/three-utils';
 import { play } from '@/lib/audio';
 
 /* V12.0 — cert rack now displays ALL 12 certificates in a 4×3 grid
@@ -229,13 +227,6 @@ function CertDisplay({
   const lightboxCertId = usePortfolioStore((s) => s.lightboxCertId);
   const setCursor = usePortfolioStore((s) => s.setCursorState);
 
-  const tex = useTexture(cert.image, (loaded) => {
-    if (!Array.isArray(loaded)) {
-      loaded.colorSpace = SRGBColorSpace;
-      loaded.anisotropy = 4;
-    }
-  }) as Texture;
-
   useEffect(() => {
     if (lightboxCertId !== cert.id && openProgress.current.value > 0.001) {
       gsap.killTweensOf(openProgress.current);
@@ -325,7 +316,15 @@ function CertDisplay({
         onClick={handleClick}
       >
         <planeGeometry args={[CERT_W - 0.08, CERT_H - 0.07]} />
-        <meshBasicMaterial map={tex} transparent toneMapped={false} />
+        {/* V12.10 — empty frame look: dark inner pane (no cert PNG).
+            Still clickable; opens AllCertsModal via the existing button. */}
+        <meshStandardMaterial
+          color="#0A1014"
+          metalness={0.30}
+          roughness={0.55}
+          emissive={palette.neonGreen}
+          emissiveIntensity={0.12}
+        />
       </mesh>
     </group>
   );
@@ -443,8 +442,3 @@ function SweepScanline() {
   );
 }
 
-/* ────────────────────── DREI text Text isn't used; pruned ──────────
- * Kept the Text import to satisfy other earlier modules; not used
- * inside this module any more. */
-void Text;
-void disableRaycast;

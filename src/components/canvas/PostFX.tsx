@@ -30,8 +30,8 @@ export function PostFX({ sunRef }: { sunRef?: React.MutableRefObject<Mesh | null
   const effects: ReactElement[] = [
     <Bloom
       key="bloom"
-      intensity={0.45}
-      luminanceThreshold={0.75}
+      intensity={0.25}
+      luminanceThreshold={0.85}
       luminanceSmoothing={0.40}
       mipmapBlur
       kernelSize={KernelSize.MEDIUM}
