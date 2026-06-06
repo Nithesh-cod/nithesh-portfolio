@@ -825,6 +825,196 @@ html.lenis-stopped {
   box-shadow: 0 0 16px rgba(46, 255, 176, 0.45);
 }
 
+/* V13.0 — ContactModal + ProjectsGalleryModal extensions to .detail-modal. */
+.contact-modal {
+  max-width: 540px;
+}
+.contact-intro {
+  color: var(--v11-text-soft);
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 14px 0 22px;
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.form-group label {
+  font-family: 'Orbitron', 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--v11-primary);
+}
+.form-group input,
+.form-group textarea {
+  background: rgba(6, 16, 22, 0.62);
+  border: 1px solid rgba(46, 255, 176, 0.30);
+  color: var(--v11-text-prim);
+  padding: 10px 14px;
+  font-family: 'Inter', ui-sans-serif, sans-serif;
+  font-size: 13px;
+  border-radius: 4px;
+  outline: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: rgba(168, 200, 176, 0.45);
+}
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: var(--v11-primary);
+  box-shadow: 0 0 14px rgba(46, 255, 176, 0.25);
+}
+.form-group textarea {
+  resize: vertical;
+  min-height: 110px;
+  font-family: 'Inter', ui-sans-serif, sans-serif;
+}
+
+.status-msg {
+  padding: 10px 14px;
+  border-radius: 4px;
+  font-size: 12px;
+  text-align: center;
+  letter-spacing: 0.05em;
+}
+.status-msg.success {
+  background: rgba(46, 255, 176, 0.15);
+  border: 1px solid var(--v11-primary);
+  color: var(--v11-primary);
+}
+.status-msg.error {
+  background: rgba(255, 100, 100, 0.15);
+  border: 1px solid #FF6464;
+  color: #FF6464;
+}
+
+.submit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, rgba(46, 255, 176, 0.25), rgba(46, 255, 176, 0.10));
+  border: 1.5px solid var(--v11-primary);
+  color: var(--v11-primary);
+  padding: 12px 18px;
+  font-family: 'Orbitron', 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+  margin-top: 6px;
+}
+.submit-btn:hover {
+  background: linear-gradient(135deg, rgba(46, 255, 176, 0.40), rgba(46, 255, 176, 0.20));
+  box-shadow: 0 0 22px rgba(46, 255, 176, 0.40);
+}
+.submit-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.contact-alt {
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(46, 255, 176, 0.18);
+  text-align: center;
+}
+.contact-alt p {
+  color: var(--v11-text-dim);
+  font-size: 11px;
+  letter-spacing: 0.10em;
+  margin-bottom: 10px;
+}
+.contact-links {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.contact-links a {
+  color: var(--v11-primary);
+  text-decoration: none;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: opacity 0.18s ease;
+}
+.contact-links a:hover {
+  opacity: 0.75;
+}
+
+/* Projects gallery grid. */
+.projects-gallery-modal {
+  width: min(96vw, 1000px);
+}
+.projects-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+  margin-top: 22px;
+}
+.projects-gallery-card {
+  background: rgba(6, 16, 22, 0.45);
+  border: 1px solid rgba(46, 255, 176, 0.30);
+  border-radius: 6px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+}
+.projects-gallery-name {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--v11-green-soft);
+  margin: 0 0 4px;
+  text-transform: uppercase;
+}
+.projects-gallery-caption {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--v11-text-soft);
+  margin: 0 0 12px;
+  text-transform: uppercase;
+}
+.projects-gallery-body {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--v11-text-soft);
+  margin: 0 0 14px;
+}
+.projects-gallery-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.projects-gallery-cta {
+  margin-top: auto;
+  align-self: flex-start;
+}
+
 /* V11.2 — cert rack chrome (used by ModernCertRack <Html>). */
 .cert-rack-title {
   color: var(--v11-green-soft);

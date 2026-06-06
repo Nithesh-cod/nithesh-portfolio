@@ -114,7 +114,7 @@ function AboutMePanel() {
 }
 
 function AchievementsPanel() {
-  const openFirstProject = useOpenFirstProject();
+  const openGallery = useOpenProjectsGallery();
   return (
     <Html
       transform
@@ -132,7 +132,7 @@ function AchievementsPanel() {
           <li>OPEN SOURCE CONTRIBUTOR</li>
           <li>1K+ HOURS OF SYSTEM DESIGN</li>
         </ul>
-        <CtaButton label="VIEW ALL WORK" onClick={openFirstProject} />
+        <CtaButton label="VIEW ALL WORK" onClick={openGallery} />
       </div>
     </Html>
   );
@@ -141,6 +141,7 @@ function AchievementsPanel() {
 /* ─────────────────────────── FRONT-RIGHT FLOATING ─────────────────── */
 
 function PhilosophyPanel() {
+  const openContact = useOpenContact();
   return (
     <Html
       transform
@@ -168,7 +169,7 @@ function PhilosophyPanel() {
         >
           ~Nithesh
         </div>
-        <CtaButton label="LET'S CONNECT" onClick={openMailto} />
+        <CtaButton label="LET'S CONNECT" onClick={openContact} />
       </div>
     </Html>
   );
@@ -297,22 +298,18 @@ function CtaButton({ label, onClick }: { label: string; onClick?: () => void }) 
   );
 }
 
-/** Shared helper — returns a stable callback that opens the
- *  CategoryDetailModal for a starting category. */
+/** Opens the CategoryDetailModal starting at 'frontend'. */
 function useOpenSkillsModal() {
   const open = usePortfolioStore((s) => s.openSkillCategory);
   return () => open('frontend');
 }
-/** Opens the first project so the user lands in the project modal. */
-function useOpenFirstProject() {
-  const openProject = usePortfolioStore((s) => s.openProject);
-  return () => openProject('cropai');
+/** V13.0 — opens the new ProjectsGalleryModal (all 3 projects). */
+function useOpenProjectsGallery() {
+  return usePortfolioStore((s) => s.openProjectsGallery);
 }
-/** Mailto fallback for contact / let's connect. */
-function openMailto() {
-  if (typeof window !== 'undefined') {
-    window.location.href = 'mailto:nithesh.r.ciet@gmail.com?subject=Hello%20Nithesh';
-  }
+/** V13.0 — opens the new ContactModal (EmailJS form). */
+function useOpenContact() {
+  return usePortfolioStore((s) => s.openContact);
 }
 
 /* ─────────────────────────── EXPORT MOUNT ─────────────────────────── */

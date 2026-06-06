@@ -62,6 +62,16 @@ type PortfolioStore = {
   openAllCerts: () => void;
   closeAllCerts: () => void;
 
+  /** V13.0 — Contact form modal (EmailJS-backed). */
+  contactOpen: boolean;
+  openContact: () => void;
+  closeContact: () => void;
+
+  /** V13.0 — Projects gallery modal (all 3 projects). */
+  projectsGalleryOpen: boolean;
+  openProjectsGallery: () => void;
+  closeProjectsGallery: () => void;
+
   /** V8.0 — cursor-driven camera focus. CameraRig listens to focusTarget
    *  changes and tweens OrbitControls toward the requested pose. */
   focusTarget: FocusTarget | null;
@@ -120,6 +130,14 @@ export const usePortfolioStore = create<PortfolioStore>((set) => ({
   allCertsOpen: false,
   openAllCerts: () => set({ allCertsOpen: true }),
   closeAllCerts: () => set({ allCertsOpen: false }),
+
+  contactOpen: false,
+  openContact: () => set({ contactOpen: true }),
+  closeContact: () => set({ contactOpen: false }),
+
+  projectsGalleryOpen: false,
+  openProjectsGallery: () => set({ projectsGalleryOpen: true }),
+  closeProjectsGallery: () => set({ projectsGalleryOpen: false }),
 
   focusTarget: null,
   focusOn: (position, lookAt) =>
