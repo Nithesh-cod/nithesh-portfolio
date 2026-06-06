@@ -34,7 +34,7 @@ const FPS_DOWNGRADE_HOLD_MS = 3000;
 const PROJECTS = [
   // V12.9 — clean foreground arc, all pedestals well clear of avatar at origin.
   { slug: 'cropai',        label: 'CropAI',        subtitle: 'AI CROP ADVISOR SYSTEM',                  position: [-4.0, 0, 4.0], yaw:  0.35, iconKind: 'leaf',  phase: 0,    scale: 1.0 },
-  { slug: 'smart-canteen', label: 'Smart Canteen', subtitle: 'AI · AUTOMATION · IoT',                   position: [ 0.0, 0, 6.0], yaw:  0.00, iconKind: 'box',   phase: 1.4,  scale: 1.10 },
+  { slug: 'smart-canteen', label: 'Smart Canteen', subtitle: 'AI · AUTOMATION · IoT',                   position: [ 0.0, 0, 6.5], yaw:  0.00, iconKind: 'box',   phase: 1.4,  scale: 1.10 },
   { slug: 'testai',        label: 'TestAI',        subtitle: 'AI EXAM PROCTORING SYSTEM',               position: [ 4.0, 0, 4.0], yaw: -0.35, iconKind: 'globe', phase: 2.8,  scale: 1.0 },
 ] as const;
 

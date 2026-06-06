@@ -191,26 +191,26 @@ html.lenis-stopped {
   --v11-text-dim:     #6B8278;
   --v11-icon-bg:      rgba(20, 50, 40, 0.45);
   --v11-button-bg:    rgba(46, 255, 176, 0.15);
-  --v11-dark-glass:   rgba(8, 18, 26, 0.55);
-  --v11-glass-border-soft: rgba(46, 255, 176, 0.35);
+  --v11-dark-glass:   rgba(8, 18, 14, 0.78); /* V12.11 — more solid */
+  --v11-glass-border-soft: rgba(46, 255, 176, 0.50);
 }
 
 /* Shared card chrome — every HUD panel uses these classes. */
 .v11-card {
   width: 280px;
   background: var(--v11-dark-glass);
-  backdrop-filter: blur(24px) saturate(135%);
-  -webkit-backdrop-filter: blur(24px) saturate(135%);
-  border: 1px solid var(--v11-glass-border-soft);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  border: 1.5px solid var(--v11-glass-border-soft);
   border-radius: 4px;
   padding: 16px;
   font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   color: var(--v11-text-prim);
   position: relative;
-  /* V11.2 — softer outer halo + deeper drop-shadow for depth. */
+  /* V12.11 — more readable halo + deeper drop-shadow. */
   box-shadow:
-    0 0 24px rgba(46, 255, 176, 0.08),
-    inset 0 0 40px rgba(46, 255, 176, 0.03),
+    0 0 32px rgba(46, 255, 176, 0.15),
+    inset 0 0 40px rgba(46, 255, 176, 0.05),
     0 30px 60px rgba(0, 0, 0, 0.50);
   pointer-events: auto;
   user-select: none;

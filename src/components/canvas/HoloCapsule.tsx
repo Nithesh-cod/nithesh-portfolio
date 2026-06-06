@@ -48,7 +48,21 @@ export const HoloCapsule = forwardRef<Mesh>(function HoloCapsule(_p, sunRef) {
   return (
     <group position={[0, 0, 0]}>
       {/* GLB avatar — includes its own pedestal. Nothing surrounds it. */}
-      <PortraitBust3D position={[0, 0, 0]} targetHeight={3.0} />
+      <PortraitBust3D position={[0, 0, 0]} targetHeight={3.3} />
+
+      {/* V12.11 — subtle emerald under-glow disc beneath avatar. Signals
+          "this is the focus" without surrounding the model. */}
+      <mesh position={[0, 0.012, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.5, 1.8, 64]} />
+        <meshStandardMaterial
+          color="#2EFFB0"
+          emissive="#2EFFB0"
+          emissiveIntensity={0.8}
+          transparent
+          opacity={0.40}
+          toneMapped={false}
+        />
+      </mesh>
 
       {/* Name plaque on the GLB pedestal's front face. */}
       <Html
@@ -76,7 +90,10 @@ export const HoloCapsule = forwardRef<Mesh>(function HoloCapsule(_p, sunRef) {
         castShadow
       />
       <pointLight position={[-2.0, 1.0, 2.5]} intensity={0.6} color="#88FFCC" distance={6} decay={2} />
-      <pointLight position={[ 0.0, 2.5, -3.0]} intensity={0.8} color="#2EFFB0" distance={5} decay={2} />
+      {/* V12.11 — back rim opacity reduced 0.8 → 0.3 per spec. */}
+      <pointLight position={[ 0.0, 2.5, -3.0]} intensity={0.3} color="#2EFFB0" distance={5} decay={2} />
+      {/* V12.11 — soft directional top light (replaces deleted front spot). */}
+      <directionalLight position={[0, 6, 0]} intensity={0.4} color="#DDEEDD" />
 
       {/* HOVER PROXY — invisible cylinder for cursor + audio feedback. */}
       <mesh

@@ -30,7 +30,7 @@ type Props = {
 
 export function PortraitBust3D({
   position = [0, 0, 0],
-  targetHeight = 3.0,
+  targetHeight = 3.3,
 }: Props) {
   const gltf = useGLTF('/portait.glb');
   const scene = gltf.scene;

@@ -14,7 +14,7 @@ import { disableRaycast, noRaycast } from '@/lib/three-utils';
  *   Building Future.
  */
 
-const TITLE_Y = 4.0; // V12.9 — closer to avatar; fits cleanly between head + ceiling.
+const TITLE_Y = 3.0; // V12.11 — sits above avatar head, doesn't overlap back wall.
 
 export function TopCenterTitle() {
   // Bracketed badge "tick" pulse + faint vertical drift for life.
@@ -33,11 +33,11 @@ export function TopCenterTitle() {
   return (
     <Billboard position={[0, TITLE_Y, 0]} follow lockX={false} lockY={false} lockZ={false}>
       {/* Badge — [ WELCOME TO MY WORLD ]. */}
-      <group position={[0, 0.40, 0]}>
+      <group position={[0, 0.30, 0]}>
         <Text
           raycast={noRaycast}
           ref={disableRaycast}
-          fontSize={0.08}
+          fontSize={0.06}
           color={palette.neonBright}
           anchorX="center"
           anchorY="middle"
@@ -50,11 +50,11 @@ export function TopCenterTitle() {
       </group>
 
       {/* Big title — DIGITAL IDENTITY ENGINE. */}
-      <group position={[0, 0.14, 0]}>
+      <group position={[0, 0.12, 0]}>
         <Text
           raycast={noRaycast}
           ref={disableRaycast}
-          fontSize={0.22}
+          fontSize={0.20}
           color={palette.neonGreen}
           anchorX="center"
           anchorY="middle"
@@ -88,11 +88,11 @@ export function TopCenterTitle() {
       </group>
 
       {/* Subtitle — Crafting Experiences. Building Future. */}
-      <group position={[0, -0.10, 0]}>
+      <group position={[0, -0.08, 0]}>
         <Text
           raycast={noRaycast}
           ref={disableRaycast}
-          fontSize={0.06}
+          fontSize={0.05}
           color={palette.textSecondary}
           anchorX="center"
           anchorY="middle"

@@ -14,7 +14,7 @@ import { usePortfolioStore } from '@/lib/store';
  * which read as buttons rather than reference-style floor plaques. */
 
 const TILT = -Math.PI / 2 + 0.20; // ~80° from horizontal, slight lean back
-const ROW_Z = 6.5;
+const ROW_Z = 8.0; // V12.11 — moved forward, clear of project pedestals at z=4-6
 const ROW_Y = 0.10;
 
 const SERVICES: ReadonlyArray<{
@@ -30,8 +30,8 @@ const SERVICES: ReadonlyArray<{
   { title: 'UI / UX DESIGN',   sub: 'CRAFTED EXPERIENCES',  icon: 'palette' },
 ];
 
-const X_BASE = -4.5;
-const X_STEP = 1.8;
+const X_BASE = -5.0;
+const X_STEP = 2.0;
 
 export function ServicesPlaques() {
   return (

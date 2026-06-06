@@ -27,16 +27,16 @@ import { play } from '@/lib/audio';
 const RACK_POS: [number, number, number] = [6.5, 1.5, 4.5];
 const RACK_ROT: [number, number, number] = [0, -Math.PI / 4, 0];
 
-// V12.9 — 3 cols × 4 rows = all 12 certs in one tall grid.
-const ROWS = 4;
-const COLS = 3;
+// V12.11 — 4 cols × 3 rows (wider grid, shorter rack).
+const ROWS = 3;
+const COLS = 4;
 
-const FRAME_W = 2.4;
-const FRAME_H = 3.4;
-const CERT_W = 0.72;
-const CERT_H = 0.74;
-const CERT_GAP_X = 0.06;
-const CERT_GAP_Y = 0.06;
+const FRAME_W = 2.8;
+const FRAME_H = 2.6;
+const CERT_W = 0.55;
+const CERT_H = 0.62;
+const CERT_GAP_X = 0.07;
+const CERT_GAP_Y = 0.07;
 const CERT_PITCH_X = CERT_W + CERT_GAP_X;
 const CERT_PITCH_Y = CERT_H + CERT_GAP_Y;
 
@@ -139,9 +139,8 @@ function RackFrame() {
         </mesh>
       ))}
 
-      {/* HORIZONTAL CROSS-STRUTS — 3 struts between the 4 cert rows. */}
-      {[0.4, -0.4, -1.2].map((rowY, i) => {
-        const y = rowY * (CERT_PITCH_Y / 0.8); // spaced by row pitch
+      {/* HORIZONTAL CROSS-STRUTS — 2 struts between the 3 cert rows. */}
+      {[CERT_PITCH_Y / 2, -CERT_PITCH_Y / 2].map((y, i) => {
         return (
           <mesh key={i} raycast={noRaycast} position={[0, y, -0.05]}>
             <boxGeometry args={[FRAME_W, 0.028, 0.028]} />

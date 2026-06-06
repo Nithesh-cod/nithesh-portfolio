@@ -29,6 +29,7 @@ const HTML_DISTANCE_FACTOR = 2.4; // shrinks the DOM so it reads as in-scene
 /* ─────────────────────────── LEFT-WALL STACK ──────────────────────── */
 
 function CoreExpertisePanel() {
+  const openSkills = useOpenSkillsModal();
   return (
     <Html
       transform
@@ -45,7 +46,7 @@ function CoreExpertisePanel() {
         <ExpertiseRow icon={<Database size={16} />} title="DATABASE" sub="MongoDB, PostgreSQL" />
         <ExpertiseRow icon={<Cloud size={16} />} title="CLOUD & DEVOPS" sub="AWS, Docker, Kubernetes" />
         <ExpertiseRow icon={<BrainCircuit size={16} />} title="AI & AUTOMATION" sub="OpenAI, LangChain, n8n" accent="warm" />
-        <CtaButton label="VIEW FULL STACK" />
+        <CtaButton label="VIEW FULL STACK" onClick={openSkills} />
       </div>
     </Html>
   );
@@ -113,6 +114,7 @@ function AboutMePanel() {
 }
 
 function AchievementsPanel() {
+  const openFirstProject = useOpenFirstProject();
   return (
     <Html
       transform
@@ -130,7 +132,7 @@ function AchievementsPanel() {
           <li>OPEN SOURCE CONTRIBUTOR</li>
           <li>1K+ HOURS OF SYSTEM DESIGN</li>
         </ul>
-        <CtaButton label="VIEW ALL WORK" />
+        <CtaButton label="VIEW ALL WORK" onClick={openFirstProject} />
       </div>
     </Html>
   );
@@ -166,7 +168,7 @@ function PhilosophyPanel() {
         >
           ~Nithesh
         </div>
-        <CtaButton label="LET'S CONNECT" />
+        <CtaButton label="LET'S CONNECT" onClick={openMailto} />
       </div>
     </Html>
   );
@@ -175,6 +177,7 @@ function PhilosophyPanel() {
 /* ─────────────────────────── RIGHT-WALL STACK ─────────────────────── */
 
 function TechStackPanel() {
+  const openSkills = useOpenSkillsModal();
   const bars = [
     { label: 'JAVASCRIPT / TYPESCRIPT', value: 95 },
     { label: 'REACT / NEXT.JS', value: 90 },
@@ -196,7 +199,7 @@ function TechStackPanel() {
         {bars.map((b, i) => (
           <TechBar key={b.label} {...b} delay={0.15 + i * 0.10} />
         ))}
-        <CtaButton label="VIEW ALL SKILLS" />
+        <CtaButton label="VIEW ALL SKILLS" onClick={openSkills} />
       </div>
     </Html>
   );
@@ -270,7 +273,7 @@ function CircleGauge({ pct, value, label }: { pct: number; value: string; label:
 
 /* ─────────────────────────── SHARED CTA BUTTON ────────────────────── */
 
-function CtaButton({ label }: { label: string }) {
+function CtaButton({ label, onClick }: { label: string; onClick?: () => void }) {
   const [hovered, setHovered] = useState(false);
   return (
     <button
@@ -282,13 +285,34 @@ function CtaButton({ label }: { label: string }) {
       onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => {
         e.stopPropagation();
+        // eslint-disable-next-line no-console
+        console.log('[BTN]', label);
         play('click_primary');
+        onClick?.();
       }}
     >
       {label}
       <ArrowRight size={12} />
     </button>
   );
+}
+
+/** Shared helper — returns a stable callback that opens the
+ *  CategoryDetailModal for a starting category. */
+function useOpenSkillsModal() {
+  const open = usePortfolioStore((s) => s.openSkillCategory);
+  return () => open('frontend');
+}
+/** Opens the first project so the user lands in the project modal. */
+function useOpenFirstProject() {
+  const openProject = usePortfolioStore((s) => s.openProject);
+  return () => openProject('cropai');
+}
+/** Mailto fallback for contact / let's connect. */
+function openMailto() {
+  if (typeof window !== 'undefined') {
+    window.location.href = 'mailto:nithesh.r.ciet@gmail.com?subject=Hello%20Nithesh';
+  }
 }
 
 /* ─────────────────────────── EXPORT MOUNT ─────────────────────────── */
