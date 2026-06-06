@@ -72,6 +72,12 @@ type PortfolioStore = {
   openProjectsGallery: () => void;
   closeProjectsGallery: () => void;
 
+  /** V13.1 — Full Stack modal (5 expertise areas). Distinct from
+   *  CategoryDetailModal (driven by VIEW ALL SKILLS). */
+  fullStackOpen: boolean;
+  openFullStack: () => void;
+  closeFullStack: () => void;
+
   /** V8.0 — cursor-driven camera focus. CameraRig listens to focusTarget
    *  changes and tweens OrbitControls toward the requested pose. */
   focusTarget: FocusTarget | null;
@@ -138,6 +144,10 @@ export const usePortfolioStore = create<PortfolioStore>((set) => ({
   projectsGalleryOpen: false,
   openProjectsGallery: () => set({ projectsGalleryOpen: true }),
   closeProjectsGallery: () => set({ projectsGalleryOpen: false }),
+
+  fullStackOpen: false,
+  openFullStack: () => set({ fullStackOpen: true }),
+  closeFullStack: () => set({ fullStackOpen: false }),
 
   focusTarget: null,
   focusOn: (position, lookAt) =>

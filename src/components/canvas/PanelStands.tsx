@@ -27,7 +27,9 @@ const STANDS: StandSpec[] = [
   // Achievements panel y=0.5 touches the floor — no stand needed.
   { x: -3.5, z: 1.0, topY: 2.4 - 0.55 }, // About Me
   { x:  3.5, z: 1.0, topY: 2.4 - 0.55 }, // Philosophy
-  { x:  5.5, z: 1.0, topY: 0.8 - 0.55 }, // System Overview (V12.9 z=1.0)
+  // V13.1 — Tech Stack panel @ [5.5, 2.5, 1.0] gets its own tall stand.
+  { x:  5.5, z: 1.0, topY: 2.5 - 0.55 }, // Tech Stack
+  { x:  5.5, z: 1.0, topY: 0.8 - 0.55 }, // System Overview (column-brace)
 ];
 
 export function PanelStands() {

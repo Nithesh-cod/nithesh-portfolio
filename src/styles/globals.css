@@ -1015,6 +1015,46 @@ html.lenis-stopped {
   align-self: flex-start;
 }
 
+/* V13.1 — FullStackModal grid. */
+.full-stack-modal {
+  width: min(96vw, 900px);
+}
+.full-stack-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+.full-stack-card {
+  background: rgba(6, 16, 22, 0.42);
+  border: 1px solid rgba(46, 255, 176, 0.28);
+  border-radius: 6px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.full-stack-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.full-stack-card-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--v11-green-soft);
+  margin: 0;
+  text-transform: uppercase;
+}
+.full-stack-card-blurb {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--v11-text-soft);
+  margin: 0;
+}
+
 /* V11.2 — cert rack chrome (used by ModernCertRack <Html>). */
 .cert-rack-title {
   color: var(--v11-green-soft);

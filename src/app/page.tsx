@@ -11,6 +11,7 @@ import { CategoryDetailModal } from '@/components/ui/CategoryDetailModal';
 import { AllCertsModal } from '@/components/ui/AllCertsModal';
 import { ContactModal } from '@/components/ui/ContactModal';
 import { ProjectsGalleryModal } from '@/components/ui/ProjectsGalleryModal';
+import { FullStackModal } from '@/components/ui/FullStackModal';
 import { TopBar } from '@/components/hud/Dashboard';
 import { CursorTrackerMount } from '@/components/hud/CursorTrackerMount';
 import { BottomTicker } from '@/components/ui/BottomTicker';
@@ -45,6 +46,7 @@ export default function Page() {
       <AllCertsModal />
       <ContactModal />
       <ProjectsGalleryModal />
+      <FullStackModal />
       <AudioController />
       <Terminal />
       <Intro />

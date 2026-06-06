@@ -29,7 +29,7 @@ const HTML_DISTANCE_FACTOR = 2.4; // shrinks the DOM so it reads as in-scene
 /* ─────────────────────────── LEFT-WALL STACK ──────────────────────── */
 
 function CoreExpertisePanel() {
-  const openSkills = useOpenSkillsModal();
+  const openFullStack = useOpenFullStack();
   return (
     <Html
       transform
@@ -46,7 +46,7 @@ function CoreExpertisePanel() {
         <ExpertiseRow icon={<Database size={16} />} title="DATABASE" sub="MongoDB, PostgreSQL" />
         <ExpertiseRow icon={<Cloud size={16} />} title="CLOUD & DEVOPS" sub="AWS, Docker, Kubernetes" />
         <ExpertiseRow icon={<BrainCircuit size={16} />} title="AI & AUTOMATION" sub="OpenAI, LangChain, n8n" accent="warm" />
-        <CtaButton label="VIEW FULL STACK" onClick={openSkills} />
+        <CtaButton label="VIEW FULL STACK" onClick={openFullStack} />
       </div>
     </Html>
   );
@@ -298,7 +298,8 @@ function CtaButton({ label, onClick }: { label: string; onClick?: () => void }) 
   );
 }
 
-/** Opens the CategoryDetailModal starting at 'frontend'. */
+/** Opens the CategoryDetailModal starting at 'frontend'.
+ *  Used by VIEW ALL SKILLS in the Tech Stack panel. */
 function useOpenSkillsModal() {
   const open = usePortfolioStore((s) => s.openSkillCategory);
   return () => open('frontend');
@@ -310,6 +311,11 @@ function useOpenProjectsGallery() {
 /** V13.0 — opens the new ContactModal (EmailJS form). */
 function useOpenContact() {
   return usePortfolioStore((s) => s.openContact);
+}
+/** V13.1 — opens the new FullStackModal (5 expertise areas). Distinct
+ *  from useOpenSkillsModal — different content + visual. */
+function useOpenFullStack() {
+  return usePortfolioStore((s) => s.openFullStack);
 }
 
 /* ─────────────────────────── EXPORT MOUNT ─────────────────────────── */
