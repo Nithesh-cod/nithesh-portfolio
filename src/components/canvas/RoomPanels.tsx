@@ -1,337 +1,381 @@
 'use client';
 
 import { Html } from '@react-three/drei';
-import { useState } from 'react';
 import {
+  ArrowDown,
   ArrowRight,
+  BarChart3,
+  Bot,
   BrainCircuit,
-  Cloud,
+  Braces,
+  Briefcase,
+  ChevronRight,
+  CircleCheck,
+  Code2,
+  Cpu,
   Database,
-  Download,
+  FileDown,
+  FolderGit2,
+  Globe2,
   Layout,
-  Sparkles as SparklesIcon,
+  Lightbulb,
+  Mail,
+  MessageSquareCode,
+  ShieldCheck,
+  Smartphone,
+  Sparkles,
   TerminalSquare,
-  TrendingUp,
+  Trophy,
+  User,
   Users,
 } from 'lucide-react';
-import { usePortfolioStore } from '@/lib/store';
+import type { ReactNode } from 'react';
+import { GitHubIcon, LinkedInIcon } from '@/components/ui/BrandIcons';
+import { ProjectIcon } from '@/components/ui/ProjectIcons';
 import { play } from '@/lib/audio';
-import { PanelHeader } from '@/components/canvas/PanelHeader';
+import {
+  aboutShort,
+  certTiles,
+  content,
+  expertiseAreas,
+  expertiseToSkillTab,
+  journey,
+  panelProjectIds,
+  projectById,
+  stats,
+  type CertTileIcon,
+} from '@/lib/content';
+import { usePortfolioStore } from '@/lib/store';
 
-/* ──────────────────────────────────────────────────────────────────── *
- * V11.1 — every wall + floating HUD panel is now a styled DOM card    *
- * mounted via drei <Html transform>. CSS lives in globals.css under   *
- * the v11-* classes. Positions mirror the reference image.            *
- * ──────────────────────────────────────────────────────────────────── */
+/* In-room HUD cards for the oval hall. Each is a DOM card mounted with
+ * drei <Html transform>, placed along the oval and yawed toward the avatar.
+ * DF sets world size: 1 CSS px = DF / 400 world units. */
 
-const HTML_DISTANCE_FACTOR = 2.4; // shrinks the DOM so it reads as in-scene
+const DF = 3.3;
 
-/* ─────────────────────────── LEFT-WALL STACK ──────────────────────── */
+type Placement = { pos: [number, number, number]; yaw: number };
 
-function CoreExpertisePanel() {
-  const openFullStack = useOpenFullStack();
-  return (
-    <Html
-      transform
-      occlude={false}
-      position={[-5.5, 3.0, 0.5]}
-      rotation={[0, 0.35, 0]}
-      distanceFactor={HTML_DISTANCE_FACTOR}
-      style={{ pointerEvents: 'auto' }}
-    >
-      <div className="v11-card" style={{ width: 270 }}>
-        <PanelHeader>CORE EXPERTISE</PanelHeader>
-        <ExpertiseRow icon={<Layout size={16} />} title="FRONTEND" sub="React, Next.js, TypeScript" />
-        <ExpertiseRow icon={<TerminalSquare size={16} />} title="BACKEND" sub="Node.js, Python, Express" />
-        <ExpertiseRow icon={<Database size={16} />} title="DATABASE" sub="MongoDB, PostgreSQL" />
-        <ExpertiseRow icon={<Cloud size={16} />} title="CLOUD & DEVOPS" sub="AWS, Docker, Kubernetes" />
-        <ExpertiseRow icon={<BrainCircuit size={16} />} title="AI & AUTOMATION" sub="OpenAI, LangChain, n8n" accent="warm" />
-        <CtaButton label="VIEW FULL STACK" onClick={openFullStack} />
-      </div>
-    </Html>
-  );
-}
+const LAYOUT = {
+  ideas:     { pos: [-9.4, 3.0, -1.0], yaw: 1.05 },
+  core:      { pos: [-6.8, 3.15, -0.9], yaw: 0.66 },
+  about:     { pos: [-3.2, 3.6, 0.9], yaw: 0.32 },
+  journey:   { pos: [-2.9, 1.35, 2.4], yaw: 0.3 },
+  links:     { pos: [3.2, 3.6, 0.9], yaw: -0.32 },
+  projects:  { pos: [6.8, 3.15, -0.9], yaw: -0.66 },
+  certs:     { pos: [9.6, 3.2, -0.6], yaw: -1.15 },
+  certified: { pos: [7.4, 0.85, 1.9], yaw: -0.75 },
+} as const satisfies Record<string, Placement>;
 
-function ExpertiseRow({
-  icon,
-  title,
-  sub,
-  accent,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  sub: string;
-  accent?: 'warm' | 'cool';
-}) {
-  const iconClass =
-    accent === 'warm' ? 'v11-row-icon v11-row-icon--warm' :
-    accent === 'cool' ? 'v11-row-icon v11-row-icon--cool' :
-    'v11-row-icon';
-  return (
-    <div className="v11-row">
-      <div className={iconClass}>{icon}</div>
-      <div className="v11-row-text">
-        <span className="v11-row-title">{title}</span>
-        <span className="v11-row-sub">{sub}</span>
-      </div>
-    </div>
-  );
-}
-
-/* ─────────────────────────── FRONT-LEFT FLOATING ──────────────────── */
-
-function AboutMePanel() {
-  const openResume = usePortfolioStore((s) => s.openResume);
-  return (
-    <Html
-      transform
-      occlude={false}
-      position={[-3.5, 2.4, 1.0]}
-      rotation={[0, 0.30, 0]}
-      distanceFactor={HTML_DISTANCE_FACTOR}
-      style={{ pointerEvents: 'auto' }}
-    >
-      <div className="v11-card" style={{ width: 230 }}>
-        <PanelHeader>ABOUT ME</PanelHeader>
-        <p className="v11-body">
-          I build intelligent and scalable digital solutions that solve real-world problems using modern technologies and creative thinking.
-        </p>
-        <button
-          type="button"
-          className="v11-button"
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={(e) => {
-            e.stopPropagation();
-            play('click_primary');
-            openResume();
-          }}
-        >
-          <Download size={12} /> DOWNLOAD RESUME
-        </button>
-      </div>
-    </Html>
-  );
-}
-
-function AchievementsPanel() {
-  const openGallery = useOpenProjectsGallery();
-  return (
-    <Html
-      transform
-      occlude={false}
-      position={[-3.5, 0.5, 1.0]}
-      rotation={[0, 0.30, 0]}
-      distanceFactor={HTML_DISTANCE_FACTOR}
-      style={{ pointerEvents: 'auto' }}
-    >
-      <div className="v11-card" style={{ width: 230 }}>
-        <PanelHeader>ACHIEVEMENTS</PanelHeader>
-        <ul className="v11-list">
-          <li>15+ SUCCESSFUL PROJECTS</li>
-          <li>5+ HACKATHON AWARDS</li>
-          <li>OPEN SOURCE CONTRIBUTOR</li>
-          <li>1K+ HOURS OF SYSTEM DESIGN</li>
-        </ul>
-        <CtaButton label="VIEW ALL WORK" onClick={openGallery} />
-      </div>
-    </Html>
-  );
-}
-
-/* ─────────────────────────── FRONT-RIGHT FLOATING ─────────────────── */
-
-function PhilosophyPanel() {
-  const openContact = useOpenContact();
-  return (
-    <Html
-      transform
-      occlude={false}
-      position={[3.5, 2.4, 1.0]}
-      rotation={[0, -0.30, 0]}
-      distanceFactor={HTML_DISTANCE_FACTOR}
-      style={{ pointerEvents: 'auto' }}
-    >
-      <div className="v11-card" style={{ width: 250 }}>
-        <PanelHeader>MY PHILOSOPHY</PanelHeader>
-        <ExpertiseRow icon={<SparklesIcon size={16} />} title="INNOVATE" sub="Think Different. Build Better." accent="warm" />
-        <ExpertiseRow icon={<Users size={16} />} title="COLLABORATE" sub="Great Teams Create Magic." accent="cool" />
-        <ExpertiseRow icon={<TrendingUp size={16} />} title="ELEVATE" sub="Continuous Learning Always." />
-        <div
-          style={{
-            fontFamily: '"Allura", "Brush Script MT", cursive',
-            fontSize: 22,
-            color: 'var(--v11-text-dim)',
-            textAlign: 'right',
-            margin: '8px 4px 0',
-            opacity: 0.8,
-            transform: 'rotate(-2deg)',
-          }}
-        >
-          ~Nithesh
-        </div>
-        <CtaButton label="LET'S CONNECT" onClick={openContact} />
-      </div>
-    </Html>
-  );
-}
-
-/* ─────────────────────────── RIGHT-WALL STACK ─────────────────────── */
-
-function TechStackPanel() {
-  const openSkills = useOpenSkillsModal();
-  const bars = [
-    { label: 'JAVASCRIPT / TYPESCRIPT', value: 95 },
-    { label: 'REACT / NEXT.JS', value: 90 },
-    { label: 'NODE.JS / PYTHON', value: 85 },
-    { label: 'CLOUD (AWS)', value: 80 },
-    { label: 'MONGODB / POSTGRESQL', value: 85 },
-  ];
-  return (
-    <Html
-      transform
-      occlude={false}
-      position={[5.5, 2.5, 1.0]}
-      rotation={[0, -0.40, 0]}
-      distanceFactor={HTML_DISTANCE_FACTOR}
-      style={{ pointerEvents: 'auto' }}
-    >
-      <div className="v11-card" style={{ width: 270 }}>
-        <PanelHeader>TECH STACK</PanelHeader>
-        {bars.map((b, i) => (
-          <TechBar key={b.label} {...b} delay={0.15 + i * 0.10} />
-        ))}
-        <CtaButton label="VIEW ALL SKILLS" onClick={openSkills} />
-      </div>
-    </Html>
-  );
-}
-
-function TechBar({ label, value, delay }: { label: string; value: number; delay: number }) {
-  return (
-    <div className="v11-bar">
-      <div className="v11-bar-head">
-        <span>{label}</span>
-        <span className="val">{value}%</span>
-      </div>
-      <div className="v11-bar-track">
-        <div
-          className="v11-bar-fill"
-          style={{ width: `${value}%`, animationDelay: `${delay}s` }}
-        />
-      </div>
-    </div>
-  );
-}
-
-function SystemOverviewPanel() {
-  return (
-    <Html
-      transform
-      occlude={false}
-      position={[5.5, 0.8, 1.0]}
-      rotation={[0, -0.40, 0]}
-      distanceFactor={HTML_DISTANCE_FACTOR}
-      style={{ pointerEvents: 'auto' }}
-    >
-      <div className="v11-card" style={{ width: 250 }}>
-        <PanelHeader>SYSTEM OVERVIEW</PanelHeader>
-        <div className="v11-gauges">
-          <CircleGauge pct={75} value="15+" label="PROJECTS" />
-          <CircleGauge pct={60} value="3+ YRS" label="EXPERIENCE" />
-          <CircleGauge pct={99} value="99.9%" label="UPTIME" />
-        </div>
-      </div>
-    </Html>
-  );
-}
-
-function CircleGauge({ pct, value, label }: { pct: number; value: string; label: string }) {
-  const r = 25;
-  const c = 2 * Math.PI * r;
-  const dash = (pct / 100) * c;
-  return (
-    <div className="v11-gauge">
-      <svg viewBox="0 0 60 60">
-        <circle cx="30" cy="30" r={r} stroke="rgba(0,255,157,0.15)" strokeWidth="3" fill="none" />
-        <circle
-          cx="30"
-          cy="30"
-          r={r}
-          stroke="#00FF9D"
-          strokeWidth="3"
-          fill="none"
-          strokeDasharray={`${dash} ${c}`}
-          strokeLinecap="round"
-          transform="rotate(-90 30 30)"
-          style={{ filter: 'drop-shadow(0 0 4px #00FF9D)' }}
-        />
-      </svg>
-      <span className="v11-gauge-val">{value}</span>
-      <span className="v11-gauge-lab">{label}</span>
-    </div>
-  );
-}
-
-/* ─────────────────────────── SHARED CTA BUTTON ────────────────────── */
-
-function CtaButton({ label, onClick }: { label: string; onClick?: () => void }) {
-  const [hovered, setHovered] = useState(false);
-  return (
-    <button
-      type="button"
-      className="v11-button"
-      style={{ opacity: hovered ? 1 : 0.92 }}
-      onPointerOver={() => setHovered(true)}
-      onPointerOut={() => setHovered(false)}
-      onPointerDown={(e) => e.stopPropagation()}
-      onClick={(e) => {
-        e.stopPropagation();
-        // eslint-disable-next-line no-console
-        console.log('[BTN]', label);
-        play('click_primary');
-        onClick?.();
-      }}
-    >
-      {label}
-      <ArrowRight size={12} />
-    </button>
-  );
-}
-
-/** Opens the CategoryDetailModal starting at 'frontend'.
- *  Used by VIEW ALL SKILLS in the Tech Stack panel. */
-function useOpenSkillsModal() {
-  const open = usePortfolioStore((s) => s.openSkillCategory);
-  return () => open('frontend');
-}
-/** V13.0 — opens the new ProjectsGalleryModal (all 3 projects). */
-function useOpenProjectsGallery() {
-  return usePortfolioStore((s) => s.openProjectsGallery);
-}
-/** V13.0 — opens the new ContactModal (EmailJS form). */
-function useOpenContact() {
-  return usePortfolioStore((s) => s.openContact);
-}
-/** V13.1 — opens the new FullStackModal (5 expertise areas). Distinct
- *  from useOpenSkillsModal — different content + visual. */
-function useOpenFullStack() {
-  return usePortfolioStore((s) => s.openFullStack);
-}
-
-/* ─────────────────────────── EXPORT MOUNT ─────────────────────────── */
+/** Floor rods under the free-standing cards (read by PanelStands). */
+export const PANEL_STANDS: readonly { x: number; z: number; topY: number }[] = [
+  { x: LAYOUT.links.pos[0], z: LAYOUT.links.pos[2], topY: 2.75 },
+  { x: LAYOUT.certified.pos[0], z: LAYOUT.certified.pos[2], topY: 0.35 },
+];
 
 export function RoomPanels() {
   return (
     <group>
-      {/* Left side. */}
-      <CoreExpertisePanel />
-      <AboutMePanel />
-      <AchievementsPanel />
-
-      {/* Right side. */}
-      <PhilosophyPanel />
-      <TechStackPanel />
-      <SystemOverviewPanel />
+      <IdeasPanel />
+      <CoreCompetenciesPanel />
+      <AboutPanel />
+      <JourneyPanel />
+      <QuickLinksPanel />
+      <ProjectsPanel />
+      <CertificationsPanel />
+      <CertifiedPanel />
     </group>
+  );
+}
+
+/* ─────────────────────────────── chrome ─────────────────────────────── */
+
+function Card({
+  at,
+  width,
+  title,
+  icon,
+  interactive = true,
+  children,
+}: {
+  at: Placement;
+  width: number;
+  title?: string;
+  icon?: ReactNode;
+  interactive?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <Html
+      transform
+      occlude={false}
+      position={at.pos}
+      rotation={[0, at.yaw, 0]}
+      distanceFactor={DF}
+      style={{ pointerEvents: interactive ? 'auto' : 'none' }}
+    >
+      <section className="hud-card" style={{ width }}>
+        {title && (
+          <header className="hud-card-head">
+            {icon}
+            <span>{title}</span>
+          </header>
+        )}
+        {children}
+      </section>
+    </Html>
+  );
+}
+
+/** Stops the canvas (OrbitControls) from treating a panel click as a drag. */
+const stop = (e: React.PointerEvent) => e.stopPropagation();
+
+function CardButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      className="hud-btn"
+      onPointerDown={stop}
+      onClick={(e) => {
+        e.stopPropagation();
+        play('click_primary');
+        onClick();
+      }}
+    >
+      {label}
+      <ArrowRight size={13} />
+    </button>
+  );
+}
+
+function Row({
+  icon,
+  title,
+  sub,
+  onClick,
+  href,
+  chevron,
+}: {
+  icon: ReactNode;
+  title: string;
+  sub: string;
+  onClick?: () => void;
+  href?: string;
+  chevron?: boolean;
+}) {
+  const body = (
+    <>
+      <span className="hud-icon">{icon}</span>
+      <span className="hud-row-text">
+        <span className="hud-row-title">{title}</span>
+        <span className="hud-row-sub">{sub}</span>
+      </span>
+      {chevron && <ChevronRight size={15} className="hud-chev" />}
+    </>
+  );
+  if (href) {
+    const external = href.startsWith('http');
+    return (
+      <a
+        className="hud-row"
+        href={href}
+        target={external ? '_blank' : undefined}
+        rel={external ? 'noopener noreferrer' : undefined}
+        onPointerDown={stop}
+        onClick={() => play('click_primary')}
+      >
+        {body}
+      </a>
+    );
+  }
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        className="hud-row"
+        onPointerDown={stop}
+        onClick={(e) => {
+          e.stopPropagation();
+          play('click_primary');
+          onClick();
+        }}
+      >
+        {body}
+      </button>
+    );
+  }
+  return <div className="hud-row">{body}</div>;
+}
+
+/* ─────────────────────────────── panels ─────────────────────────────── */
+
+function IdeasPanel() {
+  const steps = [
+    { icon: <Lightbulb size={18} />, label: 'IDEAS' },
+    { icon: <Code2 size={18} />, label: 'CODE' },
+    { icon: <Globe2 size={18} />, label: 'REAL WORLD' },
+  ];
+  return (
+    <Card at={LAYOUT.ideas} width={170} interactive={false}>
+      <div className="hud-flow">
+        {steps.map((s, i) => (
+          <div key={s.label} className="hud-flow-item">
+            {i > 0 && <ArrowDown size={16} className="hud-flow-arrow" />}
+            <div className="hud-flow-step">
+              <span className="hud-icon">{s.icon}</span>
+              <span>{s.label}</span>
+            </div>
+          </div>
+        ))}
+        <BarChart3 size={34} className="hud-flow-chart" />
+      </div>
+    </Card>
+  );
+}
+
+const EXPERTISE_ICONS = {
+  ai: <BrainCircuit size={17} />,
+  frontend: <Layout size={17} />,
+  backend: <TerminalSquare size={17} />,
+  data: <Database size={17} />,
+  mobile: <Smartphone size={17} />,
+} as const;
+
+function CoreCompetenciesPanel() {
+  const openSkill = usePortfolioStore((s) => s.openSkillCategory);
+  const openFullStack = usePortfolioStore((s) => s.openFullStack);
+  return (
+    <Card at={LAYOUT.core} width={310} title="Core Competencies" icon={<Cpu size={17} />}>
+      {expertiseAreas.map((a) => (
+        <Row
+          key={a.id}
+          icon={EXPERTISE_ICONS[a.id]}
+          title={a.title}
+          sub={a.short}
+          onClick={() => openSkill(expertiseToSkillTab[a.id])}
+        />
+      ))}
+      <CardButton label="Build › Deploy › Impact" onClick={openFullStack} />
+    </Card>
+  );
+}
+
+function AboutPanel() {
+  const openResume = usePortfolioStore((s) => s.openResume);
+  return (
+    <Card at={LAYOUT.about} width={270} title="About Me" icon={<User size={17} />}>
+      <p className="hud-body">{aboutShort}</p>
+      <CardButton label="Explore More" onClick={openResume} />
+    </Card>
+  );
+}
+
+function JourneyPanel() {
+  const openResume = usePortfolioStore((s) => s.openResume);
+  return (
+    <Card at={LAYOUT.journey} width={250} title="My Journey" icon={<Users size={17} />}>
+      <ul className="hud-check">
+        {journey.map((j) => (
+          <li key={j}>
+            <CircleCheck size={15} />
+            {j}
+          </li>
+        ))}
+      </ul>
+      <CardButton label="More" onClick={openResume} />
+    </Card>
+  );
+}
+
+function QuickLinksPanel() {
+  const openResume = usePortfolioStore((s) => s.openResume);
+  const openContact = usePortfolioStore((s) => s.openContact);
+  return (
+    <Card at={LAYOUT.links} width={250} title="Quick Links" icon={<ArrowRight size={17} />}>
+      <Row icon={<FileDown size={17} />} title="Resume" sub="View & download" onClick={openResume} />
+      {content.contact.github && (
+        <Row icon={<GitHubIcon size={16} />} title="GitHub" sub="Nithesh-cod" href={content.contact.github} />
+      )}
+      <Row icon={<LinkedInIcon size={16} />} title="LinkedIn" sub="Connect" href={content.contact.linkedin} />
+      <Row icon={<Mail size={17} />} title="Email" sub={content.contact.email} href={`mailto:${content.contact.email}`} />
+      <CardButton label="Let's Connect" onClick={openContact} />
+    </Card>
+  );
+}
+
+function ProjectsPanel() {
+  const openProject = usePortfolioStore((s) => s.openProject);
+  const openGallery = usePortfolioStore((s) => s.openProjectsGallery);
+  return (
+    <Card at={LAYOUT.projects} width={290} title="Projects" icon={<FolderGit2 size={17} />}>
+      {panelProjectIds.map((id) => {
+        const p = projectById(id);
+        if (!p) return null;
+        return (
+          <Row
+            key={id}
+            icon={<ProjectIcon id={id} />}
+            title={p.name}
+            sub={p.short}
+            onClick={() => openProject(id)}
+            chevron
+          />
+        );
+      })}
+      <CardButton label="View All Projects" onClick={openGallery} />
+    </Card>
+  );
+}
+
+const CERT_ICONS: Record<CertTileIcon, ReactNode> = {
+  sparkles: <Sparkles size={20} />,
+  message: <MessageSquareCode size={20} />,
+  bot: <Bot size={20} />,
+  cpu: <Cpu size={20} />,
+  code: <Code2 size={20} />,
+  braces: <Braces size={20} />,
+  python: <TerminalSquare size={20} />,
+  trophy: <Trophy size={20} />,
+  briefcase: <Briefcase size={20} />,
+};
+
+function CertificationsPanel() {
+  const openCertificate = usePortfolioStore((s) => s.openCertificate);
+  const openGallery = usePortfolioStore((s) => s.openProjectsGallery);
+  const openResume = usePortfolioStore((s) => s.openResume);
+  const openAllCerts = usePortfolioStore((s) => s.openAllCerts);
+  return (
+    <Card at={LAYOUT.certs} width={310} title="Certifications & Achievements" icon={<Trophy size={17} />}>
+      <div className="hud-tiles">
+        {certTiles.map((t) => (
+          <button
+            key={t.label}
+            type="button"
+            className="hud-tile"
+            onPointerDown={stop}
+            onClick={(e) => {
+              e.stopPropagation();
+              play('click_primary');
+              if (t.certId) openCertificate(t.certId);
+              else if (t.action === 'gallery') openGallery();
+              else openResume();
+            }}
+          >
+            {CERT_ICONS[t.icon]}
+            <span>{t.label}</span>
+          </button>
+        ))}
+      </div>
+      <CardButton label="See All" onClick={openAllCerts} />
+    </Card>
+  );
+}
+
+function CertifiedPanel() {
+  return (
+    <Card at={LAYOUT.certified} width={220} title="Certified" icon={<ShieldCheck size={17} />} interactive={false}>
+      <div className="hud-stat"><b>{stats.projects}</b><span>PROJECTS</span></div>
+      <div className="hud-stat"><b>{stats.certificates}</b><span>CERTIFICATIONS</span></div>
+      <div className="hud-stat"><b>{stats.liveApps}</b><span>LIVE APPS</span></div>
+    </Card>
   );
 }

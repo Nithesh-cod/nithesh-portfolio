@@ -10,6 +10,10 @@ import { usePortfolioStore } from '@/lib/store';
 
 const AUTO_ROTATE_IDLE_MS = 10000;
 const FOCUS_DURATION = 0.8;
+// The oval layout is framed for ~16:9; narrower windows start further back.
+const BASE_Z = 12;
+const BASE_ASPECT = 1.7;
+const MAX_FIT_Z = 17;
 
 /**
  * V10.0 — OrbitControls museum-tour rig. Drag to rotate, scroll to zoom.
@@ -18,7 +22,16 @@ const FOCUS_DURATION = 0.8;
  */
 export function CameraRig() {
   const controls = useRef<OrbitControlsImpl | null>(null);
-  const { camera } = useThree();
+  const { camera, size } = useThree();
+  const userMoved = useRef(false);
+
+  useEffect(() => {
+    if (userMoved.current || !controls.current) return;
+    const aspect = size.width / Math.max(1, size.height);
+    const z = Math.min(MAX_FIT_Z, BASE_Z * Math.max(1, BASE_ASPECT / aspect));
+    camera.position.set(0, 3.0, z);
+    controls.current.update();
+  }, [size.width, size.height, camera]);
 
   const focusTarget = usePortfolioStore((s) => s.focusTarget);
   const panRequest = usePortfolioStore((s) => s.panRequest);
@@ -130,7 +143,10 @@ export function CameraRig() {
       target={[0, 1.5, 0]}
       autoRotate
       autoRotateSpeed={0.15}
-      onStart={() => markInteract()}
+      onStart={() => {
+        userMoved.current = true;
+        markInteract();
+      }}
       onChange={() => markInteract()}
       // V12.2 — mobile gestures: 1-finger ROTATE (default look), 2-finger
       // PAN (move around the room), pinch ZOOM via DOLLY_PAN.

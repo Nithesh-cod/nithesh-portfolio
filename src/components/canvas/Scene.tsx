@@ -10,39 +10,53 @@ import {
   Sparkles,
   SpotLight,
 } from '@react-three/drei';
-import { useEffect, useRef, useState } from 'react';
-import type { Mesh, PointLight } from 'three';
+import { Suspense, useEffect, useState } from 'react';
+import type { PointLight } from 'three';
 import { Lab } from '@/components/canvas/Lab';
-import { HexFloor } from '@/components/canvas/HexFloor';
+import { ReflectiveFloor } from '@/components/canvas/ReflectiveFloor';
 import { HoloCapsule } from '@/components/canvas/HoloCapsule';
 import { ProjectStation } from '@/components/canvas/ProjectStation';
-import { ModernCertRack } from '@/components/canvas/ModernCertRack';
-import { WindowsWall } from '@/components/canvas/WindowsWall';
+import { OvalRoom, ovalPoint } from '@/components/canvas/OvalRoom';
 import { RoomPanels } from '@/components/canvas/RoomPanels';
 import { TopCenterTitle } from '@/components/canvas/TopCenterTitle';
 import { ServicesPlaques } from '@/components/canvas/ServicesPlaques';
 import { PanelStands } from '@/components/canvas/PanelStands';
 import { FloatingDataGlyphs } from '@/components/canvas/FloatingDataGlyphs';
 import { CameraRig } from '@/components/canvas/CameraRig';
+import { ScrollCameraRig } from '@/components/canvas/ScrollCameraRig';
+import { StopBillboard } from '@/components/canvas/StopBillboard';
 import { PostFX } from '@/components/canvas/PostFX';
 import { usePortfolioStore, type PerfMode } from '@/lib/store';
 import { useIsMobile } from '@/lib/use-is-mobile';
 import { palette } from '@/lib/palette';
+import { content, type Project } from '@/lib/content';
 
 const FPS_DOWNGRADE_HOLD_MS = 3000;
+const WALL_WASH_ANGLES = [-1.7, -0.9, 0.9, 1.7] as const;
 
 const PROJECTS = [
   // V12.9 — clean foreground arc, all pedestals well clear of avatar at origin.
-  { slug: 'cropai',        label: 'CropAI',        subtitle: 'AI CROP ADVISOR SYSTEM',                  position: [-4.0, 0, 4.0], yaw:  0.35, iconKind: 'leaf',  phase: 0,    scale: 1.0 },
-  { slug: 'smart-canteen', label: 'Smart Canteen', subtitle: 'AI · AUTOMATION · IoT',                   position: [ 0.0, 0, 6.5], yaw:  0.00, iconKind: 'box',   phase: 1.4,  scale: 1.10 },
-  { slug: 'testai',        label: 'TestAI',        subtitle: 'AI EXAM PROCTORING SYSTEM',               position: [ 4.0, 0, 4.0], yaw: -0.35, iconKind: 'globe', phase: 2.8,  scale: 1.0 },
+  { slug: 'cropai',        label: 'CropAI',        position: [-5.0, 0, 3.6], yaw:  0.45, iconKind: 'leaf',  phase: 0,    scale: 0.92, variant: 'hologram' },
+  { slug: 'smart-canteen', label: 'Smart Canteen', position: [ 0.0, 0, 4.5], yaw:  0.00, iconKind: 'box',   phase: 1.4,  scale: 0.92, variant: 'vitrine' },
+  { slug: 'testai',        label: 'TestAI',        position: [ 5.0, 0, 3.6], yaw: -0.45, iconKind: 'globe', phase: 2.8,  scale: 0.92, variant: 'hologram' },
 ] as const;
+
+const projectBySlug = (slug: Project['slug']) => content.projects.find((p) => p.slug === slug)!;
 
 export function Scene() {
   const setPerfMode = usePortfolioStore((s) => s.setPerfMode);
   const isMobile = useIsMobile();
   const [dpr, setDpr] = useState<[number, number]>([1, 2]);
-  const sunRef = useRef<Mesh | null>(null);
+
+  // PROVING SLICE — opt in with ?rig=scroll. Default = existing OrbitControls.
+  // Wheel + touch drive a virtual scroll (no DOM scroll — the canvas lives
+  // inside .hud-stage, whose `perspective` creates a containing block that
+  // breaks `position: fixed` under window scroll).
+  const [scrollRig, setScrollRig] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setScrollRig(new URLSearchParams(window.location.search).get('rig') === 'scroll');
+  }, []);
 
   useEffect(() => {
     if (isMobile) {
@@ -74,40 +88,58 @@ export function Scene() {
         }}
       />
 
-      {/* V12.5 — slightly tighter fog (6 → 25) softens distant elements. */}
-      <fog attach="fog" args={[palette.bgBase, 6, 25]} />
+      {/* Fog starts past the panels so the oval's far wall still reads crisp. */}
+      <fog attach="fog" args={[palette.bgBase, 13, 38]} />
       {/* V12.7 — Environment "city" + higher intensity gives the GLB's
-          PBR suit + skin proper IBL reflections. */}
-      <Environment preset="city" background={false} environmentIntensity={0.6} />
+          PBR suit + skin proper IBL reflections. The preset HDR comes from a
+          third-party CDN, so it gets its own boundary: if that's slow, the
+          room still renders and only the reflections arrive late. */}
+      <Suspense fallback={null}>
+        <Environment preset="city" background={false} environmentIntensity={0.6} />
+      </Suspense>
 
       <Lights />
 
-      {/* Environment shell — V11.0 windows + city backdrop replaces RoomShell. */}
+      {/* Environment shell — oval window hall + reflective floor. */}
       <Lab />
-      <HexFloor />
-      <WindowsWall />
+      <ReflectiveFloor />
+      <OvalRoom />
 
       {/* Central exhibit. */}
-      <HoloCapsule ref={sunRef} />
+      <HoloCapsule />
       <TopCenterTitle />
 
-      {/* 3 project stations in a curved arc in front. */}
-      {PROJECTS.map((p) => (
-        <ProjectStation
-          key={p.slug}
-          slug={p.slug}
-          label={p.label}
-          subtitle={p.subtitle}
-          position={p.position}
-          yaw={p.yaw}
-          iconKind={p.iconKind}
-          phase={p.phase}
-          scale={p.scale}
-        />
-      ))}
-
-      {/* V10.2 — freestanding cert rack replaces the back-wall vault. */}
-      <ModernCertRack />
+      {/* 3 project stations in a curved arc in front.
+          Proving slice: CropAI is swapped for a <StopBillboard> under ?rig=scroll
+          so we can feel the reel-2 billboard primitive in-world. */}
+      {PROJECTS.map((p) =>
+        scrollRig && p.slug === 'cropai' ? (
+          <StopBillboard
+            key={p.slug}
+            position={[p.position[0], 1.6, p.position[2]]}
+            rotation={[0, p.yaw, 0]}
+            heading={p.label}
+            subtitle={projectBySlug(p.slug).plate}
+            chips={projectBySlug(p.slug).stack.map((s) => s.toUpperCase())}
+            accent={palette.warmAmber}
+            width={3.0}
+            height={2.0}
+          />
+        ) : (
+          <ProjectStation
+            key={p.slug}
+            slug={p.slug}
+            label={p.label}
+            subtitle={projectBySlug(p.slug).plate}
+            position={p.position}
+            yaw={p.yaw}
+            iconKind={p.iconKind}
+            phase={p.phase}
+            scale={p.scale}
+            variant={p.variant}
+          />
+        )
+      )}
 
       {/* V11.1 — all dashboard panels as styled <Html transform> cards. */}
       <RoomPanels />
@@ -130,8 +162,8 @@ export function Scene() {
         position={[0, 2.5, 0]}
       />
 
-      <CameraRig />
-      <PostFX sunRef={sunRef} />
+      {scrollRig ? <ScrollCameraRig /> : <CameraRig />}
+      <PostFX />
 
       <AdaptiveDpr pixelated />
       <AdaptiveEvents />
@@ -163,11 +195,12 @@ function Lights() {
        *    marked over-bright cone). Pedestal still has its own
        *    LED ring + emissive icon, so we don't need a bright cone.
        *  • Side project + cert + panel washes kept low. */}
-      <SpotLight position={[-4.0, 5.5, 2.0]} target-position={[-4.0, 0.4, 4.0]} intensity={0.45}
+      <SpotLight position={[-5.0, 5.5, 1.6]} target-position={[-5.0, 0.4, 3.6]} intensity={0.45}
         angle={0.42} penumbra={0.90} color="#DDEEDD" distance={12} decay={1.6} />
-      <SpotLight position={[ 4.0, 5.5, 2.0]} target-position={[ 4.0, 0.4, 4.0]} intensity={0.45}
+      <SpotLight position={[ 5.0, 5.5, 1.6]} target-position={[ 5.0, 0.4, 3.6]} intensity={0.45}
         angle={0.42} penumbra={0.90} color="#DDEEDD" distance={12} decay={1.6} />
-      <SpotLight position={[0, 5.5, 4.0]} target-position={[0, 0.4, 6.0]} intensity={0.18}
+      {/* No volumetric haze here: from the camera this cone crosses the statue. */}
+      <SpotLight volumetric={false} position={[0, 5.5, 2.5]} target-position={[0, 0.4, 4.5]} intensity={0.18}
         angle={0.35} penumbra={0.95} color="#DDEEDD" distance={10} decay={1.8} />
       <SpotLight position={[5.5, 5.6, 3.5]} target-position={[6.5, 1.5, 4.5]} intensity={0.48}
         angle={0.55} penumbra={0.90} color="#DDEEDD" distance={14} decay={1.6} />
@@ -176,11 +209,13 @@ function Lights() {
       <SpotLight position={[5.5, 5.5, 0.5]} target-position={[5.5, 2.0, -0.5]} intensity={0.36}
         angle={0.55} penumbra={0.90} color="#DDEEDD" distance={12} decay={1.6} />
 
-      {/* Corner pillar point lights. */}
-      <pointLight position={[-7.8, 2, -7.8]} intensity={0.6} color={palette.neonGreen} distance={5} decay={2} />
-      <pointLight position={[ 7.8, 2, -7.8]} intensity={0.6} color={palette.neonGreen} distance={5} decay={2} />
-      <pointLight position={[-7.8, 2,  7]}   intensity={0.6} color={palette.neonGreen} distance={5} decay={2} />
-      <pointLight position={[ 7.8, 2,  7]}   intensity={0.6} color={palette.neonGreen} distance={5} decay={2} />
+      {/* Green wash just inside the oval wall. */}
+      {WALL_WASH_ANGLES.map((th) => {
+        const [x, z] = ovalPoint(th, 0.88);
+        return (
+          <pointLight key={th} position={[x, 1.2, z]} intensity={0.7} color={palette.neonGreen} distance={6} decay={2} />
+        );
+      })}
 
       {/* Capsule rim — layer-1 only so glass + emissives catch it without lighting walls. */}
       <pointLight

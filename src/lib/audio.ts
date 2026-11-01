@@ -23,6 +23,8 @@ let musicWanted = false;
 let reducedMotion = false;
 let initialised = false;
 let warnedMissing = false;
+let uiEnabled = true;
+let musicVolume = 0.5;
 
 function warnMissing(kind: 'ui' | 'ambient') {
   if (warnedMissing) return;
@@ -103,10 +105,21 @@ export function setMusicEnabled(on: boolean): void {
   const effective = on && !reducedMotion;
   if (effective) {
     if (!ambient.playing()) ambient.play();
-    ambient.fade(ambient.volume(), 0.5, 1500);
+    ambient.fade(ambient.volume(), musicVolume, 1500);
   } else {
     ambient.fade(ambient.volume(), 0, 800);
   }
+}
+
+/** Ambient bed level, 0–1. Applies immediately when the bed is playing. */
+export function setMusicVolume(v: number): void {
+  musicVolume = Math.min(1, Math.max(0, v));
+  if (ambient && musicWanted && !reducedMotion) ambient.volume(musicVolume);
+}
+
+/** JARVIS Settings → "UI sounds". */
+export function setUiSoundEnabled(on: boolean): void {
+  uiEnabled = on;
 }
 
 /**
@@ -114,7 +127,7 @@ export function setMusicEnabled(on: boolean): void {
  * or the user prefers reduced motion.
  */
 export function play(id: SpriteId): void {
-  if (!unlocked || reducedMotion || !uiSprite) return;
+  if (!unlocked || !uiEnabled || reducedMotion || !uiSprite) return;
   uiSprite.play(id);
 }
 
@@ -122,6 +135,7 @@ export function play(id: SpriteId): void {
 export function audioStatus(): {
   unlocked: boolean;
   musicWanted: boolean;
+  musicVolume: number;
   reducedMotion: boolean;
   hasSprite: boolean;
   hasAmbient: boolean;
@@ -129,6 +143,7 @@ export function audioStatus(): {
   return {
     unlocked,
     musicWanted,
+    musicVolume,
     reducedMotion,
     hasSprite: uiSprite !== null,
     hasAmbient: ambient !== null,

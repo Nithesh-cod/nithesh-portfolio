@@ -6,7 +6,7 @@ import { content } from '@/lib/content';
 import { play } from '@/lib/audio';
 import { usePortfolioStore } from '@/lib/store';
 
-const PDF_PATH = '/nithesh-ramachandran-resume.pdf';
+const PDF_PATH = content.contact.resumeUrl;
 const DOWNLOAD_NAME = 'Nithesh_Ramachandran_Resume.pdf';
 
 const BACKDROP = {

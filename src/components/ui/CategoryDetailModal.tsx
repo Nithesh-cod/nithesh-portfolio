@@ -21,6 +21,7 @@ const PANEL = {
 export function CategoryDetailModal() {
   const id = usePortfolioStore((s) => s.activeSkillCategory);
   const close = usePortfolioStore((s) => s.closeSkillCategory);
+  const openCategory = usePortfolioStore((s) => s.openSkillCategory);
 
   const category = useMemo(() => (id ? skillCategories.find((c) => c.id === id) ?? null : null), [id]);
 
@@ -46,7 +47,7 @@ export function CategoryDetailModal() {
     <AnimatePresence>
       {category ? (
         <motion.div
-          key={category.id}
+          key="skill-detail"
           role="dialog"
           aria-modal="true"
           aria-label={`${category.title} capability detail`}
@@ -86,6 +87,33 @@ export function CategoryDetailModal() {
               >
                 [ ✕ Close ]
               </button>
+            </div>
+
+            <div role="tablist" aria-label="Skill categories" className="flex flex-wrap gap-1.5 border-b border-emerald-mid/15 px-6 py-3">
+              {skillCategories.map((c) => {
+                const selected = c.id === category.id;
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={selected}
+                    onClick={() => {
+                      if (selected) return;
+                      play('click_secondary');
+                      openCategory(c.id);
+                    }}
+                    className={
+                      'rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] transition focus:outline-none focus:ring-1 focus:ring-emerald-hot ' +
+                      (selected
+                        ? 'border-emerald-glow/70 bg-emerald-glow/10 text-emerald-glow'
+                        : 'border-emerald-mid/25 text-bone hover:text-ivory')
+                    }
+                  >
+                    {c.title}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Item list */}

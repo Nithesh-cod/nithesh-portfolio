@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import { Space_Grotesk, Inter, JetBrains_Mono, Orbitron } from 'next/font/google';
 import '@/styles/globals.css';
+import '@/styles/jarvis.css';
+import '@/styles/jarvis-apps.css';
+import '@/styles/room.css';
 import { content } from '@/lib/content';
 
 const display = Space_Grotesk({
@@ -31,19 +34,24 @@ const sci = Orbitron({
   display: 'swap',
 });
 
-const siteUrl = 'https://nithesh.dev'; // TODO: replace once deployed
+const siteUrl = content.liveUrl;
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: `${content.hero.name} — ${content.hero.tagline}`,
   description: content.hero.headline,
-  authors: [{ name: content.hero.name }],
+  authors: [{ name: content.hero.name, url: content.contact.github ?? siteUrl }],
   keywords: [
     'Nithesh Ramachandran',
     'AI engineer',
+    'full-stack developer',
     'front-end developer',
     'Next.js',
+    'React',
+    'FastAPI',
+    'PyTorch',
     'Three.js',
+    'Smart India Hackathon 2026',
     'portfolio',
     'Coimbatore',
   ],
@@ -60,7 +68,6 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: `${content.hero.name} — ${content.hero.tagline}`,
     description: content.hero.headline,
-    creator: '@nithesh',
   },
   robots: { index: true, follow: true },
   icons: {

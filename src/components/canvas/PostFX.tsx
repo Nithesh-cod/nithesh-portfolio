@@ -5,22 +5,20 @@ import {
   BrightnessContrast,
   ChromaticAberration,
   EffectComposer,
-  GodRays,
   HueSaturation,
   ToneMapping,
 } from '@react-three/postprocessing';
 import { BlendFunction, KernelSize, ToneMappingMode } from 'postprocessing';
 import { type ReactElement, useMemo } from 'react';
-import { HalfFloatType, type Mesh, Vector2 } from 'three';
+import { HalfFloatType, Vector2 } from 'three';
 import { usePortfolioStore } from '@/lib/store';
 
 /**
- * V9.3 — chain order: Bloom (heavy, threshold 0.65) → GodRays from the
- * capsule's invisible sun mesh → ChromaticAberration (0.0005) → ToneMapping
- * (ACES_FILMIC). LUT dropped — the cyan/green grade comes from the
- * neon-green emissives directly.
+ * Chain: Bloom (emissives only, threshold 0.85) → colour grade →
+ * near-zero ChromaticAberration → ACES tone mapping. No god rays: they
+ * radiated from the avatar's chest and smeared the statue.
  */
-export function PostFX({ sunRef }: { sunRef?: React.MutableRefObject<Mesh | null> | React.RefObject<Mesh> }) {
+export function PostFX() {
   const perfMode = usePortfolioStore((s) => s.perfMode);
   // V11.2 — chromatic aberration nearly off; reference is sharp.
   const caOffset = useMemo(() => new Vector2(0.0001, 0.0001), []);
@@ -36,19 +34,6 @@ export function PostFX({ sunRef }: { sunRef?: React.MutableRefObject<Mesh | null
       mipmapBlur
       kernelSize={KernelSize.MEDIUM}
     />,
-    sunRef?.current ? (
-      <GodRays
-        key="godrays"
-        sun={sunRef.current}
-        density={0.96}
-        decay={0.94}
-        weight={0.5}
-        exposure={0.4}
-        samples={60}
-        clampMax={1.0}
-        blendFunction={BlendFunction.SCREEN}
-      />
-    ) : null,
     // V11.2 — gentle colour grading. Saturation -8 %, contrast +12 %.
     <HueSaturation key="hs" saturation={-0.08} hue={0.02} />,
     <BrightnessContrast key="bc" brightness={-0.02} contrast={0.12} />,

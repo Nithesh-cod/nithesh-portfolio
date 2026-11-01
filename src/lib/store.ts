@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import type { Project, SkillCategoryId } from '@/lib/content';
 
 export type PerfMode = 'low' | 'medium' | 'cinematic';
+/** Which experience is on screen: the gaming room, JARVIS OS over it, or the museum hall. */
+export type World = 'room' | 'jarvis' | 'museum';
 export type CursorState = 'idle' | 'interactive' | 'pressed';
 export type ProxyId = Project['slug'] | 'crt' | 'contact';
 
@@ -12,13 +14,17 @@ export type FocusTarget = {
 };
 
 type PortfolioStore = {
+  world: World;
+  setWorld: (w: World) => void;
+
   section: number;
   audioEnabled: boolean;
   perfMode: PerfMode;
 
   // Modal + focus state — drives the GSAP camera tween and pauses the scroll curve.
   modalOpen: boolean;
-  activeProject: Project['slug'] | null;
+  /** Any id from content.allProjects. */
+  activeProject: string | null;
 
   // Cursor reticle state — set by 3D-object hover/down handlers, read by Cursor.tsx.
   cursorState: CursorState;
@@ -32,7 +38,7 @@ type PortfolioStore = {
   setAudioEnabled: (b: boolean) => void;
   setPerfMode: (m: PerfMode) => void;
 
-  openProject: (slug: Project['slug'], proxyId?: ProxyId) => void;
+  openProject: (id: string, proxyId?: ProxyId) => void;
   closeProject: () => void;
   setCursorState: (s: CursorState) => void;
 
@@ -94,6 +100,9 @@ type PortfolioStore = {
 };
 
 export const usePortfolioStore = create<PortfolioStore>((set) => ({
+  world: 'room',
+  setWorld: (w) => set({ world: w }),
+
   section: 0,
   audioEnabled: false,
   // Default 'medium' (was 'cinematic'): DoF is mounted ONLY at 'cinematic',
@@ -111,8 +120,8 @@ export const usePortfolioStore = create<PortfolioStore>((set) => ({
   setAudioEnabled: (b) => set({ audioEnabled: b }),
   setPerfMode: (m) => set({ perfMode: m }),
 
-  openProject: (slug, proxyId) =>
-    set({ modalOpen: true, activeProject: slug, lastProxyFocus: proxyId ?? slug }),
+  openProject: (id, proxyId) =>
+    set({ modalOpen: true, activeProject: id, lastProxyFocus: proxyId ?? null }),
   closeProject: () => set({ modalOpen: false, activeProject: null }),
   setCursorState: (s) => set({ cursorState: s }),
 

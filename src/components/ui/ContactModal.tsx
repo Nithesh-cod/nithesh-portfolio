@@ -1,22 +1,14 @@
 'use client';
 
-import emailjs from '@emailjs/browser';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Mail, Send, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { content } from '@/lib/content';
 import { play } from '@/lib/audio';
+import { MailNotConfiguredError, sendMail } from '@/lib/jarvis/mail';
 import { usePortfolioStore } from '@/lib/store';
 
-/* V13.0 — EmailJS-backed contact form.
- *
- * Env vars (set in .env.local + Vercel project settings):
- *   NEXT_PUBLIC_EMAILJS_SERVICE_ID
- *   NEXT_PUBLIC_EMAILJS_TEMPLATE_ID
- *   NEXT_PUBLIC_EMAILJS_PUBLIC_KEY
- *
- * EmailJS template MUST use these exact variable keys:
- *   {{name}} {{mobile}} {{email}} {{message}} */
+/* V13.0 — EmailJS-backed contact form. Env vars and template keys: src/lib/jarvis/mail.ts. */
 
 const BACKDROP = {
   hidden: { opacity: 0 },
@@ -69,35 +61,12 @@ export function ContactModal() {
     e.preventDefault();
     if (status === 'sending') return;
 
-    const SERVICE_ID = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID;
-    const TEMPLATE_ID = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID;
-    const PUBLIC_KEY = process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY;
-
-    if (!SERVICE_ID || !TEMPLATE_ID || !PUBLIC_KEY) {
-      setStatus('error');
-      setErrorMsg(
-        'Contact form is not configured. Please email directly: nithesh.r.ciet@gmail.com',
-      );
-      return;
-    }
-
     setStatus('sending');
     setErrorMsg('');
     play('click_primary');
 
     try {
-      // Template params use the EXACT keys: name / mobile / email / message
-      await emailjs.send(
-        SERVICE_ID,
-        TEMPLATE_ID,
-        {
-          name: form.name,
-          mobile: form.mobile,
-          email: form.email,
-          message: form.message,
-        },
-        { publicKey: PUBLIC_KEY },
-      );
+      await sendMail(form);
       setStatus('success');
       setForm({ name: '', mobile: '', email: '', message: '' });
       // Auto-close after success.
@@ -107,7 +76,7 @@ export function ContactModal() {
       }, 1800);
     } catch (err) {
       // eslint-disable-next-line no-console
-      console.error('[ContactModal] EmailJS send failed:', err);
+      if (!(err instanceof MailNotConfiguredError)) console.error('[ContactModal] EmailJS send failed:', err);
       setStatus('error');
       setErrorMsg(
         err instanceof Error ? err.message : 'Send failed. Please email directly.',
@@ -239,6 +208,11 @@ export function ContactModal() {
                 <a href={content.contact.linkedin} target="_blank" rel="noopener noreferrer">
                   LinkedIn ↗
                 </a>
+                {content.contact.github && (
+                  <a href={content.contact.github} target="_blank" rel="noopener noreferrer">
+                    GitHub ↗
+                  </a>
+                )}
               </div>
             </div>
           </motion.div>

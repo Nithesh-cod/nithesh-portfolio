@@ -1,0 +1,2080 @@
+/* ═══════════════════════════ JARVIS OS ═══════════════════════════
+ * Motion identity: cubic-bezier(0.4,0,0.2,1); 180 / 400 / 700 ms.
+ * Cut-corner glass, neon green edges, one accent hue (#2EFFB0). */
+
+:root {
+  --jos-green: #2effb0;
+  --jos-green-soft: #5cffc4;
+  --jos-ink: #e9fff5;
+  --jos-text: #cfe9dc;
+  --jos-dim: #7f9c90;
+  --jos-glass: rgba(6, 20, 18, 0.72);
+  --jos-glass-strong: rgba(4, 14, 13, 0.88);
+  --jos-edge: rgba(46, 255, 176, 0.45);
+  --jos-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --jos-cut: polygon(14px 0, calc(100% - 14px) 0, 100% 14px, 100% calc(100% - 14px), calc(100% - 14px) 100%, 14px 100%, 0 calc(100% - 14px), 0 14px);
+  --jos-top-h: 74px;
+  --jos-dock-h: 96px;
+}
+
+.jos {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow: hidden;
+  color: var(--jos-text);
+  font-family: var(--font-sans), 'Inter', system-ui, sans-serif;
+}
+
+/* ─────────────── wallpaper ─────────────── */
+.jos-wall,
+.jos-wall > * {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.jos-wall {
+  --jos-horizon: 59%;
+  /* city-backdrop.jpg is a 627x1115 portrait; scaled to the wall's height and
+     mirror-tiled, because `cover` would blow up a sky-less strip of rooftops. */
+  --jos-photo-w: 110vh;
+  background: #020a0b;
+}
+.jos-wall-sky,
+.jos-wall-reflect {
+  bottom: auto;
+  height: var(--jos-horizon);
+  overflow: hidden;
+}
+.jos-wall-reflect {
+  transform-origin: 50% 100%;
+  /* A hard vertical stretch over a small blur smears lights into wet-floor streaks. */
+  transform: scaleY(-4);
+  filter: blur(2px) brightness(1.1) saturate(1.5);
+  -webkit-mask-image: linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0.5) 4%, transparent 10%);
+  mask-image: linear-gradient(0deg, #000 0%, rgba(0, 0, 0, 0.5) 4%, transparent 10%);
+}
+.jos-wall-photo,
+.jos-wall-photo::before,
+.jos-wall-photo::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: var(--jos-photo-w);
+  background: url('/city-backdrop.jpg') 0 calc(var(--jos-photo-w) * -0.574) / 100% auto no-repeat;
+}
+.jos-wall-photo {
+  left: calc(50% - var(--jos-photo-w) / 2);
+  filter: contrast(1.45) saturate(1.3) brightness(0.92);
+}
+.jos-wall-photo::before,
+.jos-wall-photo::after {
+  content: '';
+  transform: scaleX(-1);
+}
+.jos-wall-photo::before { right: 100%; }
+.jos-wall-photo::after { left: 100%; }
+.jos-wall-skyline {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.jos-wall-haze {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(46, 255, 176, 0.14) 0%, rgba(30, 190, 170, 0.06) 22%, transparent 52%);
+}
+.jos-wall-floor {
+  top: var(--jos-horizon);
+  background:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.1) 0 1px, transparent 1px 4px),
+    linear-gradient(180deg, rgba(46, 255, 176, 0.2) 0%, transparent 34%),
+    linear-gradient(180deg, rgba(2, 12, 11, 0.3) 0%, rgba(2, 9, 9, 0.6) 44%, rgba(1, 5, 6, 0.9) 100%);
+}
+.jos-wall-room {
+  width: 100%;
+  height: 100%;
+}
+.jos-wall-glow {
+  background:
+    radial-gradient(52% 24% at 50% 59%, rgba(46, 255, 176, 0.14) 0%, transparent 72%),
+    radial-gradient(40% 30% at 50% 100%, rgba(46, 255, 176, 0.1) 0%, transparent 70%);
+}
+.jos-wall-vignette {
+  background: radial-gradient(120% 95% at 50% 48%, transparent 58%, rgba(0, 0, 0, 0.6) 100%);
+}
+.jos-particles i {
+  position: absolute;
+  bottom: -10px;
+  border-radius: 999px;
+  background: var(--jos-green-soft);
+  box-shadow: 0 0 6px var(--jos-green);
+  opacity: 0;
+  animation: jos-rise linear infinite;
+}
+@keyframes jos-rise {
+  0% { transform: translateY(0); opacity: 0; }
+  15% { opacity: 0.7; }
+  100% { transform: translateY(-105vh); opacity: 0; }
+}
+@keyframes jos-spin { to { transform: rotate(360deg); } }
+
+/* ─────────────── top bar ─────────────── */
+.jos-top-wrap {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 5;
+}
+.jos-top {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  height: var(--jos-top-h);
+  padding: 0 26px;
+  background: linear-gradient(180deg, rgba(3, 12, 12, 0.92), rgba(3, 12, 12, 0.6));
+  border-bottom: 1px solid rgba(46, 255, 176, 0.32);
+  box-shadow: 0 1px 0 rgba(46, 255, 176, 0.08), 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+.jos-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.jos-brand strong {
+  display: block;
+  font-family: var(--font-display-sci), 'Orbitron', sans-serif;
+  font-size: 19px;
+  font-weight: 900;
+  letter-spacing: 0.32em;
+  color: var(--jos-ink);
+  text-shadow: 0 0 14px rgba(46, 255, 176, 0.5);
+}
+.jos-brand span {
+  font-family: var(--font-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--jos-green);
+}
+.jos-motto {
+  justify-self: center;
+  font-family: var(--font-display-sci), 'Orbitron', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5em;
+  white-space: nowrap;
+  color: var(--jos-green-soft);
+  text-shadow: 0 0 12px rgba(46, 255, 176, 0.6);
+}
+.jos-motto i {
+  font-style: normal;
+  margin: 0 0.6em;
+  color: var(--jos-dim);
+}
+.jos-top-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 22px;
+}
+.jos-clock {
+  white-space: nowrap;
+}
+.jos-clock b {
+  display: block;
+  font-family: var(--font-display-sci), 'Orbitron', sans-serif;
+  font-size: 20px;
+  letter-spacing: 0.06em;
+  color: var(--jos-ink);
+  font-variant-numeric: tabular-nums;
+}
+.jos-clock span,
+.jos-weather span {
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--jos-dim);
+}
+.jos-weather {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 20px;
+  border-left: 1px solid rgba(46, 255, 176, 0.2);
+  color: var(--jos-green-soft);
+}
+.jos-weather b {
+  display: block;
+  font-size: 16px;
+  color: var(--jos-ink);
+}
+.jos-weather span {
+  display: block;
+  white-space: nowrap;
+}
+.jos-sys-icons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-left: 20px;
+  border-left: 1px solid rgba(46, 255, 176, 0.2);
+  color: var(--jos-green);
+}
+.jos-battery {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+}
+.jos-power {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 120, 120, 0.45);
+  background: rgba(40, 6, 8, 0.4);
+  color: #ff9a9a;
+  cursor: pointer;
+  transition: background 180ms var(--jos-ease), box-shadow 180ms var(--jos-ease);
+}
+.jos-power:hover {
+  background: rgba(255, 90, 90, 0.18);
+  box-shadow: 0 0 16px rgba(255, 90, 90, 0.45);
+}
+
+/* ─────────────── layout ─────────────── */
+.jos-body {
+  position: absolute;
+  inset: var(--jos-top-h) 0 var(--jos-dock-h) 0;
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr) 290px;
+  gap: 20px;
+  padding: 20px 24px 8px;
+  z-index: 3;
+}
+.jos-side-wrap,
+.jos-right-wrap {
+  position: relative;
+  z-index: 2; /* The pedestal slides behind the panels at either end of the row. */
+  min-height: 0;
+}
+
+/* ─────────────── sidebar ─────────────── */
+.jos-side,
+.jos-panel {
+  clip-path: var(--jos-cut);
+  background: var(--jos-glass);
+  border: 1px solid var(--jos-edge);
+  box-shadow: inset 0 0 40px rgba(46, 255, 176, 0.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.jos-side {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 22px 18px;
+}
+.jos-greet {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(46, 255, 176, 0.14);
+}
+.jos-greet small {
+  display: block;
+  font-size: 13px;
+  color: var(--jos-text);
+}
+.jos-greet strong {
+  display: block;
+  font-family: var(--font-display-sci), 'Orbitron', sans-serif;
+  font-size: 22px;
+  color: var(--jos-green);
+  text-shadow: 0 0 12px rgba(46, 255, 176, 0.5);
+}
+.jos-greet span {
+  font-size: 12px;
+  color: var(--jos-dim);
+}
+.jos-greet-ring {
+  border-radius: 999px;
+  filter: drop-shadow(0 0 10px rgba(46, 255, 176, 0.45));
+}
+.jos-nav {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 20px;
+}
+.jos-nav button {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--jos-text);
+  font-size: 14.5px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 180ms var(--jos-ease), color 180ms var(--jos-ease), transform 180ms var(--jos-ease);
+}
+.jos-nav button:hover {
+  background: rgba(46, 255, 176, 0.08);
+  color: var(--jos-ink);
+}
+.jos-nav button:active {
+  transform: scale(0.98);
+}
+.jos-nav button.is-active {
+  color: var(--jos-ink);
+}
+/* Its own element, so it can slide from one item to the next. */
+.jos-nav-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc((100% - 6px * 4) / 5);
+  z-index: -1;
+  border: 1px solid rgba(46, 255, 176, 0.55);
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(46, 255, 176, 0.22), rgba(46, 255, 176, 0.04));
+  box-shadow: 0 0 18px rgba(46, 255, 176, 0.18);
+  transform: translateY(calc(var(--nav-index) * (100% + 6px)));
+  transition: transform 400ms var(--jos-ease), opacity 180ms var(--jos-ease);
+}
+.jos-nav-glow.is-off {
+  opacity: 0;
+}
+.jos-nav svg {
+  color: var(--jos-green);
+  transition: transform 180ms var(--jos-ease);
+}
+.jos-nav button:hover svg {
+  transform: translateX(2px);
+}
+.jos-nav em {
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  margin-left: auto;
+  border-radius: 999px;
+  background: var(--jos-green);
+  color: #021a10;
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 700;
+}
+.jos-quote {
+  margin: auto 0 0;
+  padding: 16px 4px 0;
+  font-family: var(--font-display), serif;
+  font-size: 15px;
+  font-style: italic;
+  line-height: 1.55;
+  color: var(--jos-green-soft);
+}
+.jos-quote cite {
+  display: block;
+  margin-top: 8px;
+  font-family: var(--font-mono), monospace;
+  font-size: 10.5px;
+  font-style: normal;
+  letter-spacing: 0.24em;
+  color: var(--jos-dim);
+}
+
+/* ─────────────── app carousel ─────────────── */
+.jos-home {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+.jos-carousel {
+  --slot-step: min(202px, calc((100cqw + 12px) / var(--card-count)));
+  container-type: inline-size;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin-top: -24px;
+}
+.jos-glyph-defs {
+  position: absolute;
+}
+.jos-arc {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+}
+/* Each card's light on the wet floor. */
+.jos-arc::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 100%;
+  left: 50%;
+  width: calc(var(--slot-step) * var(--card-count) - 12px);
+  height: 96px;
+  transform: translateX(-50%);
+  background: repeating-linear-gradient(90deg, rgba(46, 255, 176, 0.34) 0 calc(var(--slot-step) - 12px), transparent calc(var(--slot-step) - 12px) var(--slot-step));
+  -webkit-mask-image: linear-gradient(180deg, #000, transparent);
+  mask-image: linear-gradient(180deg, #000, transparent);
+  filter: blur(5px);
+}
+.jos-card-slot {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 190px;
+  transform: rotateY(var(--arc-ry)) translateZ(var(--arc-z));
+}
+/* The frame is layered, not a border: clip-path on the card itself would shave
+   the border off every chamfer and cut away any outer shadow. The frame's two
+   pseudo-elements and the glass are clipped instead, and the frame span carries
+   a drop-shadow, which traces the chamfered outline. Keep the filter off the
+   card: under the selected scale it would soften and dim all the text. */
+.jos-card {
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  padding: 26px 12px 18px;
+  border: 0;
+  background: none;
+  color: var(--jos-text);
+  text-align: center;
+  cursor: pointer;
+  transform: var(--tilt-depth,) translateY(0) scale(var(--press, 1)) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+  transition: transform 400ms var(--jos-ease);
+}
+/* Perspective only while the pointer is tilting the card: Chrome will not
+   re-raster a layer under perspective, so at rest it would blur the selected
+   card's text by upscaling it. */
+.jos-card:hover {
+  --tilt-depth: perspective(1400px);
+}
+.jos-card-frame {
+  position: absolute;
+  inset: 0;
+  filter: drop-shadow(0 0 3px rgba(46, 255, 176, 0.6)) drop-shadow(0 0 13px rgba(46, 255, 176, 0.3));
+  transition: filter 400ms var(--jos-ease);
+}
+.jos-card-frame::before,
+.jos-card-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(18px 0, calc(100% - 18px) 0, 100% 18px, 100% calc(100% - 18px), calc(100% - 18px) 100%, 18px 100%, 0 calc(100% - 18px), 0 18px);
+}
+.jos-card-frame::before {
+  background:
+    radial-gradient(46px 46px at 0 0, #b4ffe2 12%, transparent 100%),
+    radial-gradient(46px 46px at 100% 0, #b4ffe2 12%, transparent 100%),
+    radial-gradient(46px 46px at 0 100%, #b4ffe2 12%, transparent 100%),
+    radial-gradient(46px 46px at 100% 100%, #b4ffe2 12%, transparent 100%),
+    linear-gradient(180deg, rgba(46, 255, 176, 0.9), rgba(46, 255, 176, 0.68));
+}
+.jos-card-frame::after {
+  background: linear-gradient(180deg, #f2fff9, #bfffe6);
+  opacity: 0;
+  transition: opacity 400ms var(--jos-ease);
+}
+.jos-card-glass {
+  position: absolute;
+  z-index: 1;
+  inset: 2.5px;
+  overflow: hidden;
+  clip-path: polygon(16.5px 0, calc(100% - 16.5px) 0, 100% 16.5px, 100% calc(100% - 16.5px), calc(100% - 16.5px) 100%, 16.5px 100%, 0 calc(100% - 16.5px), 0 16.5px);
+  background: linear-gradient(180deg, #0a2a23 0%, #051613 42%, #030d0c 100%);
+  transition: inset 400ms var(--jos-ease);
+}
+.jos-card-glass::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(46, 255, 176, 0.24);
+  clip-path: polygon(13px 0, calc(100% - 13px) 0, 100% 13px, 100% calc(100% - 13px), calc(100% - 13px) 100%, 13px 100%, 0 calc(100% - 13px), 0 13px);
+}
+.jos-card-glass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(115deg, transparent 30%, rgba(180, 255, 225, 0.07) 45%, transparent 60%),
+    radial-gradient(90% 46% at 50% 0, rgba(46, 255, 176, 0.22), transparent 100%);
+  opacity: 0.7;
+  transition: opacity 400ms var(--jos-ease);
+}
+.jos-card > :not(.jos-card-frame, .jos-card-glass) {
+  position: relative;
+  z-index: 2;
+}
+.jos-card-slot.is-sel {
+  position: relative;
+  z-index: 1;
+}
+.jos-card.is-sel {
+  transform: var(--tilt-depth,) translateY(-18px) scale(calc(1.06 * var(--press, 1))) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+}
+.jos-card:active {
+  --press: 0.97;
+}
+.jos-card.is-sel .jos-card-frame {
+  filter:
+    drop-shadow(0 0 2px #d9fff0)
+    drop-shadow(0 0 14px rgba(46, 255, 176, 0.95))
+    drop-shadow(0 0 36px rgba(46, 255, 176, 0.6));
+}
+.jos-card.is-sel .jos-card-frame::after {
+  opacity: 1;
+}
+.jos-card.is-sel .jos-card-glass {
+  inset: 4px;
+}
+.jos-card.is-sel .jos-card-glass::after {
+  opacity: 1;
+}
+.jos-card:focus-visible {
+  outline: 2px solid var(--jos-green-soft);
+  outline-offset: 4px;
+}
+.jos-card-icon {
+  display: grid;
+  place-items: center;
+  width: min(92px, 100%);
+  aspect-ratio: 1;
+  margin-bottom: 6px;
+  color: var(--jos-green-soft);
+  filter: drop-shadow(0 0 5px rgba(46, 255, 176, 0.8)) drop-shadow(0 0 16px rgba(46, 255, 176, 0.42));
+  transition: filter 400ms var(--jos-ease);
+}
+.jos-card.is-sel .jos-card-icon {
+  filter: drop-shadow(0 0 6px rgba(160, 255, 222, 0.95)) drop-shadow(0 0 22px rgba(46, 255, 176, 0.75));
+}
+.jos-glyph-text {
+  font-family: var(--font-display-sci), 'Orbitron', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  fill: #04231a;
+}
+.jos-card strong {
+  font-family: var(--font-display-sci), 'Orbitron', sans-serif;
+  font-size: clamp(12px, 0.92vw, 15px);
+  white-space: nowrap;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--jos-ink);
+}
+.jos-card-sub {
+  min-height: 34px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #a4c4b7;
+}
+.jos-card.is-sel .jos-card-sub {
+  color: var(--jos-text);
+}
+.jos-card-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding: 7px 18px;
+  border: 1px solid rgba(46, 255, 176, 0.55);
+  border-radius: 999px;
+  font-family: var(--font-display-sci), 'Orbitron', monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--jos-green);
+}
+.jos-card.is-sel .jos-card-open {
+  background: rgba(46, 255, 176, 0.16);
+  box-shadow: 0 0 14px rgba(46, 255, 176, 0.4);
+}
+/* Stays 120px in flow so the cards keep their height on screen; the pedestal
+   hangs below it. It tracks the selected card by the same step the row uses. */
+.jos-stage {
+  --ped-h: clamp(130px, 22vh, 200px);
+  --ped-top: 26px;
+  --ped-emitter: calc(var(--ped-top) + var(--ped-h) * 0.275);
+  position: relative;
+  z-index: 1;
+  width: calc(var(--ped-h) * 2.157);
+  height: 120px;
+  margin-top: -10px;
+  pointer-events: none;
+  transform: translateX(calc(var(--sel-offset) * var(--slot-step)));
+  transition: transform 400ms var(--jos-ease);
+}
+.jos-ped {
+  position: absolute;
+  top: var(--ped-top);
+  left: 0;
+  width: 100%;
+  height: var(--ped-h);
+  overflow: visible;
+}
+.jos-ped-flow {
+  stroke-dasharray: 26 19;
+  animation: jos-ped-flow 16s linear infinite;
+}
+.jos-ped-flow.is-rev {
+  stroke-dasharray: 44 16 8 16;
+  animation-direction: reverse;
+  animation-duration: 9s;
+}
+@keyframes jos-ped-flow { to { stroke-dashoffset: -360; } }
+.jos-ped-text {
+  font-family: var(--font-display-sci), 'Orbitron', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.34em;
+  fill: #c8ffec;
+}
+.jos-stage-beam,
+.jos-stage-beam::before {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.jos-stage-beam {
+  top: -36px;
+  width: calc(var(--ped-h) * 0.84);
+  height: calc(36px + var(--ped-emitter));
+  background:
+    repeating-linear-gradient(90deg, rgba(150, 255, 216, 0.22) 0 2px, transparent 2px 11px),
+    linear-gradient(0deg, rgba(46, 255, 176, 0.62) 0%, rgba(46, 255, 176, 0.26) 58%, rgba(46, 255, 176, 0.05) 100%);
+  clip-path: polygon(13% 100%, 87% 100%, 100% 0, 0 0);
+  animation: jos-beam 3.2s var(--jos-ease) infinite;
+}
+.jos-stage-beam::before {
+  content: '';
+  bottom: 0;
+  width: 34%;
+  height: 100%;
+  background: linear-gradient(0deg, rgba(232, 255, 246, 0.95) 0%, rgba(120, 255, 208, 0.6) 46%, rgba(46, 255, 176, 0.08) 100%);
+  filter: blur(4px);
+}
+@keyframes jos-beam { 50% { opacity: 0.78; } }
+.jos-stage-reflect {
+  position: absolute;
+  top: calc(var(--ped-top) + var(--ped-h) * 0.9);
+  left: 50%;
+  width: calc(var(--ped-h) * 1.5);
+  height: calc(var(--ped-h) * 0.62);
+  transform: translateX(-50%);
+  background:
+    repeating-linear-gradient(90deg, rgba(46, 255, 176, 0.2) 0 3px, transparent 3px 14px),
+    linear-gradient(180deg, rgba(46, 255, 176, 0.42), transparent 88%);
+  -webkit-mask-image: radial-gradient(50% 100% at 50% 0, #000 30%, transparent 100%);
+  mask-image: radial-gradient(50% 100% at 50% 0, #000 30%, transparent 100%);
+}
+
+/* ─────────────── status panel ─────────────── */
+.jos-right {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  height: 100%;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.jos-panel {
+  padding: 16px 16px 14px;
+}
+.jos-online {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(46, 255, 176, 0.14);
+}
+.jos-online strong {
+  display: block;
+  font-family: var(--font-display-sci), 'Orbitron', sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  color: var(--jos-ink);
+}
+.jos-online span {
+  font-family: var(--font-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.2em;
+}
+.jos-online .is-ok { color: var(--jos-green); }
+.jos-online .is-warn { color: #ffcc66; }
+.jos-pulse {
+  display: block;
+  width: 120px;
+  height: 18px;
+  margin-top: 4px;
+}
+.jos-pulse polyline {
+  fill: none;
+  stroke: var(--jos-green);
+  stroke-width: 1.6;
+  stroke-dasharray: 160;
+  animation: jos-pulse 2.4s linear infinite;
+  filter: drop-shadow(0 0 4px var(--jos-green));
+}
+@keyframes jos-pulse {
+  from { stroke-dashoffset: 160; }
+  to { stroke-dashoffset: -160; }
+}
+.jos-panel-note {
+  margin: 10px 0 4px;
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--jos-dim);
+}
+.jos-stat {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 6px 0;
+}
+.jos-stat + .jos-stat {
+  border-top: 1px solid rgba(46, 255, 176, 0.08);
+}
+.jos-stat-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid rgba(46, 255, 176, 0.35);
+  color: var(--jos-green);
+}
+.jos-stat-main {
+  flex: 1;
+  min-width: 0;
+}
+.jos-stat-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12.5px;
+}
+.jos-stat-line b {
+  overflow: hidden;
+  max-width: 62%;
+  color: var(--jos-ink);
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+.jos-stat-bar {
+  display: block;
+  height: 4px;
+  margin-top: 6px;
+  border-radius: 99px;
+  background: rgba(46, 255, 176, 0.12);
+  overflow: hidden;
+}
+.jos-stat-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--jos-green), var(--jos-green-soft));
+  box-shadow: 0 0 8px var(--jos-green);
+  transition: width 400ms var(--jos-ease);
+}
+.jos-panel-head {
+  margin: 0 0 10px;
+  font-family: var(--font-display-sci), 'Orbitron', sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.24em;
+  color: var(--jos-green);
+}
+.jos-quick {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--jos-text);
+  font-size: 13.5px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 180ms var(--jos-ease);
+}
+.jos-quick svg {
+  color: var(--jos-green);
+}
+.jos-quick:hover {
+  background: rgba(46, 255, 176, 0.09);
+}
+.jos-quick-ext {
+  margin-left: auto;
+  opacity: 0.6;
+}
+.jos-setup {
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(46, 255, 176, 0.12);
+}
+.jos-setup > span {
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--jos-dim);
+}
+.jos-setup div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.jos-setup em {
+  padding: 4px 10px;
+  border: 1px solid rgba(46, 255, 176, 0.3);
+  border-radius: 999px;
+  font-style: normal;
+  font-size: 11.5px;
+  color: var(--jos-text);
+}
+.jos-panel-quote {
+  margin: 14px 0 0;
+  font-family: var(--font-display), serif;
+  font-style: italic;
+  font-size: 14px;
+  color: var(--jos-green-soft);
+}
+
+/* ─────────────── dock ─────────────── */
+.jos-dock {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 14px;
+  width: fit-content;
+  margin: 0 auto;
+  z-index: 6;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 72px;
+  padding: 10px 18px;
+}
+/* The trapezoid is a backing layer: clip-path on the dock itself would also cut
+   off the tooltips, the magnified icons and the launch bounce. */
+.jos-dock::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  clip-path: polygon(22px 0, calc(100% - 22px) 0, 100% 100%, 0 100%);
+  background: linear-gradient(180deg, rgba(8, 26, 23, 0.85), rgba(3, 12, 11, 0.95));
+  border-top: 1px solid rgba(46, 255, 176, 0.55);
+}
+.jos-dock-divider {
+  flex: none;
+  align-self: center;
+  width: 1px;
+  height: 34px;
+  background: rgba(46, 255, 176, 0.3);
+}
+.jos-dock-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  border-radius: 12px;
+  border: 1px solid rgba(46, 255, 176, 0.4);
+  background: linear-gradient(160deg, rgba(46, 255, 176, 0.18), rgba(6, 18, 16, 0.85));
+  color: var(--jos-green-soft);
+  cursor: pointer;
+  transition: border-color 180ms var(--jos-ease), box-shadow 180ms var(--jos-ease);
+}
+.jos-dock-icon:hover,
+.jos-dock-icon:focus-visible {
+  border-color: var(--jos-green);
+  box-shadow: 0 0 18px rgba(46, 255, 176, 0.45);
+  outline: none;
+}
+.jos-dock-icon.is-running::after {
+  content: '';
+  position: absolute;
+  bottom: -7px;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--jos-green);
+  box-shadow: 0 0 8px var(--jos-green);
+  transition: width 180ms var(--jos-ease), background 180ms var(--jos-ease);
+}
+.jos-dock-icon.is-front::after {
+  width: 16px;
+}
+.jos-dock-icon.is-minimised::after {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--jos-green);
+}
+.jos-dock-tip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  padding: 4px 10px;
+  transform: translate(-50%, 4px);
+  border-radius: 6px;
+  background: rgba(3, 12, 11, 0.95);
+  border: 1px solid rgba(46, 255, 176, 0.4);
+  color: var(--jos-ink);
+  font-size: 11.5px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms var(--jos-ease), transform 180ms var(--jos-ease);
+}
+.jos-dock-icon:hover .jos-dock-tip,
+.jos-dock-icon:focus-visible .jos-dock-tip {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* ─────────────── windows ─────────────── */
+.jos-wm {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+}
+.jos-window {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  min-width: 320px;
+  min-height: 220px;
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid rgba(46, 255, 176, 0.35);
+  background: var(--jos-glass-strong);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(46, 255, 176, 0.05);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  pointer-events: auto;
+  transform-origin: 50% 80%;
+  transition:
+    left 180ms var(--jos-ease), top 180ms var(--jos-ease), width 180ms var(--jos-ease), height 180ms var(--jos-ease),
+    border-color 180ms var(--jos-ease), box-shadow 180ms var(--jos-ease);
+}
+/* Geometry follows the pointer directly while dragging; the rest animate snaps. */
+.jos-window.is-dragging {
+  transition: border-color 180ms var(--jos-ease), box-shadow 180ms var(--jos-ease);
+}
+.jos-window:not(.is-top) .jos-window-bar {
+  opacity: 0.72;
+}
+.jos-snap-preview {
+  position: absolute;
+  border: 2px solid rgba(92, 255, 196, 0.75);
+  border-radius: 14px;
+  background: rgba(46, 255, 176, 0.1);
+  box-shadow: inset 0 0 40px rgba(46, 255, 176, 0.18), 0 0 30px rgba(46, 255, 176, 0.22);
+  pointer-events: none;
+}
+.jos-window:focus { outline: none; }
+.jos-window:focus-visible { box-shadow: 0 0 0 2px var(--jos-green-soft), 0 30px 80px rgba(0, 0, 0, 0.6); }
+.jos-window.is-top {
+  border-color: rgba(46, 255, 176, 0.65);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.65), 0 0 36px rgba(46, 255, 176, 0.18);
+}
+.jos-window-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  height: 44px;
+  padding: 0 8px 0 14px;
+  border-bottom: 1px solid rgba(46, 255, 176, 0.18);
+  background: linear-gradient(180deg, rgba(46, 255, 176, 0.10), rgba(46, 255, 176, 0.02));
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+.jos-window-bar:active {
+  cursor: grabbing;
+}
+.jos-window-icon {
+  display: grid;
+  place-items: center;
+  color: var(--jos-green);
+}
+.jos-window-bar strong {
+  white-space: nowrap;
+  font-family: var(--font-display-sci), 'Orbitron', sans-serif;
+  font-size: 12.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--jos-ink);
+}
+.jos-window-sub {
+  overflow: hidden;
+  font-size: 12px;
+  color: var(--jos-dim);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.jos-window-ctrls {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.jos-window-ctrls button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 30px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--jos-text);
+  cursor: pointer;
+  transition: background 180ms var(--jos-ease), color 180ms var(--jos-ease);
+}
+.jos-window-ctrls button:hover {
+  background: rgba(46, 255, 176, 0.14);
+  color: var(--jos-ink);
+}
+.jos-window-ctrls .is-close:hover {
+  background: rgba(255, 80, 80, 0.75);
+  color: #fff;
+}
+.jos-window-body {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+}
+.jos-window-resize {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 18px;
+  height: 18px;
+  cursor: nwse-resize;
+  touch-action: none;
+  background: linear-gradient(135deg, transparent 50%, rgba(46, 255, 176, 0.5) 50%, rgba(46, 255, 176, 0.5) 60%, transparent 60%, transparent 70%, rgba(46, 255, 176, 0.5) 70%, rgba(46, 255, 176, 0.5) 80%, transparent 80%);
+}
+
+/* ─────────────── boot ─────────────── */
+.jos-boot {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(60% 60% at 50% 45%, #04140f 0%, #010506 70%);
+}
+.jos-boot-core {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(560px, 90vw);
+}
+.jos-boot-title {
+  margin: 18px 0 0;
+  font-family: var(--font-display-sci), 'Orbitron', sans-serif;
+  font-size: clamp(30px, 5vw, 48px);
+  font-weight: 900;
+  letter-spacing: 0.34em;
+  color: var(--jos-ink);
+  text-shadow: 0 0 22px rgba(46, 255, 176, 0.6);
+}
+.jos-boot-title span {
+  display: inline-block;
+}
+.jos-boot-sub {
+  margin: 6px 0 22px;
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--jos-green);
+}
+.jos-boot-log {
+  width: 100%;
+  min-height: 176px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  line-height: 1.75;
+  color: var(--jos-text);
+}
+.jos-boot-log span {
+  color: var(--jos-dim);
+}
+.jos-boot-log em {
+  font-style: normal;
+  color: var(--jos-green);
+}
+.jos-boot-bar {
+  width: 100%;
+  height: 3px;
+  margin-top: 14px;
+  border-radius: 99px;
+  background: rgba(46, 255, 176, 0.12);
+  overflow: hidden;
+}
+.jos-boot-bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--jos-green), var(--jos-green-soft));
+  box-shadow: 0 0 12px var(--jos-green);
+}
+.jos-boot-skip {
+  margin-top: 18px;
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--jos-dim);
+}
+.nr-hex--draw {
+  stroke-dasharray: 260;
+  stroke-dashoffset: 260;
+  animation: nr-draw 800ms var(--jos-ease) forwards;
+}
+.nr-text--draw {
+  opacity: 0;
+  animation: nr-fade 400ms var(--jos-ease) 500ms forwards;
+}
+@keyframes nr-draw { to { stroke-dashoffset: 0; } }
+@keyframes nr-fade { to { opacity: 1; } }
+
+/* ─────────────── shared app chrome ─────────────── */
+.app-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex: none;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(46, 255, 176, 0.14);
+}
+.app-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 10px;
+  background: rgba(46, 255, 176, 0.06);
+}
+.app-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--jos-text);
+  font-size: 13px;
+  cursor: pointer;
+}
+.app-tabs button[aria-selected='true'] {
+  background: rgba(46, 255, 176, 0.18);
+  color: var(--jos-ink);
+  box-shadow: inset 0 0 0 1px rgba(46, 255, 176, 0.45);
+}
+.app-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.app-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border: 1px solid rgba(46, 255, 176, 0.4);
+  border-radius: 999px;
+  background: rgba(6, 18, 16, 0.6);
+  color: var(--jos-text);
+  font-size: 12.5px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 180ms var(--jos-ease), box-shadow 180ms var(--jos-ease);
+}
+.app-btn:hover {
+  background: rgba(46, 255, 176, 0.14);
+  box-shadow: 0 0 14px rgba(46, 255, 176, 0.25);
+}
+.app-btn--primary {
+  border-color: var(--jos-green);
+  background: rgba(46, 255, 176, 0.18);
+  color: var(--jos-ink);
+}
+.app-empty {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  color: var(--jos-dim);
+}
+
+/* Resume */
+.app-resume {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.app-resume-pdf {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  background: #f3f5f4;
+}
+.app-resume-doc {
+  flex: 1;
+  overflow: auto;
+  padding: 22px 26px 30px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.app-resume-doc header h2 {
+  margin: 0;
+  font-family: var(--font-display-sci), 'Orbitron', sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.08em;
+  color: var(--jos-ink);
+}
+.app-resume-doc header p {
+  margin: 4px 0 0;
+  color: var(--jos-green);
+  font-size: 12.5px;
+}
+.app-resume-doc h3 {
+  margin: 22px 0 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(46, 255, 176, 0.2);
+  font-family: var(--font-display-sci), 'Orbitron', sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--jos-green);
+}
+.app-resume-doc p {
+  margin: 0 0 6px;
+}
+.app-resume-doc b {
+  color: var(--jos-ink);
+}
+.app-resume-doc ul {
+  margin: 4px 0 8px;
+  padding-left: 18px;
+}
+.app-resume-projects li span {
+  display: block;
+  font-size: 12px;
+  color: var(--jos-dim);
+}
+.app-resume-doc dl {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+.app-resume-doc dl div {
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  gap: 12px;
+}
+.app-resume-doc dt {
+  font-weight: 700;
+  color: var(--jos-ink);
+}
+.app-resume-doc dd {
+  margin: 0;
+}
+
+/* ─────────────── museum back ─────────────── */
+.museum-back {
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  z-index: 30;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(46, 255, 176, 0.55);
+  border-radius: 999px;
+  background: rgba(3, 14, 12, 0.78);
+  color: var(--jos-ink, #e9fff5);
+  font-family: var(--font-display-sci), 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 20px rgba(46, 255, 176, 0.25);
+}
+.museum-back:hover {
+  background: rgba(46, 255, 176, 0.18);
+}
+
+/* ─────────────── desktop overlays ─────────────── */
+.jos-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+}
+.jos-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.jos-icon-btn {
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(46, 255, 176, 0.3);
+  border-radius: 999px;
+  background: rgba(6, 22, 19, 0.55);
+  color: var(--jos-green-soft);
+  cursor: pointer;
+  transition: background 180ms var(--jos-ease), border-color 180ms var(--jos-ease), box-shadow 180ms var(--jos-ease), transform 180ms var(--jos-ease);
+}
+.jos-icon-btn:hover,
+.jos-icon-btn:focus-visible {
+  border-color: var(--jos-green);
+  background: rgba(46, 255, 176, 0.14);
+  box-shadow: 0 0 14px rgba(46, 255, 176, 0.32);
+  outline: none;
+}
+.jos-icon-btn:active {
+  transform: scale(0.94);
+}
+.jos-icon-btn em {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--jos-green);
+  color: #021a10;
+  font-style: normal;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+.jos-search-btn {
+  display: inline-flex;
+  gap: 8px;
+  width: auto;
+  padding: 0 10px 0 11px;
+}
+.jos kbd {
+  padding: 2px 6px;
+  border: 1px solid rgba(46, 255, 176, 0.3);
+  border-radius: 5px;
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  color: var(--jos-dim);
+  white-space: nowrap;
+}
+
+/* App launcher */
+.jos-launcher {
+  display: flex;
+  overflow-y: auto;
+  padding: 24px;
+  background: rgba(2, 10, 10, 0.68);
+  backdrop-filter: blur(20px) saturate(130%);
+  -webkit-backdrop-filter: blur(20px) saturate(130%);
+}
+.jos-launcher-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  width: min(980px, 100%);
+  margin: auto;
+}
+.jos-launcher-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.jos-launcher-head h2,
+.jos-notes-head h2 {
+  margin: 0;
+  font-family: var(--font-display-sci), 'Orbitron', sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--jos-ink);
+}
+.jos-launcher-search {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 16px;
+  border: 1px solid rgba(46, 255, 176, 0.35);
+  border-radius: 999px;
+  background: rgba(4, 16, 15, 0.7);
+  color: var(--jos-green-soft);
+  transition: border-color 180ms var(--jos-ease), box-shadow 180ms var(--jos-ease);
+}
+.jos-launcher-search:focus-within {
+  border-color: var(--jos-green);
+  box-shadow: 0 0 16px rgba(46, 255, 176, 0.25);
+}
+.jos-launcher-search input,
+.jos-palette-input input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--jos-ink);
+  font-size: 15px;
+}
+.jos-launcher-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.jos-launcher-groups h3,
+.jos-notes-list h3,
+.jos-palette-list h3 {
+  margin: 0 0 8px;
+  font-family: var(--font-mono), monospace;
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--jos-dim);
+}
+.jos-launcher-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 12px;
+}
+.jos-launcher-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid rgba(46, 255, 176, 0.24);
+  border-radius: 12px;
+  background: rgba(6, 22, 19, 0.72);
+  color: var(--jos-text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 180ms var(--jos-ease), background 180ms var(--jos-ease), box-shadow 180ms var(--jos-ease);
+}
+.jos-launcher-tile:hover,
+.jos-launcher-tile:focus-visible {
+  border-color: var(--jos-green);
+  background: rgba(46, 255, 176, 0.12);
+  box-shadow: 0 0 20px rgba(46, 255, 176, 0.22);
+  outline: none;
+}
+.jos-launcher-tile:active {
+  background: rgba(46, 255, 176, 0.2);
+}
+.jos-launcher-icon {
+  margin-bottom: 6px;
+  color: var(--jos-green-soft);
+  filter: drop-shadow(0 0 8px rgba(46, 255, 176, 0.55));
+}
+.jos-launcher-tile strong {
+  font-size: 14px;
+  color: var(--jos-ink);
+}
+.jos-launcher-tile > span:not(.jos-launcher-icon) {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--jos-dim);
+}
+.jos-launcher-tile em {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-family: var(--font-mono), monospace;
+  font-style: normal;
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--jos-green);
+}
+.jos-launcher-none {
+  margin: 30px 0;
+  text-align: center;
+  color: var(--jos-dim);
+}
+
+/* Notification centre */
+.jos-notes-scrim {
+  background: rgba(1, 6, 6, 0.35);
+}
+.jos-notes-panel {
+  position: absolute;
+  top: calc(var(--jos-top-h) + 10px);
+  right: 14px;
+  bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  width: min(390px, calc(100vw - 24px));
+  border: 1px solid rgba(46, 255, 176, 0.5);
+  border-radius: 14px;
+  background: var(--jos-glass-strong);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 36px rgba(46, 255, 176, 0.16);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+}
+.jos-notes-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 14px 10px 18px;
+}
+.jos-notes-head h2 {
+  font-size: 14px;
+}
+.jos-notes-tools {
+  display: flex;
+  gap: 8px;
+  padding: 0 18px 12px;
+  border-bottom: 1px solid rgba(46, 255, 176, 0.14);
+}
+.jos-notes-tools .app-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.jos-notes-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 14px 16px;
+  scrollbar-width: thin;
+}
+.jos-notes-list section + section {
+  margin-top: 16px;
+}
+.jos-note {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 6px;
+  padding: 10px 8px 10px 10px;
+  overflow: hidden;
+  border: 1px solid rgba(46, 255, 176, 0.14);
+  border-radius: 10px;
+  background: rgba(46, 255, 176, 0.04);
+  transition: border-color 180ms var(--jos-ease), background 180ms var(--jos-ease);
+}
+.jos-note:hover {
+  border-color: rgba(46, 255, 176, 0.4);
+  background: rgba(46, 255, 176, 0.09);
+}
+.jos-note.is-fresh::before {
+  content: '';
+  position: absolute;
+  inset: 8px auto 8px 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--jos-green);
+  box-shadow: 0 0 8px var(--jos-green);
+}
+.jos-note-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(46, 255, 176, 0.3);
+  border-radius: 8px;
+  color: var(--jos-green);
+}
+.jos-note-main {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding: 0 18px 0 0;
+  border: 0;
+  background: none;
+  color: var(--jos-text);
+  text-align: left;
+  cursor: pointer;
+}
+.jos-note-main:disabled {
+  cursor: default;
+}
+.jos-note-main strong {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--jos-ink);
+}
+.jos-note-main span {
+  font-size: 11.5px;
+  color: var(--jos-dim);
+}
+.jos-note-go {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  color: var(--jos-green);
+  transition: transform 180ms var(--jos-ease);
+}
+.jos-note:hover .jos-note-go {
+  transform: translateX(2px);
+}
+.jos-note-x {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--jos-dim);
+  cursor: pointer;
+  transition: background 180ms var(--jos-ease), color 180ms var(--jos-ease);
+}
+.jos-note-x:hover,
+.jos-note-x:focus-visible {
+  background: rgba(46, 255, 176, 0.14);
+  color: var(--jos-ink);
+  outline: none;
+}
+.jos-notes-empty {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  padding: 48px 0;
+  color: var(--jos-dim);
+}
+.jos-notes-empty p {
+  margin: 0;
+  font-size: 13px;
+}
+.jos-toasts {
+  position: absolute;
+  right: 16px;
+  bottom: calc(var(--jos-dock-h) + 12px);
+  z-index: 11;
+  max-width: min(340px, calc(100vw - 32px));
+  pointer-events: none;
+}
+.jos-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px 10px 10px;
+  border: 1px solid rgba(46, 255, 176, 0.55);
+  border-radius: 12px;
+  background: rgba(4, 16, 15, 0.94);
+  color: var(--jos-text);
+  text-align: left;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5), 0 0 22px rgba(46, 255, 176, 0.2);
+  cursor: pointer;
+  pointer-events: auto;
+}
+.jos-toast strong {
+  display: block;
+  font-size: 13px;
+  color: var(--jos-ink);
+}
+.jos-toast small {
+  font-size: 11.5px;
+  color: var(--jos-dim);
+}
+
+/* Command palette */
+.jos-palette-scrim {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 12vh 12px 12px;
+  background: rgba(1, 6, 6, 0.5);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.jos-palette {
+  display: flex;
+  flex-direction: column;
+  width: min(640px, 100%);
+  max-height: min(560px, 76vh);
+  overflow: hidden;
+  border: 1px solid rgba(46, 255, 176, 0.6);
+  border-radius: 14px;
+  background: rgba(4, 15, 14, 0.96);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.65), 0 0 40px rgba(46, 255, 176, 0.2);
+}
+.jos-palette-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(46, 255, 176, 0.18);
+  color: var(--jos-green-soft);
+}
+.jos-palette-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px;
+  scrollbar-width: thin;
+}
+.jos-palette-list > div + div {
+  margin-top: 12px;
+}
+.jos-palette-list h3 {
+  margin: 0 0 4px 8px;
+}
+.jos-palette-item {
+  display: grid;
+  grid-template-columns: 26px auto minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--jos-text);
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.jos-palette-item[aria-selected='true'] {
+  background: rgba(46, 255, 176, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(46, 255, 176, 0.4);
+}
+.jos-palette-item strong {
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--jos-ink);
+}
+.jos-palette-item strong mark {
+  background: none;
+  color: var(--jos-green);
+}
+.jos-palette-item > span:nth-child(3) {
+  overflow: hidden;
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--jos-dim);
+}
+.jos-palette-icon {
+  display: grid;
+  place-items: center;
+  color: var(--jos-green);
+}
+.jos-palette-enter {
+  color: var(--jos-green);
+}
+.jos-palette-none {
+  padding: 26px 0;
+  margin: 0;
+  text-align: center;
+  color: var(--jos-dim);
+}
+.jos-palette-foot {
+  display: flex;
+  gap: 16px;
+  padding: 8px 16px;
+  border-top: 1px solid rgba(46, 255, 176, 0.14);
+  font-family: var(--font-mono), monospace;
+  font-size: 10.5px;
+  color: var(--jos-dim);
+}
+.jos-palette-foot span:last-child {
+  margin-left: auto;
+}
+
+/* Home widgets stand on the floor either side of the pedestal, which slides
+   behind them when the first or last card is selected. */
+.jos-widgets {
+  position: absolute;
+  inset: auto 0 6px;
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  pointer-events: none;
+}
+.jos-widget {
+  width: clamp(176px, 21%, 214px);
+  padding: 10px 12px;
+  border: 1px solid rgba(46, 255, 176, 0.32);
+  border-radius: 10px;
+  background: rgba(4, 16, 15, 0.74);
+  box-shadow: 0 0 20px rgba(46, 255, 176, 0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: auto;
+  transition: border-color 180ms var(--jos-ease), box-shadow 180ms var(--jos-ease);
+}
+.jos-widget:hover {
+  border-color: rgba(46, 255, 176, 0.6);
+  box-shadow: 0 0 24px rgba(46, 255, 176, 0.18);
+}
+.jos-widget h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--jos-green);
+}
+.jos-widget-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+.jos-widget-stats button {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 4px 2px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--jos-dim);
+  font-size: 10px;
+  cursor: pointer;
+  transition: background 180ms var(--jos-ease);
+}
+.jos-widget-stats button:hover,
+.jos-widget-stats button:focus-visible {
+  background: rgba(46, 255, 176, 0.12);
+  outline: none;
+}
+.jos-widget-stats b {
+  font-family: var(--font-display-sci), 'Orbitron', sans-serif;
+  font-size: 20px;
+  color: var(--jos-ink);
+}
+.jos-widget-pushes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.jos-widget-pushes a {
+  position: relative;
+  display: grid;
+  padding: 3px 16px 3px 4px;
+  border-radius: 6px;
+  color: var(--jos-text);
+  text-decoration: none;
+  transition: background 180ms var(--jos-ease);
+}
+.jos-widget-pushes a:hover,
+.jos-widget-pushes a:focus-visible {
+  background: rgba(46, 255, 176, 0.12);
+  outline: none;
+}
+.jos-widget-pushes span {
+  overflow: hidden;
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--jos-ink);
+}
+.jos-widget-pushes small {
+  font-size: 10.5px;
+  color: var(--jos-dim);
+}
+.jos-widget-pushes svg {
+  position: absolute;
+  top: 7px;
+  right: 4px;
+  color: var(--jos-green);
+  opacity: 0;
+  transition: opacity 180ms var(--jos-ease);
+}
+.jos-widget-pushes a:hover svg {
+  opacity: 1;
+}
+.jos-widget-more {
+  display: block;
+  margin: 4px 0 0 4px;
+  font-size: 10.5px;
+  color: var(--jos-green);
+}
+.jos-window-bar {
+  transition: opacity 180ms var(--jos-ease);
+}
+.jos-quick {
+  transition: background 180ms var(--jos-ease), transform 180ms var(--jos-ease);
+}
+.jos-quick:active {
+  transform: scale(0.98);
+}
+.jos-quick svg:first-child {
+  transition: transform 180ms var(--jos-ease);
+}
+.jos-quick:hover svg:first-child {
+  transform: translateX(2px);
+}
+
+/* ─────────────── responsive ─────────────── */
+@media (max-height: 780px) {
+  .jos-widget-more { display: none; }
+}
+@media (max-height: 680px) {
+  .jos-widgets { display: none; }
+}
+@media (max-width: 1440px) {
+  .jos-body { grid-template-columns: 230px minmax(0, 1fr) 270px; gap: 16px; padding-inline: 18px; }
+  .jos-motto { letter-spacing: 0.32em; }
+  .jos-search-btn kbd { display: none; }
+  .jos-search-btn { width: 38px; padding: 0; }
+  .jos-top-right { gap: 16px; }
+}
+/* The top bar sheds its least useful items first as width runs out. */
+@media (max-width: 1400px) {
+  .jos-motto { display: none; }
+  .jos-top { grid-template-columns: 1fr auto; }
+}
+@media (max-width: 1280px) {
+  .jos-body { grid-template-columns: 230px minmax(0, 1fr); }
+  .jos-right-wrap { display: none; }
+}
+@media (max-width: 1100px) {
+  .jos-brand span { display: none; }
+}
+@media (max-width: 1024px) {
+  .jos-body { grid-template-columns: minmax(0, 1fr); }
+  .jos-side-wrap { display: none; }
+}
+@media (max-width: 1000px) {
+  .jos-sys-icons { display: none; }
+}
+@media (max-width: 860px) {
+  .jos-weather { display: none; }
+}
+@media (max-width: 760px) {
+  :root { --jos-top-h: 64px; --jos-dock-h: 84px; }
+  .jos-top { grid-template-columns: auto 1fr; gap: 10px; padding: 0 12px; }
+  .jos-brand { gap: 10px; }
+  .jos-brand strong { font-size: 14px; letter-spacing: 0.22em; white-space: nowrap; }
+  .jos-brand span, .jos-weather, .jos-sys-icons { display: none; }
+  .jos-top-right { gap: 12px; }
+  .jos-clock b { font-size: 14px; white-space: nowrap; }
+  .jos-clock span { display: none; }
+  .jos-power, .jos-icon-btn, .jos-search-btn { width: 34px; height: 34px; }
+  .jos-top-actions { gap: 6px; }
+  .jos-window-sub { display: none; }
+  .jos-body { padding: 14px 12px 8px; overflow-y: auto; }
+  .jos-home { flex-direction: column; justify-content: flex-start; gap: 12px; }
+  .jos-widgets { position: static; flex-direction: column; align-items: stretch; width: 100%; pointer-events: auto; }
+  .jos-widget { width: auto; }
+  .jos-widget-more { display: block; }
+  .jos-notes-panel { top: 8px; right: 8px; bottom: 8px; width: calc(100vw - 16px); }
+  .jos-palette-scrim { padding: 8px; }
+  .jos-palette { max-height: calc(100vh - 16px); }
+  .jos-palette-foot span:not(:last-child) { display: none; }
+  .jos-launcher { padding: 14px 12px; }
+  .jos-launcher-head h2 { display: none; }
+  .jos-launcher-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .jos-carousel { margin-top: 0; }
+  .jos-arc { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: 100%; }
+  .jos-card-slot { transform: none; }
+  .jos-card { width: 100%; padding: 18px 10px 14px; }
+  .jos-card.is-sel { transform: none; }
+  .jos-card-icon { width: 64px; height: 64px; }
+  .jos-card-icon svg { width: 40px; height: 40px; }
+  .jos-stage, .jos-arc::after { display: none; }
+  .jos-dock {
+    max-width: calc(100vw - 16px);
+    overflow-x: auto;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 14px 14px 0 0;
+    border-top: 1px solid rgba(46, 255, 176, 0.55);
+    background: linear-gradient(180deg, rgba(8, 26, 23, 0.85), rgba(3, 12, 11, 0.95));
+  }
+  .jos-dock::before { display: none; }
+  .jos-wall-room { display: none; }
+}
+@media (max-width: 440px) {
+  .jos-brand strong { display: none; }
+}
+@media (max-width: 380px) {
+  .jos-top { gap: 6px; padding: 0 8px; }
+  .jos-top-right { gap: 8px; }
+  .jos-top-actions { gap: 4px; }
+  .jos-clock b { font-size: 12.5px; letter-spacing: 0; }
+}
+
+/* The tilt follows the pointer through inline vars, so only !important stops it. */
+.jos[data-reduce-motion] .jos-card {
+  --tilt-x: 0deg !important;
+  --tilt-y: 0deg !important;
+  --tilt-depth: initial !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .jos-card {
+    --tilt-x: 0deg !important;
+    --tilt-y: 0deg !important;
+    --tilt-depth: initial !important;
+  }
+}

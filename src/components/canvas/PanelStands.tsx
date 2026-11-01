@@ -3,39 +3,17 @@
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { type Mesh, type MeshStandardMaterial } from 'three';
+import { PANEL_STANDS } from '@/components/canvas/RoomPanels';
 import { palette } from '@/lib/palette';
 import { noRaycast } from '@/lib/three-utils';
 
-/* V12.1 — thin metal rod + neon trim "stands" beneath the 4 floating
- * mid-air panels (Achievements, About Me, Philosophy, Tech Stack) so
- * they read as physically anchored to the room rather than floating
- * arbitrarily in space. */
-
-type StandSpec = {
-  x: number;
-  z: number;
-  topY: number; // bottom of the panel
-};
-
-// V12.4 — panel positions:
-//   AboutMe        [-3.5, 2.4, 1.0]
-//   Achievements   [-3.5, 0.5, 1.0]
-//   Philosophy     [ 3.5, 2.4, 1.0]
-//   TechStack      [ 5.5, 2.5, -0.5]
-//   SystemOverview [ 5.5, 0.8, -0.5]
-const STANDS: StandSpec[] = [
-  // Achievements panel y=0.5 touches the floor — no stand needed.
-  { x: -3.5, z: 1.0, topY: 2.4 - 0.55 }, // About Me
-  { x:  3.5, z: 1.0, topY: 2.4 - 0.55 }, // Philosophy
-  // V13.1 — Tech Stack panel @ [5.5, 2.5, 1.0] gets its own tall stand.
-  { x:  5.5, z: 1.0, topY: 2.5 - 0.55 }, // Tech Stack
-  { x:  5.5, z: 1.0, topY: 0.8 - 0.55 }, // System Overview (column-brace)
-];
+/* Thin metal rod + neon trim stands under the free-standing HUD cards so
+ * they read as anchored to the floor. Positions come from RoomPanels. */
 
 export function PanelStands() {
   return (
     <group>
-      {STANDS.map((s, i) => (
+      {PANEL_STANDS.map((s, i) => (
         <Stand key={i} x={s.x} z={s.z} topY={s.topY} phase={i * 0.7} />
       ))}
     </group>
