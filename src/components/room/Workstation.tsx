@@ -2,15 +2,17 @@
 
 import { RoundedBox, useGLTF } from '@react-three/drei';
 import type { ThreeEvent } from '@react-three/fiber';
-import { Suspense, useLayoutEffect, useMemo, useRef } from 'react';
-import { AdditiveBlending, CylinderGeometry, DoubleSide, ExtrudeGeometry, InstancedMesh, Object3D, Shape, type Texture } from 'three';
+import { Suspense, useMemo } from 'react';
+import { AdditiveBlending, CylinderGeometry, DoubleSide, ExtrudeGeometry, RepeatWrapping, Shape, type Texture } from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
-import { drawNR, FONTS, glowText, useCanvasTexture } from '@/components/room/canvasTex';
+import { FONTS, glowText, seeded, useCanvasTexture } from '@/components/room/canvasTex';
+import { Headset, Keyboard, MacroPad, Mouse, Notebook, Speakers } from '@/components/room/DeskGear';
+import { Mug } from '@/components/room/Foreground';
 import { DESK, DESK_CX, SCREEN, type Vec3 } from '@/components/room/layout';
 import { MAT } from '@/components/room/materials';
 import { LedBar } from '@/components/room/RoomShell';
 import { useBreathingScreen, useFpsScreen, useGamesScreen, useHeroScreen } from '@/components/room/Screens';
-import { cube, NO_MIRROR, painted, solid, tube, Unmirrored, useGeometries } from '@/components/room/shapes';
+import { cube, NO_MIRROR, painted, post, soft, solid, tube, Unmirrored, useGeometries } from '@/components/room/shapes';
 
 type Handlers = {
   onClick: (e: ThreeEvent<MouseEvent>) => void;
@@ -29,16 +31,22 @@ export function Workstation({ bootHandlers }: { bootHandlers: Handlers }) {
         <Monitors />
       </group>
       <Unmirrored>
-        <Keyboard />
-        <Mouse />
-        <Headphones position={[-2.62, TOP, -2.66]} />
-        <Mug position={[-2.08, TOP, -2.5]} />
-        <Speaker position={[-2.42, TOP, -3.12]} />
-        <Speaker position={[0.62, TOP, -3.14]} />
+        <Keyboard position={[-0.9, TOP + 0.024, -2.58]} />
+        <Mouse position={[-0.32, TOP + 0.004, -2.58]} />
+        <Headset position={[-2.62, TOP, -2.66]} />
+        <Mug position={[-2.08, TOP, -2.5]} turn={-0.4} />
+        <Speakers
+          at={[
+            [-2.42, TOP, -3.12],
+            [0.62, TOP, -3.14],
+          ]}
+        />
+        <MacroPad position={[-1.58, TOP, -2.62]} />
+        <Notebook position={[0.15, TOP, -2.6]} />
       </Unmirrored>
       <DeskModel url="/models/room/desk_lamp_arm_01.glb" position={[-2.82, TOP, -3.12]} rotation={[0, 0.9, 0]} scale={0.78} />
       <DeskModel url="/models/room/potted_plant_04.glb" position={[1.47, TOP, -2.62]} scale={1.15} />
-      <DeskModel url="/models/room/gamepad.glb" position={[0.5, TOP + 0.002, -2.56]} rotation={[0, -0.45, 0]} scale={0.42} />
+      <DeskModel url="/models/room/gamepad.glb" position={[0.55, TOP + 0.002, -2.56]} rotation={[0, -0.45, 0]} scale={0.95} />
     </group>
   );
 }
@@ -59,27 +67,65 @@ function Desk() {
     },
     [],
   );
+  // A fine woven top and a stitched desk mat: flat colour falls apart up close.
+  const weave = useCanvasTexture(
+    256,
+    256,
+    (ctx, w, h) => {
+      const rnd = seeded(77);
+      ctx.fillStyle = '#c8c8c8';
+      ctx.fillRect(0, 0, w, h);
+      for (let y = 0; y < h; y += 4) {
+        for (let x = (y / 4) % 2 ? 0 : 4; x < w; x += 8) {
+          ctx.fillStyle = `rgba(255,255,255,${0.05 + rnd() * 0.07})`;
+          ctx.fillRect(x, y, 4, 4);
+        }
+      }
+    },
+    [],
+  );
+  weave.wrapS = weave.wrapT = RepeatWrapping;
+  weave.repeat.set(26, 6);
+  const mat = useCanvasTexture(
+    1024,
+    360,
+    (ctx, w, h) => {
+      const rnd = seeded(78);
+      ctx.fillStyle = '#10171a';
+      ctx.fillRect(0, 0, w, h);
+      for (let i = 0; i < 14000; i++) {
+        ctx.fillStyle = rnd() > 0.5 ? 'rgba(90,120,120,0.05)' : 'rgba(0,0,0,0.12)';
+        ctx.fillRect(rnd() * w, rnd() * h, 2, 2);
+      }
+      ctx.setLineDash([9, 7]);
+      ctx.strokeStyle = 'rgba(46,255,176,0.42)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(12, 12, w - 24, h - 24);
+      ctx.setLineDash([]);
+      ctx.font = `700 22px ${FONTS.sci()}`;
+      ctx.fillStyle = 'rgba(46,255,176,0.3)';
+      ctx.textAlign = 'right';
+      ctx.fillText('LEVEL UP · BUILD · EXPLORE', w - 34, h - 32);
+    },
+    [],
+  );
+  const { cabinets } = useGeometries(buildCabinets);
   const width = DESK.x1 - DESK.x0;
   return (
     <group>
-      <RoundedBox args={[width, 0.045, DESK.depth]} radius={0.012} position={[DESK_CX, TOP - 0.0225, DESK.z]} material={MAT.matte} />
+      <RoundedBox args={[width, 0.045, DESK.depth]} radius={0.012} position={[DESK_CX, TOP - 0.0225, DESK.z]}>
+        <meshStandardMaterial map={weave} roughnessMap={weave} color="#171d20" roughness={1} metalness={0.2} envMapIntensity={0.6} />
+      </RoundedBox>
+      <mesh geometry={cabinets} material={MAT.painted} />
       {/* Front edge light + under-desk glow strip. */}
       <LedBar from={[DESK.x0 + 0.02, TOP - 0.05, FRONT - 0.01]} to={[DESK.x1 - 0.02, TOP - 0.05, FRONT - 0.01]} />
       <LedBar from={[DESK.x0 + 0.7, 0.32, DESK.z - 0.38]} to={[DESK.x1 - 0.7, 0.32, DESK.z - 0.38]} mat={MAT.ledSoft} />
       {/* Drawer cabinets at both ends. */}
       {[DESK.x0 + 0.33, DESK.x1 - 0.33].map((x, i) => (
         <group key={x} position={[x, 0, DESK.z]}>
-          <mesh position={[0, (TOP - 0.05) / 2, 0]} material={MAT.matte}>
-            <boxGeometry args={[0.62, TOP - 0.05, DESK.depth - 0.06]} />
-          </mesh>
-          {[0.18, 0.42].map((y) => (
-            <mesh key={y} position={[0, y, (DESK.depth - 0.06) / 2 + 0.001]} material={MAT.metal}>
-              <boxGeometry args={[0.58, 0.006, 0.004]} />
-            </mesh>
-          ))}
           <LedBar from={[0.3, 0.04, DESK.depth / 2 - 0.02]} to={[0.3, TOP - 0.08, DESK.depth / 2 - 0.02]} thick={0.012} />
           {i === 0 && (
-            <mesh position={[-0.02, 0.46, (DESK.depth - 0.06) / 2 + 0.003]}>
+            <mesh position={[-0.02, 0.46, (DESK.depth - 0.06) / 2 + 0.018]}>
               <planeGeometry args={[0.42, 0.42]} />
               <meshBasicMaterial map={sign} toneMapped={false} />
             </mesh>
@@ -92,12 +138,45 @@ function Desk() {
       </mesh>
       {/* Large desk mat with lit edge. */}
       <group position={[-0.72, TOP + 0.002, -2.62]}>
-        <RoundedBox args={[1.25, 0.004, 0.44]} radius={0.002} material={MAT.fabric} />
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.0022, 0]}>
+          <planeGeometry args={[1.25, 0.44]} />
+          <meshStandardMaterial map={mat} roughness={0.95} />
+        </mesh>
+        <RoundedBox args={[1.25, 0.004, 0.44]} radius={0.002} material={MAT.matte} />
         <LedBar from={[-0.62, 0.003, 0.22]} to={[0.62, 0.003, 0.22]} thick={0.006} mat={MAT.ledSoft} />
         <LedBar from={[-0.62, 0.003, -0.22]} to={[0.62, 0.003, -0.22]} thick={0.006} mat={MAT.ledSoft} />
       </group>
     </group>
   );
+}
+
+/** The desk's two pedestals: carcass, then separate fronts with a shadow gap and a recessed pull. */
+function buildCabinets() {
+  const FRONT_Z = (DESK.depth - 0.06) / 2;
+  const fronts = (x: number, spans: [number, number][]) =>
+    spans.flatMap(([y0, y1]) => [
+      soft(0.59, y1 - y0, 0.02, x, (y0 + y1) / 2, FRONT_Z + 0.009, '#1a2225', 0.004),
+      cube(0.16, 0.012, 0.006, x, y1 - 0.03, FRONT_Z + 0.0195, '#090c0d'),
+      cube(0.14, 0.003, 0.006, x, y1 - 0.0255, FRONT_Z + 0.0215, '#6b7a80'),
+    ]);
+  const pedestal = (x: number) => [cube(0.62, TOP - 0.05, DESK.depth - 0.06, x, (TOP - 0.05) / 2, DESK.z, '#0e1315'), ...[-0.25, 0.25].map((d) => cube(0.05, 0.03, 0.05, x + d, 0.015, DESK.z + 0.33, '#080b0c'))];
+  const [left, right] = [DESK.x0 + 0.33, DESK.x1 - 0.33];
+  const lift = (g: ReturnType<typeof soft>) => g.translate(0, 0, DESK.z);
+  return {
+    cabinets: solid([
+      ...pedestal(left),
+      ...pedestal(right),
+      ...fronts(left, [
+        [0.04, 0.22],
+        [0.235, 0.69],
+      ]).map(lift),
+      ...fronts(right, [
+        [0.04, 0.24],
+        [0.255, 0.46],
+        [0.475, 0.69],
+      ]).map(lift),
+    ]),
+  };
 }
 
 /* ─────────────────────────── monitors ─────────────────────────── */
@@ -148,9 +227,15 @@ function buildMonitor(w: number, h: number, height: number) {
   const shell = [
     body,
     ...rim,
-    cube(w * 0.62, h * 0.56, 0.026, 0, -0.012, -0.027, CASE),
-    cube(w * 0.42, h * 0.38, 0.03, 0, -0.018, -0.052, '#14191c'),
-    cube(0.07, 0.07, 0.014, 0, -0.018, -0.071, LIP),
+    soft(w * 0.66, h * 0.6, 0.028, 0, -0.014, -0.026, CASE, 0.012),
+    soft(w * 0.44, h * 0.4, 0.03, 0, -0.018, -0.05, '#14191c', 0.012),
+    // Vents across the shoulders of the back.
+    ...[-1, 1].flatMap((s) => Array.from({ length: 9 }, (_, i) => cube(0.008, h * 0.14, 0.002, s * (w * 0.16 + i * 0.016), h * 0.17, -0.0405, '#050708'))),
+    // VESA plate and its four screws, then the port bay under it.
+    soft(0.1, 0.1, 0.008, 0, -0.018, -0.068, LIP, 0.003),
+    ...[-1, 1].flatMap((sx) => [-1, 1].map((sy) => post(0.0038, 0.0038, 0.003, 0, 0, 0, '#0a0d0e', 10).rotateX(Math.PI / 2).translate(sx * 0.036, -0.018 + sy * 0.036, -0.073))),
+    cube(w * 0.26, 0.03, 0.006, 0, -h * 0.2 - 0.03, -0.0655, '#050708'),
+    ...[-2, -1, 0, 1, 2].map((i) => cube(0.016, 0.009, 0.002, i * 0.03, -h * 0.2 - 0.03, -0.069, '#3a4448')),
   ];
 
   const toDesk = height - TOP;
@@ -200,110 +285,6 @@ function Monitor({ tex, size: [w, h], position, rotationY = 0, breathe = false }
       <mesh position={[0, 0.05, -0.08]}>
         <planeGeometry args={[w * 1.9, h * 2.2]} />
         <meshBasicMaterial map={glow} transparent opacity={0.5} side={DoubleSide} depthWrite={false} blending={AdditiveBlending} />
-      </mesh>
-    </group>
-  );
-}
-
-/* ─────────────────────────── peripherals ─────────────────────────── */
-
-const KEY_COLS = 17;
-const KEY_ROWS = 5;
-
-function Keyboard() {
-  const keys = useRef<InstancedMesh>(null);
-  const count = KEY_COLS * KEY_ROWS;
-  useLayoutEffect(() => {
-    const o = new Object3D();
-    let i = 0;
-    for (let r = 0; r < KEY_ROWS; r++)
-      for (let c = 0; c < KEY_COLS; c++) {
-        o.position.set(-0.208 + c * 0.026, 0, -0.052 + r * 0.026);
-        o.updateMatrix();
-        keys.current?.setMatrixAt(i++, o.matrix);
-      }
-    if (keys.current) keys.current.instanceMatrix.needsUpdate = true;
-  }, []);
-  return (
-    <group position={[-0.9, TOP + 0.006, -2.58]} rotation={[0.05, 0, 0]}>
-      <RoundedBox args={[0.47, 0.016, 0.155]} radius={0.006} material={MAT.metal} />
-      {/* Underglow seen between the keycaps. */}
-      <mesh position={[0, 0.0085, 0]} rotation={[-Math.PI / 2, 0, 0]} material={MAT.ledSoft}>
-        <planeGeometry args={[0.45, 0.135]} />
-      </mesh>
-      <instancedMesh ref={keys} args={[undefined, undefined, count]} position={[0, 0.014, 0]} material={MAT.plastic}>
-        <boxGeometry args={[0.021, 0.011, 0.021]} />
-      </instancedMesh>
-    </group>
-  );
-}
-
-function Mouse() {
-  return (
-    <group position={[-0.32, TOP + 0.016, -2.58]} rotation={[0, 0.12, 0]}>
-      <mesh scale={[0.034, 0.018, 0.06]} material={MAT.plastic}>
-        <sphereGeometry args={[1, 24, 16]} />
-      </mesh>
-      <LedBar from={[0, 0.017, -0.035]} to={[0, 0.017, 0.01]} thick={0.004} />
-    </group>
-  );
-}
-
-function Headphones({ position }: { position: Vec3 }) {
-  return (
-    <group position={position}>
-      <mesh position={[0, 0.006, 0]} material={MAT.metal}>
-        <cylinderGeometry args={[0.07, 0.08, 0.012, 32]} />
-      </mesh>
-      <mesh position={[0, 0.16, 0]} material={MAT.metal}>
-        <cylinderGeometry args={[0.008, 0.008, 0.3, 12]} />
-      </mesh>
-      <group position={[0, 0.3, 0]} rotation={[0, 0.5, 0]}>
-        <mesh rotation={[0, 0, 0]} material={MAT.leather}>
-          <torusGeometry args={[0.085, 0.012, 12, 40, Math.PI]} />
-        </mesh>
-        {[-1, 1].map((s) => (
-          <group key={s} position={[s * 0.085, -0.03, 0]} rotation={[0, 0, (s * Math.PI) / 2]}>
-            <mesh material={MAT.leather}>
-              <cylinderGeometry args={[0.045, 0.045, 0.035, 28]} />
-            </mesh>
-            <mesh position={[0, s * -0.019, 0]} rotation={[Math.PI / 2, 0, 0]} material={MAT.ledGreen}>
-              <torusGeometry args={[0.03, 0.003, 8, 32]} />
-            </mesh>
-          </group>
-        ))}
-      </group>
-    </group>
-  );
-}
-
-function Mug({ position }: { position: Vec3 }) {
-  const logo = useCanvasTexture(256, 256, (ctx, w, h) => drawNR(ctx, w / 2, h / 2, 90), []);
-  return (
-    <group position={position} rotation={[0, -0.4, 0]}>
-      <mesh position={[0, 0.05, 0]} material={MAT.matte}>
-        <cylinderGeometry args={[0.04, 0.037, 0.1, 32]} />
-      </mesh>
-      <mesh position={[0.045, 0.05, 0]} rotation={[0, 0, Math.PI / 2]} material={MAT.matte}>
-        <torusGeometry args={[0.025, 0.007, 10, 24]} />
-      </mesh>
-      <mesh position={[0, 0.05, 0.0405]}>
-        <planeGeometry args={[0.055, 0.055]} />
-        <meshBasicMaterial map={logo} transparent toneMapped={false} depthWrite={false} />
-      </mesh>
-    </group>
-  );
-}
-
-function Speaker({ position }: { position: Vec3 }) {
-  return (
-    <group position={position}>
-      <RoundedBox args={[0.12, 0.2, 0.12]} radius={0.01} position={[0, 0.1, 0]} material={MAT.matte} />
-      <mesh position={[0, 0.12, 0.061]} material={MAT.ledGreen}>
-        <ringGeometry args={[0.032, 0.038, 32]} />
-      </mesh>
-      <mesh position={[0, 0.12, 0.0605]} material={MAT.plastic}>
-        <circleGeometry args={[0.032, 32]} />
       </mesh>
     </group>
   );

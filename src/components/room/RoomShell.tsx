@@ -1,12 +1,13 @@
 'use client';
 
 import { MeshReflectorMaterial, useTexture } from '@react-three/drei';
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
-import { AdditiveBlending, Color, DoubleSide, InstancedMesh, Object3D, PlaneGeometry, RepeatWrapping, SRGBColorSpace, Shape, type MeshStandardMaterial, type Texture } from 'three';
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { AdditiveBlending, Color, DoubleSide, InstancedMesh, Object3D, PlaneGeometry, RepeatWrapping, SRGBColorSpace, Shape, type Material, type MeshStandardMaterial, type Texture, type WebGLProgramParametersWithUniforms } from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { drawNR, FONTS, glowText, seeded, useCanvasTexture } from '@/components/room/canvasTex';
 import { DESK, ROOM, type Vec3 } from '@/components/room/layout';
 import { MAT } from '@/components/room/materials';
+import { NO_MIRROR, post, solid, useGeometries } from '@/components/room/shapes';
 
 const W = ROOM.x1 - ROOM.x0;
 const D = ROOM.z1 - ROOM.z0;
@@ -39,13 +40,14 @@ export function RoomShell({ lowPerf }: { lowPerf: boolean }) {
       </Suspense>
       <Ceiling />
       <Rug />
-      {/* Floor skirting + crown LEDs around the three walls. */}
+      {/* Floor skirting + crown LEDs around all four walls. */}
       <LedBar from={[ROOM.x0 + 0.02, 0.05, ROOM.z0 + 0.03]} to={[ROOM.x1 - 0.02, 0.05, ROOM.z0 + 0.03]} mat={MAT.ledSoft} />
       <LedBar from={[ROOM.x0 + 0.03, 0.05, ROOM.z0]} to={[ROOM.x0 + 0.03, 0.05, ROOM.z1]} mat={MAT.ledSoft} />
       <LedBar from={[ROOM.x1 - 0.03, 0.05, ROOM.z0]} to={[ROOM.x1 - 0.03, 0.05, ROOM.z1]} mat={MAT.ledSoft} />
       <LedBar from={[ROOM.x0, H - 0.08, ROOM.z0 + 0.04]} to={[ROOM.x1, H - 0.08, ROOM.z0 + 0.04]} thick={0.016} />
-      <LedBar from={[ROOM.x0 + 0.04, H - 0.08, ROOM.z0]} to={[ROOM.x0 + 0.04, H - 0.08, ROOM.z1 - 1.6]} thick={0.012} mat={MAT.ledSoft} />
-      <LedBar from={[ROOM.x1 - 0.04, H - 0.08, ROOM.z0]} to={[ROOM.x1 - 0.04, H - 0.08, ROOM.z1 - 1.6]} thick={0.012} mat={MAT.ledSoft} />
+      <LedBar from={[ROOM.x0 + 0.04, H - 0.08, ROOM.z0]} to={[ROOM.x0 + 0.04, H - 0.08, ROOM.z1]} thick={0.012} mat={MAT.ledSoft} />
+      <LedBar from={[ROOM.x1 - 0.04, H - 0.08, ROOM.z0]} to={[ROOM.x1 - 0.04, H - 0.08, ROOM.z1]} thick={0.012} mat={MAT.ledSoft} />
+      <LedBar from={[ROOM.x0, H - 0.08, ROOM.z1 - 0.04]} to={[ROOM.x1, H - 0.08, ROOM.z1 - 0.04]} thick={0.012} mat={MAT.ledSoft} />
     </group>
   );
 }
@@ -188,9 +190,14 @@ function Walls() {
       <mesh position={[ROOM.x1, H / 2, CZ]} rotation={[0, -Math.PI / 2, 0]} material={MAT.wall}>
         <planeGeometry args={[D, H]} />
       </mesh>
+      {/* front, closing the room behind the start view */}
+      <mesh position={[CX, H / 2, ROOM.z1]} rotation={[0, Math.PI, 0]} material={MAT.wall}>
+        <planeGeometry args={[W, H]} />
+      </mesh>
 
       <WallCladding />
-      <WallTrim />
+      <Bars list={TRIM} material={MAT.trim} />
+      <Bars list={CEILING_TRIM} material={MAT.matte} />
       {/* LED reveals either side of the desk bay. */}
       {[-3.05, 0.3].map((x) => (
         <LedBar key={x} from={[x, 0.7, ROOM.z0 + 0.04]} to={[x, 2.74, ROOM.z0 + 0.04]} thick={0.01} mat={MAT.ledSoft} />
@@ -217,39 +224,40 @@ function WallPiece({ x0, x1, y0, y1 }: { x0: number; x1: number; y0: number; y1:
 type Slab = { p: Vec3; s: Vec3; tone: number };
 
 const SEAM = 0.016;
-/** Side walls are only ever seen up to the camera. */
-const SIDE_END = 3.2;
-const SIDE_MID = (ROOM.z0 + SIDE_END) / 2;
-const SIDE_LEN = SIDE_END - ROOM.z0;
+const SIDE_MID = (ROOM.z0 + ROOM.z1) / 2;
+const SIDE_LEN = ROOM.z1 - ROOM.z0;
 /** Row breaks up the wall; the rails in WallTrim sit on these. */
 const RAILS = [0.98, 2.02] as const;
 // Panel counts differ per row so the seams never line up.
 const ROWS = [
-  { v0: 0.12, v1: RAILS[0], back: 6, leftNear: 2, leftFar: 4, right: 6 },
-  { v0: RAILS[0], v1: RAILS[1], back: 8, leftNear: 1, leftFar: 5, right: 7 },
-  { v0: RAILS[1], v1: H - 0.12, back: 5, leftNear: 2, leftFar: 4, right: 5 },
+  { v0: 0.12, v1: RAILS[0], back: 6, leftNear: 2, leftFar: 7, right: 9, front: 7 },
+  { v0: RAILS[0], v1: RAILS[1], back: 8, leftNear: 1, leftFar: 8, right: 10, front: 9 },
+  { v0: RAILS[1], v1: H - 0.12, back: 5, leftNear: 2, leftFar: 6, right: 8, front: 6 },
 ];
 
 const SLABS: Slab[] = (() => {
   const rnd = seeded(21);
   const out: Slab[] = [];
-  const row = (wall: 'back' | 'left' | 'right', u0: number, u1: number, v0: number, v1: number, n: number) => {
+  const row = (wall: 'back' | 'front' | 'left' | 'right', u0: number, u1: number, v0: number, v1: number, n: number) => {
     const pitch = (u1 - u0) / n;
     for (let i = 0; i < n; i++) {
       const u = u0 + pitch * (i + 0.5);
       const proud = rnd() > 0.65 ? 0.024 : 0.014;
-      const tone = 0.7 + rnd() * 0.6;
+      const farEnd = wall === 'front' || (wall !== 'back' && u > 1);
+      const tone = (0.7 + rnd() * 0.6) * (farEnd ? 1.5 : 1);
       const v = (v0 + v1) / 2;
       const [len, tall] = [pitch - SEAM, v1 - v0 - SEAM];
       if (wall === 'back') out.push({ p: [u, v, ROOM.z0 + proud / 2], s: [len, tall, proud], tone });
+      else if (wall === 'front') out.push({ p: [u, v, ROOM.z1 - proud / 2], s: [len, tall, proud], tone });
       else out.push({ p: [wall === 'left' ? ROOM.x0 + proud / 2 : ROOM.x1 - proud / 2, v, u], s: [proud, tall, len], tone });
     }
   };
-  ROWS.forEach(({ v0, v1, back, leftNear, leftFar, right }) => {
+  ROWS.forEach(({ v0, v1, back, leftNear, leftFar, right, front }) => {
     row('back', ROOM.x0, WINDOW.x0 - 0.06, v0, v1, back);
+    row('front', ROOM.x0, ROOM.x1, v0, v1, front);
     row('left', ROOM.z0, -1.55, v0, v1, leftNear);
-    row('left', -1.55, SIDE_END, v0, v1, leftFar);
-    row('right', ROOM.z0, SIDE_END, v0, v1, right);
+    row('left', -1.55, ROOM.z1, v0, v1, leftFar);
+    row('right', ROOM.z0, ROOM.z1, v0, v1, right);
   });
   row('back', WINDOW.x1 + 0.06, ROOM.x1, 0.12, H - 0.12, 1);
   row('back', WINDOW.x0 - 0.06, WINDOW.x1 + 0.06, 0.12, WINDOW.y0 - 0.06, 3);
@@ -259,6 +267,7 @@ const SLABS: Slab[] = (() => {
 
 const horizontal = (y: number, tall: number, proud: number): [Vec3, Vec3][] => [
   [[CX, y, ROOM.z0 + proud / 2], [W, tall, proud]],
+  [[CX, y, ROOM.z1 - proud / 2], [W, tall, proud]],
   [[ROOM.x0 + proud / 2, y, SIDE_MID], [proud, tall, SIDE_LEN]],
   [[ROOM.x1 - proud / 2, y, SIDE_MID], [proud, tall, SIDE_LEN]],
 ];
@@ -269,37 +278,121 @@ const TRIM: [Vec3, Vec3][] = [
   ...horizontal(H - 0.05, 0.1, 0.03),
   ...horizontal(RAILS[0], 0.03, 0.032),
   [[(ROOM.x0 + WINDOW.x0) / 2, RAILS[1], ROOM.z0 + 0.01], [WINDOW.x0 - ROOM.x0, 0.016, 0.02]],
+  [[ROOM.x0 + 0.01, RAILS[1], (1.1 + ROOM.z1) / 2], [0.02, 0.016, ROOM.z1 - 1.1]],
+  [[ROOM.x1 - 0.01, RAILS[1], (1.1 + ROOM.z1) / 2], [0.02, 0.016, ROOM.z1 - 1.1]],
+  [[CX, RAILS[1], ROOM.z1 - 0.01], [W, 0.016, 0.02]],
   // Pilasters carry the two LED reveals behind the desk.
   ...[-3.05, 0.3].map((x): [Vec3, Vec3] => [[x, H / 2, ROOM.z0 + 0.015], [0.09, H, 0.03]]),
-  ...[-1.55, 1.1].map((z): [Vec3, Vec3] => [[ROOM.x0 + 0.015, H / 2, z], [0.03, H, 0.09]]),
-  ...[-1.55, 1.1].map((z): [Vec3, Vec3] => [[ROOM.x1 - 0.015, H / 2, z], [0.03, H, 0.09]]),
+  ...[-1.55, 1.1, 3.75].map((z): [Vec3, Vec3] => [[ROOM.x0 + 0.015, H / 2, z], [0.03, H, 0.09]]),
+  ...[-1.55, 1.1, 3.75].map((z): [Vec3, Vec3] => [[ROOM.x1 - 0.015, H / 2, z], [0.03, H, 0.09]]),
+  [[1.0, H / 2, ROOM.z1 - 0.015], [0.09, H, 0.03]],
   // Deep window casing.
   ...[WINDOW.x0 - 0.045, WINDOW.x1 + 0.045].map((x): [Vec3, Vec3] => [[x, (WINDOW.y0 + WINDOW.y1) / 2, ROOM.z0 + 0.025], [0.09, WINDOW.y1 - WINDOW.y0 + 0.16, 0.05]]),
   [[(WINDOW.x0 + WINDOW.x1) / 2, WINDOW.y1 + 0.05, ROOM.z0 + 0.025], [WINDOW.x1 - WINDOW.x0 + 0.18, 0.1, 0.05]],
 ];
 
+/** Ceiling: long beams, cross ribs, and the dropped frame over the lounge end. */
+const CEILING_TRIM: [Vec3, Vec3][] = [
+  ...[-3.1, 2.9].map((x): [Vec3, Vec3] => [[x, H - 0.02, SIDE_MID], [0.1, 0.04, SIDE_LEN]]),
+  ...[2.1, 3.6, 5.1].map((z): [Vec3, Vec3] => [[CX, H - 0.016, z], [W, 0.03, 0.05]]),
+  ...[-2.1, 2.3].map((x): [Vec3, Vec3] => [[x, H - 0.07, 3.85], [0.14, 0.14, 3.1]]),
+  ...[2.3, 5.4].map((z): [Vec3, Vec3] => [[0.1, H - 0.07, z], [4.54, 0.14, 0.14]]),
+];
+
+/** Hex bolts at each panel's corners. Geometry, so they stay round on any panel shape. */
+function buildBolts() {
+  const INSET = 0.05;
+  return {
+    bolts: solid(
+      SLABS.flatMap(({ p, s }) => {
+        const depth = s[2] <= s[0] ? 2 : 0;
+        const across = depth === 2 ? 0 : 2;
+        const inward = -Math.sign(p[depth]);
+        return [-1, 1].flatMap((a) =>
+          [-1, 1].map((b) => {
+            const head = post(0.009, 0.012, 0.005, 0, 0, 0, '#59666b', 6);
+            if (depth === 2) head.rotateX((inward * Math.PI) / 2);
+            else head.rotateZ((-inward * Math.PI) / 2);
+            const at: Vec3 = [0, p[1] + b * (s[1] / 2 - INSET), 0];
+            at[across] = p[across] + a * (s[across] / 2 - INSET);
+            at[depth] = p[depth] + inward * (s[depth] / 2 + 0.002);
+            return head.translate(...at);
+          }),
+        );
+      }),
+    ),
+  };
+}
+
 function WallCladding() {
   const ref = useRef<InstancedMesh>(null);
+  const { bolts } = useGeometries(buildBolts);
   // Brushed grain and a folded edge. One grey canvas feeds map and roughness.
   const metal = useCanvasTexture(
-    512,
-    512,
+    1024,
+    1024,
     (ctx, w, h) => {
       const rnd = seeded(5);
       ctx.fillStyle = '#b4b4b4';
       ctx.fillRect(0, 0, w, h);
-      for (let i = 0; i < 1400; i++) {
-        ctx.fillStyle = rnd() > 0.5 ? 'rgba(255,255,255,0.018)' : 'rgba(0,0,0,0.024)';
-        ctx.fillRect(rnd() * w - 60, rnd() * h, 60 + rnd() * 260, 1);
+      for (let i = 0; i < 900; i++) {
+        ctx.fillStyle = rnd() > 0.5 ? 'rgba(255,255,255,0.016)' : 'rgba(0,0,0,0.02)';
+        ctx.fillRect(rnd() * w - 40, rnd() * h, 40 + rnd() * 120, 1);
       }
       ctx.strokeStyle = '#3a3a3a';
-      ctx.lineWidth = 16;
+      ctx.lineWidth = 26;
       ctx.strokeRect(0, 0, w, h);
       ctx.strokeStyle = '#f2f2f2';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(10, 10, w - 20, h - 20);
+      ctx.lineWidth = 4;
+      ctx.strokeRect(16, 16, w - 32, h - 32);
+      // An inset groove round the panel face.
+      ctx.strokeStyle = '#4a4a4a';
+      ctx.lineWidth = 5;
+      ctx.strokeRect(70, 70, w - 140, h - 140);
+      ctx.strokeStyle = '#e4e4e4';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(75, 75, w - 150, h - 150);
     },
     [],
+  );
+  // Fine perforation on a 12 cm tile, mapped in world space so it never stretches
+  // with a panel. It keeps walls crisp up close and averages away with distance.
+  const mesh = useCanvasTexture(
+    128,
+    128,
+    (ctx, w, h) => {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
+      ctx.fillStyle = '#000000';
+      const pitch = w / 8;
+      for (let row = 0; row < 8; row++) {
+        for (let col = -1; col < 9; col++) {
+          ctx.beginPath();
+          ctx.arc((col + 0.5 + (row % 2) * 0.5) * pitch, (row + 0.5) * pitch, pitch * 0.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    },
+    [],
+  );
+  mesh.wrapS = mesh.wrapT = RepeatWrapping;
+  const perforate = useCallback(
+    (shader: WebGLProgramParametersWithUniforms) => {
+      shader.uniforms.wallMesh = { value: mesh };
+      shader.vertexShader = shader.vertexShader
+        .replace('#include <common>', '#include <common>\nvarying vec3 vWallPos;')
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWallPos = (modelMatrix * instanceMatrix * vec4(position, 1.0)).xyz;');
+      shader.fragmentShader = shader.fragmentShader
+        .replace('#include <common>', '#include <common>\nuniform sampler2D wallMesh;\nvarying vec3 vWallPos;')
+        .replace(
+          '#include <map_fragment>',
+          `#include <map_fragment>
+          vec3 wallAxis = abs(normalize(cross(dFdx(vWallPos), dFdy(vWallPos))));
+          float wallHoles = texture2D(wallMesh, (wallAxis.x > wallAxis.z ? vWallPos.zy : vWallPos.xy) * 8.33).g;
+          diffuseColor.rgb *= 0.5 + 0.62 * wallHoles;`,
+        );
+    },
+    [mesh],
   );
   useLayoutEffect(() => {
     const mesh = ref.current;
@@ -317,29 +410,32 @@ function WallCladding() {
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
   }, []);
   return (
-    <instancedMesh ref={ref} args={[undefined, undefined, SLABS.length]} frustumCulled={false}>
-      <boxGeometry />
-      <meshStandardMaterial map={metal} roughnessMap={metal} color="#222d2b" roughness={1} metalness={0.42} envMapIntensity={0.8} />
-    </instancedMesh>
+    <>
+      <instancedMesh ref={ref} args={[undefined, undefined, SLABS.length]} frustumCulled={false}>
+        <boxGeometry />
+        <meshStandardMaterial map={metal} roughnessMap={metal} color="#222d2b" roughness={1} metalness={0.42} envMapIntensity={0.8} onBeforeCompile={perforate} />
+      </instancedMesh>
+      <mesh geometry={bolts} material={MAT.painted} layers={NO_MIRROR} frustumCulled={false} />
+    </>
   );
 }
 
-function WallTrim() {
+function Bars({ list, material }: { list: [Vec3, Vec3][]; material: Material }) {
   const ref = useRef<InstancedMesh>(null);
   useLayoutEffect(() => {
     const mesh = ref.current;
     if (!mesh) return;
     const o = new Object3D();
-    TRIM.forEach(([p, s], i) => {
+    list.forEach(([p, s], i) => {
       o.position.set(...p);
       o.scale.set(...s);
       o.updateMatrix();
       mesh.setMatrixAt(i, o.matrix);
     });
     mesh.instanceMatrix.needsUpdate = true;
-  }, []);
+  }, [list]);
   return (
-    <instancedMesh ref={ref} args={[undefined, undefined, TRIM.length]} frustumCulled={false} material={MAT.trim}>
+    <instancedMesh ref={ref} args={[undefined, undefined, list.length]} frustumCulled={false} material={material}>
       <boxGeometry />
     </instancedMesh>
   );
@@ -370,6 +466,7 @@ function LedWash() {
       new PlaneGeometry(ROOM.x1 - WINDOW.x0, 0.2).translate((WINDOW.x0 + ROOM.x1) / 2, H - 0.19, ROOM.z0 + 0.034),
       new PlaneGeometry(SIDE_LEN, reach).rotateY(Math.PI / 2).translate(ROOM.x0 + 0.034, y, SIDE_MID),
       new PlaneGeometry(SIDE_LEN, reach).rotateY(-Math.PI / 2).translate(ROOM.x1 - 0.034, y, SIDE_MID),
+      new PlaneGeometry(W, reach).rotateY(Math.PI).translate(CX, y, ROOM.z1 - 0.034),
     ]);
   }, []);
   useEffect(() => () => strips.dispose(), [strips]);
@@ -399,6 +496,7 @@ function WindowView() {
         <planeGeometry args={[9, 4.6]} />
         <meshBasicMaterial map={city} color="#c4d6ff" toneMapped={false} fog={false} />
       </mesh>
+      <NearSkyline x={xc - 0.2} />
       {/* Glass with a faint tint. */}
       <mesh position={[xc, yc, ROOM.z0 - 0.02]}>
         <planeGeometry args={[wx, wy]} />
@@ -425,6 +523,64 @@ function WindowView() {
         <LedBar from={[WINDOW.x0, WINDOW.y0 - 0.045, 0.05]} to={[WINDOW.x1, WINDOW.y0 - 0.045, 0.05]} thick={0.012} mat={MAT.ledSoft} />
       </group>
     </group>
+  );
+}
+
+/** Procedural towers just outside the glass: the backdrop photo goes soft up close. */
+function NearSkyline({ x }: { x: number }) {
+  const towers = useCanvasTexture(
+    2048,
+    852,
+    (ctx, w, h) => {
+      const rnd = seeded(52);
+      ctx.clearRect(0, 0, w, h);
+      // Far to near: each layer is darker, and its windows are a little larger.
+      [
+        { base: '#101c2c', pitch: 6, reach: 0.62, lit: 0.34 },
+        { base: '#0a1421', pitch: 7, reach: 0.5, lit: 0.3 },
+        { base: '#060c15', pitch: 9, reach: 0.34, lit: 0.26 },
+      ].forEach(({ base, pitch, reach, lit }) => {
+        for (let tx = -30; tx < w; ) {
+          const bw = 60 + rnd() * 150;
+          const bh = h * (0.16 + rnd() * reach);
+          const y = h - bh;
+          ctx.fillStyle = base;
+          ctx.fillRect(tx, y, bw, bh);
+          // A few floors are dark as a block, as offices are at night.
+          for (let wy = y + 8; wy < h; wy += pitch + 2) {
+            const floor = rnd() > 0.12 ? lit : 0.04;
+            for (let wx = tx + 5; wx < tx + bw - 5; wx += pitch) {
+              if (rnd() > floor) continue;
+              const tone = rnd();
+              ctx.fillStyle = tone > 0.8 ? 'rgba(255,196,120,0.62)' : tone > 0.62 ? 'rgba(120,235,255,0.42)' : 'rgba(170,205,235,0.24)';
+              ctx.fillRect(wx, wy, pitch - 3, pitch - 2);
+            }
+          }
+          if (rnd() > 0.7) {
+            ctx.fillStyle = base;
+            ctx.fillRect(tx + bw / 2 - 1, y - 40, 2, 40);
+            ctx.fillStyle = '#ff4fd8';
+            ctx.fillRect(tx + bw / 2 - 2, y - 43, 4, 4);
+          }
+          // The odd neon band round a roofline.
+          if (rnd() > 0.78) {
+            ctx.fillStyle = ['#ff4fd8', '#4de3ff', '#2effb0'][Math.floor(rnd() * 3)] ?? '#2effb0';
+            ctx.shadowColor = ctx.fillStyle;
+            ctx.shadowBlur = 12;
+            ctx.fillRect(tx + 4, y + 4, bw - 8, 3);
+            ctx.shadowBlur = 0;
+          }
+          tx += bw + 4 + rnd() * 30;
+        }
+      });
+    },
+    [],
+  );
+  return (
+    <mesh position={[x, 0.95, ROOM.z0 - 1.5]}>
+      <planeGeometry args={[6.4, 2.66]} />
+      <meshBasicMaterial map={towers} transparent toneMapped={false} fog={false} depthWrite={false} />
+    </mesh>
   );
 }
 
@@ -473,8 +629,9 @@ function Ceiling() {
         <meshBasicMaterial map={emblem} transparent toneMapped={false} side={DoubleSide} depthWrite={false} color="#9fffd9" />
       </mesh>
       {/* Recessed downlights around the tray. */}
+      <LoungeCove />
       {[-3.6, 3.2].flatMap((x) =>
-        [-2.4, 0.2, 2.2].map((z) => (
+        [-2.4, 0.2, 2.2, 4.6].map((z) => (
           <mesh key={`${x}${z}`} position={[x, H - 0.005, z]} rotation={[Math.PI / 2, 0, 0]} material={MAT.ledWarm}>
             <circleGeometry args={[0.05, 20]} />
           </mesh>
@@ -482,6 +639,17 @@ function Ceiling() {
       )}
     </group>
   );
+}
+
+/** The thin lit reveal inside the lounge's dropped ceiling frame. */
+function LoungeCove() {
+  const strip = useMemo(() => {
+    const y = H - 0.145;
+    const bar = (w: number, d: number, x: number, z: number) => new PlaneGeometry(w, d).rotateX(Math.PI / 2).translate(x, y, z);
+    return mergeGeometries([bar(4.1, 0.012, 0.1, 2.42), bar(4.1, 0.012, 0.1, 5.28), bar(0.012, 2.88, -1.98, 3.85), bar(0.012, 2.88, 2.18, 3.85)]);
+  }, []);
+  useEffect(() => () => strip.dispose(), [strip]);
+  return <mesh geometry={strip} material={MAT.ledSoft} />;
 }
 
 /* ─────────────────────────── rug ─────────────────────────── */
@@ -515,8 +683,8 @@ function Rug() {
     [],
   );
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0.04]} position={[-0.75, 0.006, -1.3]}>
-      <planeGeometry args={[2.9, 2.0]} />
+    <mesh rotation={[-Math.PI / 2, 0, 0.04]} position={[-0.75, 0.005, -1.3]}>
+      <boxGeometry args={[2.9, 2.0, 0.01]} />
       <meshStandardMaterial map={tex} roughness={1} metalness={0} />
     </mesh>
   );

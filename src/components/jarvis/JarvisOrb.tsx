@@ -3,6 +3,7 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
+import { useOS } from '@/lib/jarvis/osStore';
 import { orbSignal } from '@/lib/jarvis/voice';
 
 /* JARVIS AI's "face": a noise-displaced energy sphere inside a wire shell and
@@ -128,9 +129,12 @@ function Core() {
 }
 
 export default function JarvisOrb() {
+  // No WebGL frames while the window sits in the dock.
+  const docked = useOS((s) => s.windows.some((w) => w.id === 'jarvis' && w.minimized));
   return (
     <Canvas
       className="app-ai-orb-canvas"
+      frameloop={docked ? 'never' : 'always'}
       dpr={[1, 1.75]}
       camera={{ position: [0, 0, 4.6], fov: 42 }}
       gl={{ antialias: true, alpha: true, powerPreference: 'low-power' }}

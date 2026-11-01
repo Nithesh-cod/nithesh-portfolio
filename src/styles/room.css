@@ -1,0 +1,139 @@
+/* ─────────────── the gaming room's page furniture ─────────────── */
+.room-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: radial-gradient(70% 60% at 50% 55%, #062018 0%, #020708 70%);
+}
+.room-stage-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(30% 20% at 50% 62%, rgba(46, 255, 176, 0.18), transparent 70%);
+}
+.room-canvas { position: absolute; inset: 0; }
+.room-stage-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--jos-dim);
+}
+.room-hud {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 26px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+.room-hint {
+  margin: 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(2, 10, 9, 0.55);
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--jos-text);
+  backdrop-filter: blur(6px);
+}
+.room-tip {
+  padding: 6px 12px;
+  border: 1px solid var(--jos-green);
+  border-radius: 999px;
+  background: rgba(2, 12, 10, 0.85);
+  color: var(--jos-ink);
+  font-family: var(--font-display-sci), 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  white-space: nowrap;
+  box-shadow: 0 0 18px rgba(46, 255, 176, 0.45);
+}
+.room-boot-btn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 24px;
+  border: 1px solid var(--jos-green);
+  border-radius: 999px;
+  background: rgba(3, 14, 12, 0.8);
+  color: var(--jos-ink);
+  font-family: var(--font-display-sci), 'Orbitron', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 0 24px rgba(46, 255, 176, 0.35);
+  backdrop-filter: blur(10px);
+  transition: background 180ms var(--jos-ease), box-shadow 180ms var(--jos-ease);
+}
+.room-boot-btn svg {
+  color: var(--jos-green);
+}
+.room-boot-btn:hover {
+  background: rgba(46, 255, 176, 0.18);
+  box-shadow: 0 0 34px rgba(46, 255, 176, 0.55);
+}
+
+/* Walking */
+.room-canvas { touch-action: none; }
+.room-hud[data-touch] {
+  left: auto;
+  align-items: flex-end;
+  padding-right: 16px;
+}
+.room-hud[data-touch] .room-hint {
+  max-width: calc(100vw - 166px);
+  border-radius: 14px;
+  text-align: right;
+}
+.room-pad {
+  position: fixed;
+  left: 18px;
+  bottom: 24px;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  width: 116px;
+  height: 116px;
+  border: 1px solid rgba(46, 255, 176, 0.45);
+  border-radius: 50%;
+  background: rgba(2, 12, 10, 0.42);
+  backdrop-filter: blur(6px);
+  touch-action: none;
+  user-select: none;
+}
+.room-pad-knob {
+  width: 46px;
+  height: 46px;
+  border: 1px solid var(--jos-green);
+  border-radius: 50%;
+  background: rgba(46, 255, 176, 0.28);
+  box-shadow: 0 0 16px rgba(46, 255, 176, 0.45);
+  pointer-events: none;
+}
+
+@media (max-width: 720px) {
+  .room-hint { font-size: 10px; letter-spacing: 0.1em; }
+}
+
+/* The walking tip clears off so it doesn't sit on the view. */
+.room-hint[data-fades] { animation: room-hint-out 400ms var(--jos-ease) 7s forwards; }
+@keyframes room-hint-out {
+  to { opacity: 0; visibility: hidden; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .room-hint[data-fades] { animation-duration: 1ms; }
+}

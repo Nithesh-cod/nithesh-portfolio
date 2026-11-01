@@ -18,7 +18,7 @@ export const MAT = {
   wall: new MeshStandardMaterial({ color: '#060b0b', roughness: 0.9, metalness: 0 }),
   wallPanel: new MeshStandardMaterial({ color: '#172726', roughness: 0.55, metalness: 0.25 }),
   /** Skirting, rails and pilasters: dark metal that catches a thin highlight. */
-  trim: new MeshStandardMaterial({ color: '#1c2426', roughness: 0.36, metalness: 0.82 }),
+  trim: new MeshStandardMaterial({ color: '#1c2426', roughness: 0.68, metalness: 0.7 }),
   ceiling: new MeshStandardMaterial({ color: '#050808', roughness: 0.95, metalness: 0.0 }),
   /** Chair leather. */
   leather: new MeshStandardMaterial({ color: '#171b1d', roughness: 0.42, metalness: 0.08 }),
@@ -27,6 +27,8 @@ export const MAT = {
   plastic: new MeshStandardMaterial({ color: '#1d2326', roughness: 0.4, metalness: 0.1 }),
   /** Merged models: colour comes from each part, see shapes.tsx. */
   painted: new MeshStandardMaterial({ vertexColors: true, roughness: 0.4, metalness: 0.35 }),
+  /** Merged models with large flat faces: rough enough that a nearby lamp can't burn a white spot. */
+  satin: new MeshStandardMaterial({ vertexColors: true, roughness: 0.74, metalness: 0.12 }),
   /** Merged soft furnishings. */
   cloth: new MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0 }),
   /** Tempered glass. Plain alpha on purpose: three renders the whole scene an
@@ -43,6 +45,8 @@ export const MAT = {
   ledSoft: led(GREEN, 1.6),
   /** Fine lit trim on furniture: below the bloom threshold, so it stays a thin line. */
   piping: led(GREEN, 0.85),
+  /** The faint glow between keycaps. */
+  underglow: led(GREEN, 0.22),
   ledCyan: led('#4de3ff', 2.4),
   ledWarm: led('#ffb35c', 2.4),
   ledMagenta: led('#ff4fd8', 2.2),

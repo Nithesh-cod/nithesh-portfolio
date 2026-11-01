@@ -71,7 +71,7 @@ export function useGamesScreen() {
 }
 
 /** Original wallpaper: a hooded figure before a neon skyline, in the room's green. */
-function paintHeroArt(ctx: CanvasRenderingContext2D, w: number, h: number) {
+export function paintHeroArt(ctx: CanvasRenderingContext2D, w: number, h: number) {
   const rnd = seeded(14);
   const cx = w / 2;
   const sky = ctx.createLinearGradient(0, 0, 0, h);

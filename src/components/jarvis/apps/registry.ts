@@ -30,7 +30,7 @@ export const APPS: Record<AppId, AppMeta> = {
   museum: { id: 'museum', title: 'Museum', subtitle: 'Walk the 3D exhibition hall.', Icon: Landmark, size: [0, 0] },
   resume: { id: 'resume', title: 'Resume', subtitle: 'View, download or ask about it.', Icon: FileText, size: [940, 720] },
   jarvis: { id: 'jarvis', title: 'JARVIS AI', subtitle: 'Ask anything about Nithesh. Voice ready.', Icon: Bot, size: [760, 640] },
-  arcade: { id: 'arcade', title: 'Arcade', subtitle: 'My games and a playable Neon Snake.', Icon: Gamepad2, size: [900, 640] },
+  arcade: { id: 'arcade', title: 'Arcade', subtitle: 'My games, plus two you can play here.', Icon: Gamepad2, size: [900, 640] },
   more: { id: 'more', title: 'More', subtitle: 'Terminal, mail, settings and more.', Icon: LayoutGrid, size: [720, 400] },
   terminal: { id: 'terminal', title: 'Terminal', subtitle: 'Command line.', Icon: TerminalSquare, size: [720, 460] },
   mail: { id: 'mail', title: 'Mail', subtitle: 'Send Nithesh a message.', Icon: Mail, size: [560, 640] },
@@ -45,3 +45,11 @@ export const APPS: Record<AppId, AppMeta> = {
 export const HERO_APPS: readonly AppId[] = ['thispc', 'museum', 'resume', 'jarvis', 'arcade', 'more'];
 export const DOCK_APPS: readonly AppId[] = ['thispc', 'museum', 'resume', 'jarvis', 'arcade', 'terminal', 'mail', 'settings', 'more'];
 export const MORE_APPS: readonly AppId[] = ['terminal', 'mail', 'certificates', 'settings', 'music', 'about'];
+
+/** The full launcher, by what each app is for. */
+export const APP_GROUPS: readonly { title: string; apps: readonly AppId[] }[] = [
+  { title: 'Portfolio', apps: ['resume', 'thispc', 'certificates', 'museum'] },
+  { title: 'Assistant', apps: ['jarvis', 'mail'] },
+  { title: 'Play', apps: ['arcade', 'music'] },
+  { title: 'System', apps: ['terminal', 'settings', 'about'] },
+];

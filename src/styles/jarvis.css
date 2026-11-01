@@ -128,8 +128,9 @@
 }
 .jos-top {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
+  gap: 16px;
   height: var(--jos-top-h);
   padding: 0 26px;
   background: linear-gradient(180deg, rgba(3, 12, 12, 0.92), rgba(3, 12, 12, 0.6));
@@ -158,10 +159,12 @@
   color: var(--jos-green);
 }
 .jos-motto {
+  justify-self: center;
   font-family: var(--font-display-sci), 'Orbitron', sans-serif;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.5em;
+  white-space: nowrap;
   color: var(--jos-green-soft);
   text-shadow: 0 0 12px rgba(46, 255, 176, 0.6);
 }
@@ -305,6 +308,8 @@
   filter: drop-shadow(0 0 10px rgba(46, 255, 176, 0.45));
 }
 .jos-nav {
+  position: relative;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -323,20 +328,42 @@
   font-size: 14.5px;
   text-align: left;
   cursor: pointer;
-  transition: background 180ms var(--jos-ease), border-color 180ms var(--jos-ease), color 180ms var(--jos-ease);
+  transition: background 180ms var(--jos-ease), color 180ms var(--jos-ease), transform 180ms var(--jos-ease);
 }
 .jos-nav button:hover {
   background: rgba(46, 255, 176, 0.08);
   color: var(--jos-ink);
 }
+.jos-nav button:active {
+  transform: scale(0.98);
+}
 .jos-nav button.is-active {
-  border-color: rgba(46, 255, 176, 0.55);
-  background: linear-gradient(90deg, rgba(46, 255, 176, 0.22), rgba(46, 255, 176, 0.04));
   color: var(--jos-ink);
+}
+/* Its own element, so it can slide from one item to the next. */
+.jos-nav-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc((100% - 6px * 4) / 5);
+  z-index: -1;
+  border: 1px solid rgba(46, 255, 176, 0.55);
+  border-radius: 10px;
+  background: linear-gradient(90deg, rgba(46, 255, 176, 0.22), rgba(46, 255, 176, 0.04));
   box-shadow: 0 0 18px rgba(46, 255, 176, 0.18);
+  transform: translateY(calc(var(--nav-index) * (100% + 6px)));
+  transition: transform 400ms var(--jos-ease), opacity 180ms var(--jos-ease);
+}
+.jos-nav-glow.is-off {
+  opacity: 0;
 }
 .jos-nav svg {
   color: var(--jos-green);
+  transition: transform 180ms var(--jos-ease);
+}
+.jos-nav button:hover svg {
+  transform: translateX(2px);
 }
 .jos-nav em {
   display: grid;
@@ -350,18 +377,6 @@
   font-style: normal;
   font-size: 11px;
   font-weight: 700;
-}
-.jos-notes {
-  margin: 4px 0 6px;
-  padding: 8px 10px 8px 26px;
-  list-style: disc;
-  border-left: 1px solid rgba(46, 255, 176, 0.3);
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--jos-text);
-}
-.jos-notes li + li {
-  margin-top: 6px;
 }
 .jos-quote {
   margin: auto 0 0;
@@ -453,7 +468,7 @@
   color: var(--jos-text);
   text-align: center;
   cursor: pointer;
-  transform: var(--tilt-depth,) translateY(0) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+  transform: var(--tilt-depth,) translateY(0) scale(var(--press, 1)) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
   transition: transform 400ms var(--jos-ease);
 }
 /* Perspective only while the pointer is tilting the card: Chrome will not
@@ -523,7 +538,10 @@
   z-index: 1;
 }
 .jos-card.is-sel {
-  transform: var(--tilt-depth,) translateY(-18px) scale(1.06) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+  transform: var(--tilt-depth,) translateY(-18px) scale(calc(1.06 * var(--press, 1))) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+}
+.jos-card:active {
+  --press: 0.97;
 }
 .jos-card.is-sel .jos-card-frame {
   filter:
@@ -873,10 +891,24 @@
   gap: 10px;
   height: 72px;
   padding: 10px 18px;
+}
+/* The trapezoid is a backing layer: clip-path on the dock itself would also cut
+   off the tooltips, the magnified icons and the launch bounce. */
+.jos-dock::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
   clip-path: polygon(22px 0, calc(100% - 22px) 0, 100% 100%, 0 100%);
   background: linear-gradient(180deg, rgba(8, 26, 23, 0.85), rgba(3, 12, 11, 0.95));
   border-top: 1px solid rgba(46, 255, 176, 0.55);
-  box-shadow: 0 -8px 30px rgba(46, 255, 176, 0.12);
+}
+.jos-dock-divider {
+  flex: none;
+  align-self: center;
+  width: 1px;
+  height: 34px;
+  background: rgba(46, 255, 176, 0.3);
 }
 .jos-dock-icon {
   position: relative;
@@ -888,6 +920,7 @@
   background: linear-gradient(160deg, rgba(46, 255, 176, 0.18), rgba(6, 18, 16, 0.85));
   color: var(--jos-green-soft);
   cursor: pointer;
+  transition: border-color 180ms var(--jos-ease), box-shadow 180ms var(--jos-ease);
 }
 .jos-dock-icon:hover,
 .jos-dock-icon:focus-visible {
@@ -904,6 +937,14 @@
   border-radius: 999px;
   background: var(--jos-green);
   box-shadow: 0 0 8px var(--jos-green);
+  transition: width 180ms var(--jos-ease), background 180ms var(--jos-ease);
+}
+.jos-dock-icon.is-front::after {
+  width: 16px;
+}
+.jos-dock-icon.is-minimised::after {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--jos-green);
 }
 .jos-dock-tip {
   position: absolute;
@@ -949,6 +990,24 @@
   -webkit-backdrop-filter: blur(22px) saturate(140%);
   pointer-events: auto;
   transform-origin: 50% 80%;
+  transition:
+    left 180ms var(--jos-ease), top 180ms var(--jos-ease), width 180ms var(--jos-ease), height 180ms var(--jos-ease),
+    border-color 180ms var(--jos-ease), box-shadow 180ms var(--jos-ease);
+}
+/* Geometry follows the pointer directly while dragging; the rest animate snaps. */
+.jos-window.is-dragging {
+  transition: border-color 180ms var(--jos-ease), box-shadow 180ms var(--jos-ease);
+}
+.jos-window:not(.is-top) .jos-window-bar {
+  opacity: 0.72;
+}
+.jos-snap-preview {
+  position: absolute;
+  border: 2px solid rgba(92, 255, 196, 0.75);
+  border-radius: 14px;
+  background: rgba(46, 255, 176, 0.1);
+  box-shadow: inset 0 0 40px rgba(46, 255, 176, 0.18), 0 0 30px rgba(46, 255, 176, 0.22);
+  pointer-events: none;
 }
 .jos-window:focus { outline: none; }
 .jos-window:focus-visible { box-shadow: 0 0 0 2px var(--jos-green-soft), 0 30px 80px rgba(0, 0, 0, 0.6); }
@@ -1268,94 +1327,7 @@
   margin: 0;
 }
 
-/* ─────────────── room stage + museum back ─────────────── */
-.room-stage {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  background: radial-gradient(70% 60% at 50% 55%, #062018 0%, #020708 70%);
-}
-.room-stage-glow {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(30% 20% at 50% 62%, rgba(46, 255, 176, 0.18), transparent 70%);
-}
-.room-canvas { position: absolute; inset: 0; }
-.room-stage-loading {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-family: var(--font-mono), monospace;
-  font-size: 12px;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: var(--jos-dim);
-}
-.room-hud {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 26px;
-  z-index: 30;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  pointer-events: none;
-}
-.room-hint {
-  margin: 0;
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: rgba(2, 10, 9, 0.55);
-  font-family: var(--font-mono), monospace;
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--jos-text);
-  backdrop-filter: blur(6px);
-}
-.room-tip {
-  padding: 6px 12px;
-  border: 1px solid var(--jos-green);
-  border-radius: 999px;
-  background: rgba(2, 12, 10, 0.85);
-  color: var(--jos-ink);
-  font-family: var(--font-display-sci), 'Orbitron', sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  white-space: nowrap;
-  box-shadow: 0 0 18px rgba(46, 255, 176, 0.45);
-}
-.room-boot-btn {
-  pointer-events: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 13px 24px;
-  border: 1px solid var(--jos-green);
-  border-radius: 999px;
-  background: rgba(3, 14, 12, 0.8);
-  color: var(--jos-ink);
-  font-family: var(--font-display-sci), 'Orbitron', sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  cursor: pointer;
-  box-shadow: 0 0 24px rgba(46, 255, 176, 0.35);
-  backdrop-filter: blur(10px);
-  transition: background 180ms var(--jos-ease), box-shadow 180ms var(--jos-ease);
-}
-.room-boot-btn svg {
-  color: var(--jos-green);
-}
-.room-boot-btn:hover {
-  background: rgba(46, 255, 176, 0.18);
-  box-shadow: 0 0 34px rgba(46, 255, 176, 0.55);
-}
+/* ─────────────── museum back ─────────────── */
 .museum-back {
   position: fixed;
   top: 18px;
@@ -1383,25 +1355,661 @@
   background: rgba(46, 255, 176, 0.18);
 }
 
+/* ─────────────── desktop overlays ─────────────── */
+.jos-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+}
+.jos-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.jos-icon-btn {
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(46, 255, 176, 0.3);
+  border-radius: 999px;
+  background: rgba(6, 22, 19, 0.55);
+  color: var(--jos-green-soft);
+  cursor: pointer;
+  transition: background 180ms var(--jos-ease), border-color 180ms var(--jos-ease), box-shadow 180ms var(--jos-ease), transform 180ms var(--jos-ease);
+}
+.jos-icon-btn:hover,
+.jos-icon-btn:focus-visible {
+  border-color: var(--jos-green);
+  background: rgba(46, 255, 176, 0.14);
+  box-shadow: 0 0 14px rgba(46, 255, 176, 0.32);
+  outline: none;
+}
+.jos-icon-btn:active {
+  transform: scale(0.94);
+}
+.jos-icon-btn em {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--jos-green);
+  color: #021a10;
+  font-style: normal;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+.jos-search-btn {
+  display: inline-flex;
+  gap: 8px;
+  width: auto;
+  padding: 0 10px 0 11px;
+}
+.jos kbd {
+  padding: 2px 6px;
+  border: 1px solid rgba(46, 255, 176, 0.3);
+  border-radius: 5px;
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  color: var(--jos-dim);
+  white-space: nowrap;
+}
+
+/* App launcher */
+.jos-launcher {
+  display: flex;
+  overflow-y: auto;
+  padding: 24px;
+  background: rgba(2, 10, 10, 0.68);
+  backdrop-filter: blur(20px) saturate(130%);
+  -webkit-backdrop-filter: blur(20px) saturate(130%);
+}
+.jos-launcher-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  width: min(980px, 100%);
+  margin: auto;
+}
+.jos-launcher-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.jos-launcher-head h2,
+.jos-notes-head h2 {
+  margin: 0;
+  font-family: var(--font-display-sci), 'Orbitron', sans-serif;
+  font-size: 18px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--jos-ink);
+}
+.jos-launcher-search {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 16px;
+  border: 1px solid rgba(46, 255, 176, 0.35);
+  border-radius: 999px;
+  background: rgba(4, 16, 15, 0.7);
+  color: var(--jos-green-soft);
+  transition: border-color 180ms var(--jos-ease), box-shadow 180ms var(--jos-ease);
+}
+.jos-launcher-search:focus-within {
+  border-color: var(--jos-green);
+  box-shadow: 0 0 16px rgba(46, 255, 176, 0.25);
+}
+.jos-launcher-search input,
+.jos-palette-input input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--jos-ink);
+  font-size: 15px;
+}
+.jos-launcher-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.jos-launcher-groups h3,
+.jos-notes-list h3,
+.jos-palette-list h3 {
+  margin: 0 0 8px;
+  font-family: var(--font-mono), monospace;
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--jos-dim);
+}
+.jos-launcher-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 12px;
+}
+.jos-launcher-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid rgba(46, 255, 176, 0.24);
+  border-radius: 12px;
+  background: rgba(6, 22, 19, 0.72);
+  color: var(--jos-text);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 180ms var(--jos-ease), background 180ms var(--jos-ease), box-shadow 180ms var(--jos-ease);
+}
+.jos-launcher-tile:hover,
+.jos-launcher-tile:focus-visible {
+  border-color: var(--jos-green);
+  background: rgba(46, 255, 176, 0.12);
+  box-shadow: 0 0 20px rgba(46, 255, 176, 0.22);
+  outline: none;
+}
+.jos-launcher-tile:active {
+  background: rgba(46, 255, 176, 0.2);
+}
+.jos-launcher-icon {
+  margin-bottom: 6px;
+  color: var(--jos-green-soft);
+  filter: drop-shadow(0 0 8px rgba(46, 255, 176, 0.55));
+}
+.jos-launcher-tile strong {
+  font-size: 14px;
+  color: var(--jos-ink);
+}
+.jos-launcher-tile > span:not(.jos-launcher-icon) {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--jos-dim);
+}
+.jos-launcher-tile em {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-family: var(--font-mono), monospace;
+  font-style: normal;
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--jos-green);
+}
+.jos-launcher-none {
+  margin: 30px 0;
+  text-align: center;
+  color: var(--jos-dim);
+}
+
+/* Notification centre */
+.jos-notes-scrim {
+  background: rgba(1, 6, 6, 0.35);
+}
+.jos-notes-panel {
+  position: absolute;
+  top: calc(var(--jos-top-h) + 10px);
+  right: 14px;
+  bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  width: min(390px, calc(100vw - 24px));
+  border: 1px solid rgba(46, 255, 176, 0.5);
+  border-radius: 14px;
+  background: var(--jos-glass-strong);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 36px rgba(46, 255, 176, 0.16);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+}
+.jos-notes-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 14px 10px 18px;
+}
+.jos-notes-head h2 {
+  font-size: 14px;
+}
+.jos-notes-tools {
+  display: flex;
+  gap: 8px;
+  padding: 0 18px 12px;
+  border-bottom: 1px solid rgba(46, 255, 176, 0.14);
+}
+.jos-notes-tools .app-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.jos-notes-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 14px 16px;
+  scrollbar-width: thin;
+}
+.jos-notes-list section + section {
+  margin-top: 16px;
+}
+.jos-note {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 6px;
+  padding: 10px 8px 10px 10px;
+  overflow: hidden;
+  border: 1px solid rgba(46, 255, 176, 0.14);
+  border-radius: 10px;
+  background: rgba(46, 255, 176, 0.04);
+  transition: border-color 180ms var(--jos-ease), background 180ms var(--jos-ease);
+}
+.jos-note:hover {
+  border-color: rgba(46, 255, 176, 0.4);
+  background: rgba(46, 255, 176, 0.09);
+}
+.jos-note.is-fresh::before {
+  content: '';
+  position: absolute;
+  inset: 8px auto 8px 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--jos-green);
+  box-shadow: 0 0 8px var(--jos-green);
+}
+.jos-note-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(46, 255, 176, 0.3);
+  border-radius: 8px;
+  color: var(--jos-green);
+}
+.jos-note-main {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding: 0 18px 0 0;
+  border: 0;
+  background: none;
+  color: var(--jos-text);
+  text-align: left;
+  cursor: pointer;
+}
+.jos-note-main:disabled {
+  cursor: default;
+}
+.jos-note-main strong {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--jos-ink);
+}
+.jos-note-main span {
+  font-size: 11.5px;
+  color: var(--jos-dim);
+}
+.jos-note-go {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  color: var(--jos-green);
+  transition: transform 180ms var(--jos-ease);
+}
+.jos-note:hover .jos-note-go {
+  transform: translateX(2px);
+}
+.jos-note-x {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--jos-dim);
+  cursor: pointer;
+  transition: background 180ms var(--jos-ease), color 180ms var(--jos-ease);
+}
+.jos-note-x:hover,
+.jos-note-x:focus-visible {
+  background: rgba(46, 255, 176, 0.14);
+  color: var(--jos-ink);
+  outline: none;
+}
+.jos-notes-empty {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  padding: 48px 0;
+  color: var(--jos-dim);
+}
+.jos-notes-empty p {
+  margin: 0;
+  font-size: 13px;
+}
+.jos-toasts {
+  position: absolute;
+  right: 16px;
+  bottom: calc(var(--jos-dock-h) + 12px);
+  z-index: 11;
+  max-width: min(340px, calc(100vw - 32px));
+  pointer-events: none;
+}
+.jos-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px 10px 10px;
+  border: 1px solid rgba(46, 255, 176, 0.55);
+  border-radius: 12px;
+  background: rgba(4, 16, 15, 0.94);
+  color: var(--jos-text);
+  text-align: left;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5), 0 0 22px rgba(46, 255, 176, 0.2);
+  cursor: pointer;
+  pointer-events: auto;
+}
+.jos-toast strong {
+  display: block;
+  font-size: 13px;
+  color: var(--jos-ink);
+}
+.jos-toast small {
+  font-size: 11.5px;
+  color: var(--jos-dim);
+}
+
+/* Command palette */
+.jos-palette-scrim {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 12vh 12px 12px;
+  background: rgba(1, 6, 6, 0.5);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.jos-palette {
+  display: flex;
+  flex-direction: column;
+  width: min(640px, 100%);
+  max-height: min(560px, 76vh);
+  overflow: hidden;
+  border: 1px solid rgba(46, 255, 176, 0.6);
+  border-radius: 14px;
+  background: rgba(4, 15, 14, 0.96);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.65), 0 0 40px rgba(46, 255, 176, 0.2);
+}
+.jos-palette-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(46, 255, 176, 0.18);
+  color: var(--jos-green-soft);
+}
+.jos-palette-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px;
+  scrollbar-width: thin;
+}
+.jos-palette-list > div + div {
+  margin-top: 12px;
+}
+.jos-palette-list h3 {
+  margin: 0 0 4px 8px;
+}
+.jos-palette-item {
+  display: grid;
+  grid-template-columns: 26px auto minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--jos-text);
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.jos-palette-item[aria-selected='true'] {
+  background: rgba(46, 255, 176, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(46, 255, 176, 0.4);
+}
+.jos-palette-item strong {
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--jos-ink);
+}
+.jos-palette-item strong mark {
+  background: none;
+  color: var(--jos-green);
+}
+.jos-palette-item > span:nth-child(3) {
+  overflow: hidden;
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--jos-dim);
+}
+.jos-palette-icon {
+  display: grid;
+  place-items: center;
+  color: var(--jos-green);
+}
+.jos-palette-enter {
+  color: var(--jos-green);
+}
+.jos-palette-none {
+  padding: 26px 0;
+  margin: 0;
+  text-align: center;
+  color: var(--jos-dim);
+}
+.jos-palette-foot {
+  display: flex;
+  gap: 16px;
+  padding: 8px 16px;
+  border-top: 1px solid rgba(46, 255, 176, 0.14);
+  font-family: var(--font-mono), monospace;
+  font-size: 10.5px;
+  color: var(--jos-dim);
+}
+.jos-palette-foot span:last-child {
+  margin-left: auto;
+}
+
+/* Home widgets stand on the floor either side of the pedestal, which slides
+   behind them when the first or last card is selected. */
+.jos-widgets {
+  position: absolute;
+  inset: auto 0 6px;
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  pointer-events: none;
+}
+.jos-widget {
+  width: clamp(176px, 21%, 214px);
+  padding: 10px 12px;
+  border: 1px solid rgba(46, 255, 176, 0.32);
+  border-radius: 10px;
+  background: rgba(4, 16, 15, 0.74);
+  box-shadow: 0 0 20px rgba(46, 255, 176, 0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: auto;
+  transition: border-color 180ms var(--jos-ease), box-shadow 180ms var(--jos-ease);
+}
+.jos-widget:hover {
+  border-color: rgba(46, 255, 176, 0.6);
+  box-shadow: 0 0 24px rgba(46, 255, 176, 0.18);
+}
+.jos-widget h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  font-family: var(--font-mono), monospace;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--jos-green);
+}
+.jos-widget-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+.jos-widget-stats button {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 4px 2px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--jos-dim);
+  font-size: 10px;
+  cursor: pointer;
+  transition: background 180ms var(--jos-ease);
+}
+.jos-widget-stats button:hover,
+.jos-widget-stats button:focus-visible {
+  background: rgba(46, 255, 176, 0.12);
+  outline: none;
+}
+.jos-widget-stats b {
+  font-family: var(--font-display-sci), 'Orbitron', sans-serif;
+  font-size: 20px;
+  color: var(--jos-ink);
+}
+.jos-widget-pushes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.jos-widget-pushes a {
+  position: relative;
+  display: grid;
+  padding: 3px 16px 3px 4px;
+  border-radius: 6px;
+  color: var(--jos-text);
+  text-decoration: none;
+  transition: background 180ms var(--jos-ease);
+}
+.jos-widget-pushes a:hover,
+.jos-widget-pushes a:focus-visible {
+  background: rgba(46, 255, 176, 0.12);
+  outline: none;
+}
+.jos-widget-pushes span {
+  overflow: hidden;
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--jos-ink);
+}
+.jos-widget-pushes small {
+  font-size: 10.5px;
+  color: var(--jos-dim);
+}
+.jos-widget-pushes svg {
+  position: absolute;
+  top: 7px;
+  right: 4px;
+  color: var(--jos-green);
+  opacity: 0;
+  transition: opacity 180ms var(--jos-ease);
+}
+.jos-widget-pushes a:hover svg {
+  opacity: 1;
+}
+.jos-widget-more {
+  display: block;
+  margin: 4px 0 0 4px;
+  font-size: 10.5px;
+  color: var(--jos-green);
+}
+.jos-window-bar {
+  transition: opacity 180ms var(--jos-ease);
+}
+.jos-quick {
+  transition: background 180ms var(--jos-ease), transform 180ms var(--jos-ease);
+}
+.jos-quick:active {
+  transform: scale(0.98);
+}
+.jos-quick svg:first-child {
+  transition: transform 180ms var(--jos-ease);
+}
+.jos-quick:hover svg:first-child {
+  transform: translateX(2px);
+}
+
 /* ─────────────── responsive ─────────────── */
+@media (max-height: 780px) {
+  .jos-widget-more { display: none; }
+}
+@media (max-height: 680px) {
+  .jos-widgets { display: none; }
+}
 @media (max-width: 1440px) {
   .jos-body { grid-template-columns: 230px minmax(0, 1fr) 270px; gap: 16px; padding-inline: 18px; }
   .jos-motto { letter-spacing: 0.32em; }
+  .jos-search-btn kbd { display: none; }
+  .jos-search-btn { width: 38px; padding: 0; }
+  .jos-top-right { gap: 16px; }
+}
+/* The top bar sheds its least useful items first as width runs out. */
+@media (max-width: 1400px) {
+  .jos-motto { display: none; }
+  .jos-top { grid-template-columns: 1fr auto; }
 }
 @media (max-width: 1280px) {
-  .jos-top { grid-template-columns: auto minmax(0, 1fr) auto; gap: 16px; }
-  .jos-motto { justify-self: center; font-size: 12px; letter-spacing: 0.14em; white-space: nowrap; }
-  .jos-top-right { gap: 16px; }
   .jos-body { grid-template-columns: 230px minmax(0, 1fr); }
   .jos-right-wrap { display: none; }
 }
-@media (max-width: 1160px) {
-  .jos-motto { display: none; }
-  .jos-top { grid-template-columns: 1fr auto; }
+@media (max-width: 1100px) {
+  .jos-brand span { display: none; }
 }
 @media (max-width: 1024px) {
   .jos-body { grid-template-columns: minmax(0, 1fr); }
   .jos-side-wrap { display: none; }
+}
+@media (max-width: 1000px) {
+  .jos-sys-icons { display: none; }
+}
+@media (max-width: 860px) {
+  .jos-weather { display: none; }
 }
 @media (max-width: 760px) {
   :root { --jos-top-h: 64px; --jos-dock-h: 84px; }
@@ -1412,9 +2020,21 @@
   .jos-top-right { gap: 12px; }
   .jos-clock b { font-size: 14px; white-space: nowrap; }
   .jos-clock span { display: none; }
-  .jos-power { width: 34px; height: 34px; }
+  .jos-power, .jos-icon-btn, .jos-search-btn { width: 34px; height: 34px; }
+  .jos-top-actions { gap: 6px; }
   .jos-window-sub { display: none; }
   .jos-body { padding: 14px 12px 8px; overflow-y: auto; }
+  .jos-home { flex-direction: column; justify-content: flex-start; gap: 12px; }
+  .jos-widgets { position: static; flex-direction: column; align-items: stretch; width: 100%; pointer-events: auto; }
+  .jos-widget { width: auto; }
+  .jos-widget-more { display: block; }
+  .jos-notes-panel { top: 8px; right: 8px; bottom: 8px; width: calc(100vw - 16px); }
+  .jos-palette-scrim { padding: 8px; }
+  .jos-palette { max-height: calc(100vh - 16px); }
+  .jos-palette-foot span:not(:last-child) { display: none; }
+  .jos-launcher { padding: 14px 12px; }
+  .jos-launcher-head h2 { display: none; }
+  .jos-launcher-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .jos-carousel { margin-top: 0; }
   .jos-arc { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: 100%; }
   .jos-card-slot { transform: none; }
@@ -1423,9 +2043,26 @@
   .jos-card-icon { width: 64px; height: 64px; }
   .jos-card-icon svg { width: 40px; height: 40px; }
   .jos-stage, .jos-arc::after { display: none; }
-  .jos-dock { max-width: calc(100vw - 16px); overflow-x: auto; gap: 8px; padding: 10px 12px; clip-path: none; border-radius: 14px 14px 0 0; }
+  .jos-dock {
+    max-width: calc(100vw - 16px);
+    overflow-x: auto;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 14px 14px 0 0;
+    border-top: 1px solid rgba(46, 255, 176, 0.55);
+    background: linear-gradient(180deg, rgba(8, 26, 23, 0.85), rgba(3, 12, 11, 0.95));
+  }
+  .jos-dock::before { display: none; }
   .jos-wall-room { display: none; }
-  .room-hint { font-size: 10px; letter-spacing: 0.1em; }
+}
+@media (max-width: 440px) {
+  .jos-brand strong { display: none; }
+}
+@media (max-width: 380px) {
+  .jos-top { gap: 6px; padding: 0 8px; }
+  .jos-top-right { gap: 8px; }
+  .jos-top-actions { gap: 4px; }
+  .jos-clock b { font-size: 12.5px; letter-spacing: 0; }
 }
 
 /* The tilt follows the pointer through inline vars, so only !important stops it. */

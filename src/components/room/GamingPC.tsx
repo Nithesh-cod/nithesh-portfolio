@@ -3,13 +3,14 @@
 import { Html } from '@react-three/drei';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
-import { Color, CylinderGeometry, RingGeometry, TorusGeometry, type BufferGeometry, type Group, type MeshBasicMaterial } from 'three';
+import { AdditiveBlending, Color, CylinderGeometry, RingGeometry, TorusGeometry, type BufferGeometry, type Group, type MeshBasicMaterial } from 'three';
 import { seeded, useCanvasTexture } from '@/components/room/canvasTex';
 import { PC, type Vec3 } from '@/components/room/layout';
 import { led, MAT } from '@/components/room/materials';
 import { LedBar } from '@/components/room/RoomShell';
 import { useRoom } from '@/components/room/roomStore';
 import { cube, painted, solid, tube, Unmirrored, useGeometries } from '@/components/room/shapes';
+import { useGlowTexture } from '@/components/room/Workstation';
 
 /* Glass-panel tower: a side stack of three intake fans facing the glass, a top
  * radiator with its hoses, finned VRM and GPU coolers, RGB RAM and sleeved cable
@@ -190,6 +191,7 @@ export function GamingPC({ handlers, still }: { handlers: Handlers; still: boole
   // Own LED material so hovering brightens the PC, not every strip in the room.
   const pcLed = useMemo(() => led(), []);
   const { interior, leds, rotor } = useGeometries(buildPC);
+  const backlight = useGlowTexture();
 
   // Unbranded circuit board: traces, chips and the socket outline.
   const pcb = useCanvasTexture(
@@ -245,6 +247,11 @@ export function GamingPC({ handlers, still }: { handlers: Handlers; still: boole
           <planeGeometry args={[0.3, 0.36]} />
           <meshStandardMaterial map={pcb} roughness={0.55} metalness={0.35} />
         </mesh>
+        {/* A lit backplate, so hoses and cables stand out in silhouette. */}
+        <mesh position={[-0.03, 0.04, BACK + 0.0085]}>
+          <planeGeometry args={[0.5, 0.54]} />
+          <meshBasicMaterial map={backlight} transparent opacity={0.9} depthWrite={false} blending={AdditiveBlending} toneMapped={false} />
+        </mesh>
         {/* Tempered glass. */}
         <mesh position={[0, 0, D / 2]} material={MAT.glass}>
           <boxGeometry args={[W - 0.01, H - 0.01, 0.004]} />
@@ -273,8 +280,6 @@ export function GamingPC({ handlers, still }: { handlers: Handlers; still: boole
           </group>
         ))}
       </Unmirrored>
-      {/* Interior light so the parts read through the glass. */}
-      <pointLight position={[0, 0.05, 0.02]} color="#2effb0" intensity={0.9} distance={1} decay={2} />
       <LedBar from={[-W / 2 + 0.02, H / 2 - 0.02, D / 2 - 0.01]} to={[W / 2 - 0.02, H / 2 - 0.02, D / 2 - 0.01]} thick={0.005} mat={pcLed} />
 
       {hover && (

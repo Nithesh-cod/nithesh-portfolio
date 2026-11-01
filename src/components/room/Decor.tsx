@@ -3,12 +3,13 @@
 import { RoundedBox } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { useRef } from 'react';
-import { AdditiveBlending, type BufferGeometry, ConeGeometry, CylinderGeometry, DoubleSide, ExtrudeGeometry, type Group, Matrix4, Quaternion, Shape, SphereGeometry, Vector3 } from 'three';
+import { AdditiveBlending, type BufferGeometry, ConeGeometry, CylinderGeometry, DoubleSide, ExtrudeGeometry, type Group, Matrix4, PlaneGeometry, Quaternion, Shape, SphereGeometry, Vector3 } from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { drawNR, FONTS, glowText, rr, seeded, useCanvasTexture } from '@/components/room/canvasTex';
 import { ROOM, type Vec3 } from '@/components/room/layout';
 import { MAT } from '@/components/room/materials';
 import { LedBar } from '@/components/room/RoomShell';
-import { ball, cube, painted, post, solid, Unmirrored, useGeometries } from '@/components/room/shapes';
+import { ball, cube, painted, post, soft, solid, tube, Unmirrored, useGeometries } from '@/components/room/shapes';
 import { DeskModel, useGlowTexture } from '@/components/room/Workstation';
 import { useClock, useDeviceInfo, useFps } from '@/lib/jarvis/device';
 import { useWeather } from '@/lib/jarvis/weather';
@@ -34,13 +35,68 @@ export function Decor({ still }: { still: boolean }) {
 
 /* ─────────────────────────── shelves ─────────────────────────── */
 
-const BOOKS: [number, string][] = [
-  [0.05, '#13302a'],
-  [0.04, '#1b1f2a'],
-  [0.06, '#0f2420'],
-  [0.035, '#2a1d1d'],
-  [0.05, '#16261f'],
+/** Thickness, height, cover colour and spine title, left to right. */
+const BOOKS: [number, number, string, string][] = [
+  [0.046, 0.235, '#1d5a48', 'ALGORITHMS'],
+  [0.034, 0.215, '#27384f', 'SYSTEM DESIGN'],
+  [0.056, 0.24, '#15463a', 'APPLIED AI'],
+  [0.03, 0.205, '#4a2f2a', 'PYTHON'],
+  [0.042, 0.225, '#2c3a33', 'TYPESCRIPT'],
+  [0.038, 0.218, '#1b3a4a', 'GAME FEEL'],
 ];
+const LEAN = 0.17;
+
+function buildShelfBooks() {
+  const parts: Parameters<typeof solid>[0] = [];
+  const spines: Parameters<typeof mergeGeometries>[0] = [];
+  let x = 0;
+  BOOKS.forEach(([t, tall, cover], i) => {
+    const last = i === BOOKS.length - 1;
+    const place = <G extends Parameters<typeof solid>[0][number]>(g: G) => (last ? g.rotateZ(LEAN).translate(x + 0.024, tall / 2, 0) : g.translate(x + t / 2, tall / 2, 0));
+    parts.push(place(cube(t, tall, 0.165, 0, 0, 0, cover)), place(cube(t - 0.006, tall - 0.008, 0.16, 0, 0, -0.007, '#a6b2ab')));
+    // A label on every spine, cut from one strip of titles.
+    const spine = new PlaneGeometry(t * 0.82, tall * 0.92);
+    const uv = spine.getAttribute('uv');
+    for (let k = 0; k < uv.count; k++) uv.setX(k, (i + uv.getX(k)) / BOOKS.length);
+    spines.push(place(spine.translate(0, 0, 0.0835)));
+    x += t + 0.0015;
+  });
+  return { covers: solid(parts), spines: mergeGeometries(spines) };
+}
+
+function ShelfBooks() {
+  const { covers, spines } = useGeometries(buildShelfBooks);
+  const titles = useCanvasTexture(
+    768,
+    512,
+    (ctx, w, h) => {
+      const cell = w / BOOKS.length;
+      ctx.clearRect(0, 0, w, h);
+      BOOKS.forEach(([, , , title], i) => {
+        ctx.save();
+        ctx.translate(cell * (i + 0.5), h / 2);
+        ctx.rotate(Math.PI / 2);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#d6ffee';
+        ctx.font = `700 42px ${FONTS.sans()}`;
+        ctx.fillText(title, 0, 0);
+        ctx.fillRect(-200, 34, 400, 3);
+        ctx.fillRect(-200, -38, 400, 3);
+        ctx.restore();
+      });
+    },
+    [],
+  );
+  return (
+    <group position={[0.14, 0.015, 0]}>
+      <mesh geometry={covers} material={MAT.painted} />
+      <mesh geometry={spines}>
+        <meshBasicMaterial map={titles} transparent toneMapped={false} depthWrite={false} />
+      </mesh>
+    </group>
+  );
+}
 
 function Shelves() {
   const x = -3.82;
@@ -69,18 +125,11 @@ function Shelves() {
           <LedBar from={[-0.6, -0.018, 0.1]} to={[0.6, -0.018, 0.1]} thick={0.008} mat={MAT.ledSoft} />
           {i === 0 && <DeskModel url="/models/room/gaming_console.glb" position={[-0.25, 0.015, 0]} rotation={[0, 0.3, 0]} scale={1} />}
           {i === 1 && (
-            <group position={[0.15, 0.015, 0]}>
-              {BOOKS.map(([w, c], b) => (
-                <mesh key={b} position={[b * 0.062, 0.1 + (b % 2) * 0.01, 0]} rotation={[0, 0, b === 4 ? 0.18 : 0]}>
-                  <boxGeometry args={[w, 0.2 + (b % 3) * 0.02, 0.17]} />
-                  <meshStandardMaterial color={c} roughness={0.8} />
-                </mesh>
-              ))}
-            </group>
+            <ShelfBooks />
           )}
           {i === 1 && <DeskModel url="/models/room/calathea_orbifolia_01.glb" position={[-0.32, 0.015, 0.02]} scale={0.9} />}
-          {i === 2 && <DeskModel url="/models/room/gamepad.glb" position={[0.2, 0.02, 0]} rotation={[0.3, -0.5, 0]} scale={0.4} />}
-          {i === 2 && <MiniHex position={[-0.25, 0.12, 0]} />}
+          {i === 2 && <DeskModel url="/models/room/gamepad.glb" position={[0.12, 0.022, 0]} rotation={[0, -0.5, 0]} scale={0.95} />}
+          {i === 2 && <MiniHex position={[-0.25, 0.015, 0]} />}
         </group>
       ))}
     </group>
@@ -130,13 +179,21 @@ function ShelfBacklight() {
   );
 }
 
+/** The NR emblem as a small edge-lit plaque, standing in a slotted base. */
 function MiniHex({ position }: { position: Vec3 }) {
   const tex = useCanvasTexture(256, 256, (ctx, w, h) => drawNR(ctx, w / 2, h / 2, 100), []);
+  const { base } = useGeometries(() => ({ base: solid([soft(0.2, 0.024, 0.08, 0, 0.012, 0, '#141a1d', 0.006), cube(0.17, 0.004, 0.012, 0, 0.0245, 0, '#050708')]) }));
   return (
-    <mesh position={position}>
-      <planeGeometry args={[0.22, 0.22]} />
-      <meshBasicMaterial map={tex} transparent toneMapped={false} depthWrite={false} />
-    </mesh>
+    <group position={position}>
+      <mesh geometry={base} material={MAT.painted} />
+      <mesh position={[0, 0.125, 0]} material={MAT.matte}>
+        <boxGeometry args={[0.2, 0.2, 0.006]} />
+      </mesh>
+      <mesh position={[0, 0.125, 0.0035]}>
+        <planeGeometry args={[0.2, 0.2]} />
+        <meshBasicMaterial map={tex} transparent toneMapped={false} depthWrite={false} />
+      </mesh>
+    </group>
   );
 }
 
@@ -168,6 +225,23 @@ type Parts = { body: BufferGeometry[]; glow: BufferGeometry[] };
 const STEEL = '#5a6a70';
 const DARK = '#1b2427';
 
+/** A figure part with its edges just taken off. */
+const block = (w: number, h: number, d: number, x: number, y: number, z: number, hex = STEEL, tilt = 0) => soft(w, h, d, x, y, z, hex, Math.min(w, h, d) * 0.22, tilt);
+
+/** A cloak that hangs in folds rather than a smooth cone. */
+function cloak(paint: string) {
+  const g = new ConeGeometry(0.076, 0.2, 84, 8, true);
+  const pos = g.getAttribute('position');
+  for (let i = 0; i < pos.count; i++) {
+    const a = Math.atan2(pos.getZ(i), pos.getX(i));
+    const fall = (0.1 - pos.getY(i)) / 0.2;
+    const k = 1 + 0.09 * fall * Math.sin(a * 7);
+    pos.setXYZ(i, pos.getX(i) * k, pos.getY(i), pos.getZ(i) * k);
+  }
+  g.computeVertexNormals();
+  return painted(g.translate(0, 0.108, 0), paint);
+}
+
 const plinth = () => post(0.062, 0.067, 0.008, 0, 0.004, 0, DARK, 20);
 
 function mech(paint: string): Parts {
@@ -175,20 +249,20 @@ function mech(paint: string): Parts {
     body: [
       plinth(),
       ...[-1, 1].flatMap((s) => [
-        cube(0.036, 0.014, 0.054, s * 0.025, 0.015, 0.007, DARK),
-        cube(0.025, 0.07, 0.03, s * 0.025, 0.056, 0, paint),
-        cube(0.031, 0.02, 0.037, s * 0.025, 0.098, 0.003, DARK),
-        cube(0.028, 0.05, 0.032, s * 0.025, 0.13, 0, paint),
-        cube(0.046, 0.034, 0.052, s * 0.072, 0.21, 0, paint, s * -0.24),
-        cube(0.02, 0.066, 0.026, s * 0.076, 0.162, 0, DARK),
-        cube(0.025, 0.05, 0.031, s * 0.079, 0.11, 0.004, paint),
+        block(0.036, 0.014, 0.054, s * 0.025, 0.015, 0.007, DARK),
+        block(0.025, 0.07, 0.03, s * 0.025, 0.056, 0, paint),
+        block(0.031, 0.02, 0.037, s * 0.025, 0.098, 0.003, DARK),
+        block(0.028, 0.05, 0.032, s * 0.025, 0.13, 0, paint),
+        block(0.046, 0.034, 0.052, s * 0.072, 0.21, 0, paint, s * -0.24),
+        block(0.02, 0.066, 0.026, s * 0.076, 0.162, 0, DARK),
+        block(0.025, 0.05, 0.031, s * 0.079, 0.11, 0.004, paint),
       ]),
-      cube(0.07, 0.024, 0.04, 0, 0.158, 0, DARK),
-      cube(0.094, 0.072, 0.054, 0, 0.205, 0, paint),
-      cube(0.037, 0.034, 0.039, 0, 0.26, 0, DARK),
-      cube(0.005, 0.03, 0.005, 0.014, 0.29, 0),
+      block(0.07, 0.024, 0.04, 0, 0.158, 0, DARK),
+      block(0.094, 0.072, 0.054, 0, 0.205, 0, paint),
+      block(0.037, 0.034, 0.039, 0, 0.26, 0, DARK),
+      block(0.005, 0.03, 0.005, 0.014, 0.29, 0),
     ],
-    glow: [cube(0.028, 0.006, 0.003, 0, 0.263, 0.02), cube(0.024, 0.012, 0.003, 0, 0.21, 0.028)],
+    glow: [block(0.028, 0.006, 0.003, 0, 0.263, 0.02), block(0.024, 0.012, 0.003, 0, 0.21, 0.028)],
   };
 }
 
@@ -196,13 +270,13 @@ function wanderer(paint: string): Parts {
   return {
     body: [
       plinth(),
-      painted(new ConeGeometry(0.076, 0.2, 9, 1, true).translate(0, 0.108, 0), paint),
+      cloak(paint),
       painted(new SphereGeometry(0.044, 10, 8).scale(1.25, 0.7, 0.95).translate(0, 0.2, 0), paint),
       ball(0.033, 0, 0.236, 0, DARK),
       painted(new ConeGeometry(0.033, 0.05, 9).translate(0, 0.268, -0.004), paint),
       post(0.0035, 0.0035, 0.27, 0.064, 0.139, 0.01, STEEL, 6),
     ],
-    glow: [cube(0.022, 0.004, 0.003, 0, 0.24, 0.032), ball(0.011, 0.064, 0.282, 0.01)],
+    glow: [block(0.022, 0.004, 0.003, 0, 0.24, 0.032), ball(0.011, 0.064, 0.282, 0.01)],
   };
 }
 
@@ -214,11 +288,11 @@ function knight(paint: string): Parts {
       post(0.031, 0.052, 0.05, 0, 0.125, 0, DARK),
       post(0.052, 0.034, 0.08, 0, 0.186, 0, paint),
       post(0.026, 0.031, 0.046, 0, 0.252, 0, paint, 12),
-      cube(0.006, 0.036, 0.052, 0, 0.286, 0, DARK),
+      block(0.006, 0.036, 0.052, 0, 0.286, 0, DARK),
       painted(new CylinderGeometry(0.05, 0.05, 0.008, 14).rotateX(Math.PI / 2).translate(-0.078, 0.164, 0.022), DARK),
-      cube(0.032, 0.006, 0.009, 0.074, 0.142, 0.012),
+      block(0.032, 0.006, 0.009, 0.074, 0.142, 0.012),
     ],
-    glow: [cube(0.008, 0.13, 0.003, 0.074, 0.212, 0.012), cube(0.03, 0.004, 0.003, 0, 0.253, 0.031)],
+    glow: [block(0.008, 0.13, 0.003, 0.074, 0.212, 0.012), block(0.03, 0.004, 0.003, 0, 0.253, 0.031)],
   };
 }
 
@@ -384,7 +458,7 @@ function Guitar() {
 const PANEL_W = 1.0;
 const PANEL_H = 0.5;
 
-function panelChrome(ctx: CanvasRenderingContext2D, w: number, h: number, title: string) {
+export function panelChrome(ctx: CanvasRenderingContext2D, w: number, h: number, title: string) {
   rr(ctx, 6, 6, w - 12, h - 12, 26);
   ctx.fillStyle = 'rgba(4,16,14,0.92)';
   ctx.fill();
@@ -538,13 +612,11 @@ function NeonSigns() {
         <planeGeometry args={[0.8, 0.8]} />
         {neon(nr)}
       </mesh>
-      <pointLight position={[ROOM.x0 + 0.5, 1.9, -2.4]} color="#2effb0" intensity={1.6} distance={2.6} decay={2} />
       {/* Right wall, front section. */}
       <mesh position={[ROOM.x1 - 0.03, 1.8, 1.5]} rotation={[0, -Math.PI / 2, 0]}>
         <planeGeometry args={[1.37, 0.8]} />
         {neon(dreams)}
       </mesh>
-      <pointLight position={[ROOM.x1 - 0.5, 1.8, 1.5]} color="#2effb0" intensity={1} distance={2.4} decay={2} />
       {/* Right wall, beside the bed. */}
       <mesh position={[ROOM.x1 - 0.03, 2.3, -1.15]} rotation={[0, -Math.PI / 2, 0]}>
         <planeGeometry args={[1.6, 0.25]} />
@@ -558,6 +630,9 @@ function NeonSigns() {
 
 function HoloStand({ still }: { still: boolean }) {
   const emblem = useCanvasTexture(512, 512, (ctx, w, h) => drawNR(ctx, w / 2, h / 2, 180), []);
+  const { doors } = useGeometries(() => ({
+    doors: solid([-1, 1].flatMap((s) => [soft(0.385, 0.46, 0.014, s * 0.196, 0.29, 0.256, '#1a2225', 0.004), cube(0.006, 0.1, 0.012, s * 0.03, 0.3, 0.27, '#6b7a80')])),
+  }));
   const spin = useRef<Group>(null);
   const shell = useRef<Group>(null);
   useFrame(({ clock }) => {
@@ -572,6 +647,7 @@ function HoloStand({ still }: { still: boolean }) {
   return (
     <group position={[-3.4, 0, -1.65]}>
       <RoundedBox args={[0.8, 0.56, 0.5]} radius={0.02} position={[0, 0.28, 0]} material={MAT.matte} />
+      <mesh geometry={doors} material={MAT.painted} />
       <LedBar from={[-0.39, 0.54, 0.252]} to={[0.39, 0.54, 0.252]} thick={0.01} />
       <LedBar from={[-0.39, 0.04, 0.252]} to={[0.39, 0.04, 0.252]} thick={0.01} mat={MAT.ledSoft} />
       {/* Projector puck. */}
@@ -598,7 +674,6 @@ function HoloStand({ still }: { still: boolean }) {
           <meshBasicMaterial color="#2effb0" wireframe transparent opacity={0.25} />
         </mesh>
       </group>
-      <pointLight position={[0, 0.95, 0.1]} color="#2effb0" intensity={0.8} distance={1.6} decay={2} />
     </group>
   );
 }

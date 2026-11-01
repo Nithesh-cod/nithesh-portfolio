@@ -5,8 +5,10 @@ import { useEffect, useRef, useState } from 'react';
 import { AppCarousel } from '@/components/jarvis/AppCarousel';
 import { BootSequence } from '@/components/jarvis/BootSequence';
 import { Dock } from '@/components/jarvis/Dock';
+import { HomeWidgets } from '@/components/jarvis/HomeWidgets';
 import { OSSidebar } from '@/components/jarvis/OSSidebar';
 import { OSTopBar } from '@/components/jarvis/OSTopBar';
+import { ShellOverlays } from '@/components/jarvis/ShellOverlays';
 import { StatusPanel } from '@/components/jarvis/StatusPanel';
 import { Wallpaper } from '@/components/jarvis/Wallpaper';
 import { WindowManager } from '@/components/jarvis/WindowManager';
@@ -85,6 +87,7 @@ export function JarvisOS() {
             </motion.div>
             <main className="jos-home">
               <AppCarousel delay={0.12} />
+              <HomeWidgets delay={0.42} />
             </main>
             <motion.div className="jos-right-wrap" {...enter(0.12, { x: 26 })}>
               <StatusPanel />
@@ -92,6 +95,7 @@ export function JarvisOS() {
           </div>
           <Dock delay={0.3} />
           <WindowManager />
+          <ShellOverlays />
         </>
       )}
       <AnimatePresence>{boot === 'show' && <BootSequence key="boot" onDone={finishBoot} fast={reduceMotion} />}</AnimatePresence>

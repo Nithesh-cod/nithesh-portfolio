@@ -14,6 +14,7 @@ import {
   type Group,
   type Mesh,
 } from 'three';
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries, mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { Vec3 } from '@/components/room/layout';
 
@@ -65,6 +66,26 @@ export const cube = (w: number, h: number, d: number, x: number, y: number, z: n
 export const post = (r0: number, r1: number, h: number, x: number, y: number, z: number, hex = STEEL, sides = 10) =>
   painted(new CylinderGeometry(r0, r1, h, sides).translate(x, y, z), hex);
 export const ball = (r: number, x: number, y: number, z: number, hex = STEEL) => painted(new SphereGeometry(r, 10, 8).translate(x, y, z), hex);
+
+/** A box with softened edges, for parts that get seen up close. */
+export const soft = (w: number, h: number, d: number, x: number, y: number, z: number, hex = STEEL, radius = 0.004, tilt = 0) =>
+  painted(new RoundedBoxGeometry(w, h, d, 1, radius).rotateZ(tilt).translate(x, y, z), hex);
+
+/** Upholstered block: rounded all round, smooth across its seams, crowned on top. */
+export function cushion(w: number, h: number, d: number, hex: string, radius = 0.05, crown = 0.02) {
+  const box = new RoundedBoxGeometry(w, h, d, 4, radius);
+  box.deleteAttribute('uv');
+  box.deleteAttribute('normal');
+  const g = mergeVertices(box, 1e-4);
+  const pos = g.getAttribute('position');
+  for (let i = 0; i < pos.count; i++) {
+    const nx = (pos.getX(i) * 2) / w;
+    const nz = (pos.getZ(i) * 2) / d;
+    if (pos.getY(i) > 0) pos.setY(i, pos.getY(i) + crown * (1 - nx * nx) * (1 - nz * nz));
+  }
+  g.computeVertexNormals();
+  return painted(g, hex);
+}
 
 /** A round bar through the given points. */
 export function tube(points: Vec3[], radius: number, hex = STEEL, { closed = false, sides = 8, segments = 36 } = {}) {

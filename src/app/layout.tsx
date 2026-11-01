@@ -3,6 +3,7 @@ import { Space_Grotesk, Inter, JetBrains_Mono, Orbitron } from 'next/font/google
 import '@/styles/globals.css';
 import '@/styles/jarvis.css';
 import '@/styles/jarvis-apps.css';
+import '@/styles/room.css';
 import { content } from '@/lib/content';
 
 const display = Space_Grotesk({

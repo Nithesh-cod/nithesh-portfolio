@@ -1,10 +1,11 @@
 'use client';
 
 import { BoxGeometry, CylinderGeometry, ExtrudeGeometry, Matrix4, Path, RepeatWrapping, Shape, SphereGeometry } from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { drawNR, useCanvasTexture } from '@/components/room/canvasTex';
 import type { Vec3 } from '@/components/room/layout';
 import { MAT } from '@/components/room/materials';
-import { ball, cube, painted, post, solid, tube, useGeometries } from '@/components/room/shapes';
+import { ball, cube, cushion, painted, pillow, post, solid, tube, useGeometries } from '@/components/room/shapes';
 
 /* Racing bucket chair. Local space: seat faces -z (towards the desk), backrest
  * at +z. The whole shell is one merged mesh, so the extra padding costs less
@@ -91,7 +92,10 @@ function buildChair() {
     return [tube(edge, 0.046, HIDE, { sides: 12, segments: 44 }), ball(0.046, ...first, HIDE), ball(0.046, ...last, HIDE)];
   });
 
-  const padding = [painted(shell, HIDE), ...wings, cube(0.26, 0.15, 0.05, 0, 0.82, -0.075, SHADOW), cube(0.27, 0.2, 0.05, 0, 0.2, -0.078, SHADOW)].map(onBack);
+  // Neck pillow and lumbar cushion, strapped on the sitting side.
+  const neckPad = pillow(0.27, 0.15, 0.1, '#20282b', 1.4).translate(0, 0.83, -0.095);
+  const lumbar = pillow(0.31, 0.21, 0.12, '#20282b', 2.3).translate(0, 0.21, -0.1);
+  const padding = [painted(shell, HIDE), ...wings, neckPad, lumbar].map(onBack);
 
   // Bucket seat: rounded pan, raised thigh bolsters and a soft front lip.
   const pan = new Shape();
@@ -147,10 +151,14 @@ function buildChair() {
     }),
   ];
 
-  const parts = [...padding, painted(seat, HIDE), ...bolsters, cube(0.27, 0.014, 0.4, 0, 0.552, 0, SHADOW), ...arms, ...base];
+  // Stitched channels across the seat, in place of a flat insert.
+  const seatInsert = Array.from({ length: 6 }, (_, i) => cushion(0.32, 0.03, 0.068, i % 2 ? '#20282b' : '#1a2124', 0.012, 0.004).translate(0, 0.548, -0.17 + i * 0.07));
+
+  const parts = [...padding, painted(seat, HIDE), ...bolsters, ...seatInsert, ...arms, ...base];
 
   // Rear panel, set into the shell, and the lit piping that follows its curve.
-  const panel = onBack(new ExtrudeGeometry(backOutline(0.76), { depth: 0.006, bevelEnabled: false, curveSegments: 12 }).translate(0, 0, 0.061));
+  const panelShape = (k: number, z: number) => onBack(new ExtrudeGeometry(backOutline(k), { depth: 0.006, bevelEnabled: false, curveSegments: 12 }).translate(0, 0, z));
+  const panel = mergeGeometries([panelShape(0.76, 0.061), panelShape(0.62, -0.067)]);
   const rim = backOutline(0.86)
     .getPoints(8)
     .map((p): Vec3 => [p.x, p.y, 0.064]);

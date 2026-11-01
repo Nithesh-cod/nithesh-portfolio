@@ -6,7 +6,7 @@ import { FONTS, glowText, seeded, useCanvasTexture } from '@/components/room/can
 import { ROOM, type Vec3 } from '@/components/room/layout';
 import { MAT } from '@/components/room/materials';
 import { LedBar } from '@/components/room/RoomShell';
-import { cube, NO_MIRROR, pillow, solid, tube, Unmirrored, useGeometries } from '@/components/room/shapes';
+import { cube, cushion, NO_MIRROR, pillow, post, soft, solid, tube, Unmirrored, useGeometries } from '@/components/room/shapes';
 import { useClock } from '@/lib/jarvis/device';
 
 /* Bed against the back wall under the window: channel-tufted headboard, quilted
@@ -130,6 +130,14 @@ function buildBed() {
     pillow(0.5, 0.36, 0.2, '#1a2329', 0.7).rotateX(-0.6).rotateY(0.1).translate(BX + 0.14, 0.64, BED.z0 + 0.52),
   ];
 
+  // A padded rail round the frame, so the bed's sides aren't a bare box.
+  const rails = [
+    cushion(0.05, 0.13, BL - 0.02, '#141e2b', 0.02, 0).translate(BED.x0 + 0.018, 0.17, BZ),
+    cushion(BW - 0.02, 0.13, 0.05, '#141e2b', 0.02, 0).translate(BX, 0.17, BED.z1 - 0.018),
+    cube(BW + 0.012, 0.006, 0.006, BX, 0.1, BED.z1 + 0.006, '#3b4a5f'),
+    cube(0.006, 0.006, BL, BED.x0 - 0.006, 0.1, BZ, '#3b4a5f'),
+  ];
+
   // Piping along the mattress border, kept to its flat band.
   const edgePiping = [0.415, 0.325].flatMap((y) => [
     cube(0.007, 0.007, BL - 0.2, BED.x0 + 0.021, y, BZ + 0.01, TRIM),
@@ -139,7 +147,7 @@ function buildBed() {
 
   return {
     duvet,
-    upholstery: solid([...channels, cube(BW + 0.1, 0.92, 0.05, BX, 0.6, BED.z0 + 0.03, '#0d141c'), ...pillows, cuff, ...edgePiping]),
+    upholstery: solid([...channels, cube(BW + 0.1, 0.92, 0.05, BX, 0.6, BED.z0 + 0.03, '#0d141c'), ...pillows, cuff, ...edgePiping, ...rails]),
   };
 }
 
@@ -251,11 +259,28 @@ function Nightstand() {
   const x = BED.x0 - 0.42;
   const z = ROOM.z0 + 0.3;
   const clockAt: Vec3 = [0.06, 0.55, 0.06];
+  const { stand, topItems } = useGeometries(() => ({
+    // Two drawers with shadow gaps and pulls.
+    stand: solid(
+      [0.13, 0.33].flatMap((y) => [soft(0.44, 0.17, 0.012, 0, y, 0.214, '#1a2225', 0.004), cube(0.1, 0.008, 0.012, 0, y + 0.05, 0.224, '#6b7a80')]),
+    ),
+    // A small lamp and a book on the top.
+    topItems: solid([
+      post(0.05, 0.06, 0.012, -0.13, 0.506, -0.02, '#1c2529', 28),
+      post(0.006, 0.008, 0.13, -0.13, 0.575, -0.02, '#6b7a80', 12),
+      soft(0.13, 0.02, 0.17, 0.11, 0.51, -0.09, '#1d4a3d', 0.003),
+    ]),
+  }));
   return (
     <group position={[x, 0, z]}>
       <RoundedBox args={[0.5, 0.5, 0.42]} radius={0.02} position={[0, 0.25, 0]} material={MAT.matte} />
+      <mesh geometry={stand} material={MAT.painted} />
       <LedBar from={[-0.24, 0.49, 0.212]} to={[0.24, 0.49, 0.212]} thick={0.008} />
       <Unmirrored>
+        <mesh geometry={topItems} material={MAT.painted} />
+        <mesh position={[-0.13, 0.67, -0.02]} material={MAT.ledWarm}>
+          <sphereGeometry args={[0.022, 12, 10]} />
+        </mesh>
         <group position={clockAt} rotation={[0, -0.4, 0]}>
           <RoundedBox args={[0.16, 0.08, 0.06]} radius={0.012} material={MAT.plastic} />
           <mesh position={[0, 0, 0.031]}>

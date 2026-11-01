@@ -10,6 +10,7 @@ import { Bedroom } from '@/components/room/Bedroom';
 import { Chair } from '@/components/room/Chair';
 import { Decor } from '@/components/room/Decor';
 import { Foreground } from '@/components/room/Foreground';
+import { RoomFront } from '@/components/room/RoomFront';
 import { GamingPC } from '@/components/room/GamingPC';
 import { POSES, ROOM, SCREEN } from '@/components/room/layout';
 import { RoomCameraRig } from '@/components/room/RoomCameraRig';
@@ -96,7 +97,7 @@ export default function GamingRoom() {
       {/* Reflections come from soft light cards, not a downloaded HDR. */}
       <Environment resolution={128} frames={1} environmentIntensity={0.9}>
         <Lightformer form="rect" intensity={2.2} color="#2effb0" position={[0, 3, -1]} rotation-x={Math.PI / 2} scale={[6, 0.4, 1]} />
-        <Lightformer form="rect" intensity={3} color="#7fb3ff" position={[5, 1.8, -1.5]} rotation-y={-Math.PI / 2} scale={[3, 2, 1]} />
+        <Lightformer form="rect" intensity={1.6} color="#7fb3ff" position={[5, 1.8, -1.5]} rotation-y={-Math.PI / 2} scale={[3, 2, 1]} />
         <Lightformer form="rect" intensity={1.4} color="#bfffe8" position={[-0.9, 1.2, -2.6]} scale={[2.6, 0.6, 1]} />
         <Lightformer form="ring" intensity={1.2} color="#ffb36b" position={[-2.5, 1.4, -2.6]} scale={0.4} />
       </Environment>
@@ -111,6 +112,7 @@ export default function GamingRoom() {
       <Bedroom />
       <Decor still={still} />
       <Foreground />
+      <RoomFront />
       {!lowPerf && !still && (
         <Sparkles count={40} scale={[8, 2.6, 5]} position={[0, 1.5, -0.6]} size={1.4} speed={0.12} opacity={0.25} color="#5cffc4" />
       )}
@@ -190,8 +192,12 @@ function RoomLights({ lowPerf }: { lowPerf: boolean }) {
         color="#6f9dff"
         target-position={[2.6, 0, -1.2]}
       />
-      {/* Soft front fill so the chair and rug read. */}
-      <pointLight position={[0.4, 1.7, 2.2]} color="#d6efff" intensity={7} distance={8} decay={2} />
+      {/* Soft fill from the ceiling so the chair and rug read. */}
+      <pointLight position={[0.4, 2.35, 1.4]} color="#d6efff" intensity={11} distance={9} decay={2} />
+      {/* The far end: one light hugging each long wall, one for the end wall. */}
+      <pointLight position={[-3.45, 2.25, 3.2]} color="#6ff0c4" intensity={7.5} distance={6} decay={2} />
+      <pointLight position={[3.45, 2.25, 3.2]} color="#9ff2da" intensity={7.5} distance={6} decay={2} />
+      <pointLight position={[0.2, 2.25, 4.9]} color="#c8f5e6" intensity={6} distance={6.5} decay={2} />
       {/* Soft light raking across the bed, so the duvet folds read. */}
       <pointLight position={[3.2, 1.5, -1.55]} color="#a8d4ff" intensity={3.4} distance={3.6} decay={2} />
     </>

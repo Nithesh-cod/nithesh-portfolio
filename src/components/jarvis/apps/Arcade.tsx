@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
+  Blocks,
   Building2,
   Car,
   Crosshair,
@@ -18,8 +19,10 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import { NeonBreakout, saveBest } from '@/components/jarvis/apps/NeonBreakout';
 import { play } from '@/lib/audio';
 import { myGames } from '@/lib/content';
+import { useOS } from '@/lib/jarvis/osStore';
 
 const GENRE_ICON: Record<string, LucideIcon> = {
   'Tactical shooter': Crosshair,
@@ -29,10 +32,22 @@ const GENRE_ICON: Record<string, LucideIcon> = {
   Sandbox: Pickaxe,
 };
 
-/** Gaming hub: Nithesh's own library (designed title cards, no official art) + Neon Snake. */
+type ArcadeTab = 'library' | 'snake' | 'breakout';
+
+const tabFrom = (payload?: Record<string, unknown>): ArcadeTab | null =>
+  payload?.tab === 'snake' || payload?.tab === 'breakout' ? payload.tab : null;
+
+/** Gaming hub: Nithesh's own library (designed title cards, no official art) + two playable games. */
 export function Arcade({ payload }: { payload?: Record<string, unknown> }) {
-  const [tab, setTab] = useState<'library' | 'snake'>(payload?.tab === 'snake' ? 'snake' : 'library');
+  const [tab, setTab] = useState<ArcadeTab>(tabFrom(payload) ?? 'library');
   const [pick, setPick] = useState(0);
+
+  // Launching a game while Arcade is already open switches to it.
+  useEffect(() => {
+    const next = tabFrom(payload);
+    if (next) setTab(next);
+  }, [payload]);
+
   const game = myGames[pick] ?? { title: 'Arcade', genre: '', hue: 160 };
   const Icon = GENRE_ICON[game.genre] ?? Gamepad2;
 
@@ -45,6 +60,9 @@ export function Arcade({ payload }: { payload?: Record<string, unknown> }) {
           </button>
           <button type="button" role="tab" aria-selected={tab === 'snake'} onClick={() => setTab('snake')}>
             <Zap size={14} /> Neon Snake
+          </button>
+          <button type="button" role="tab" aria-selected={tab === 'breakout'} onClick={() => setTab('breakout')}>
+            <Blocks size={14} /> Neon Breakout
           </button>
         </div>
         <span className="app-arcade-note">Games I play on my PC · title cards designed here, not official art</span>
@@ -95,10 +113,24 @@ export function Arcade({ payload }: { payload?: Record<string, unknown> }) {
               <strong>Neon Snake</strong>
               <span>Playable right here</span>
             </button>
+            <button
+              type="button"
+              className="app-game-tile is-playable"
+              onClick={() => {
+                play('click_primary');
+                setTab('breakout');
+              }}
+            >
+              <Play size={22} aria-hidden />
+              <strong>Neon Breakout</strong>
+              <span>Playable right here</span>
+            </button>
           </div>
         </div>
-      ) : (
+      ) : tab === 'snake' ? (
         <NeonSnake />
+      ) : (
+        <NeonBreakout />
       )}
     </div>
   );
@@ -139,8 +171,16 @@ function NeonSnake() {
   const [phase, setPhase] = useState<Phase>('ready');
   const [score, setScore] = useState(0);
   const [best, setBest] = useState(0);
+  const docked = useOS((s) => s.windows.some((w) => w.id === 'arcade' && w.minimized));
+  const dockedRef = useRef(docked);
+  dockedRef.current = docked;
 
   useEffect(() => setBest(readBest()), []);
+
+  // A game left running in the dock would just lose.
+  useEffect(() => {
+    if (docked) setPhase((p) => (p === 'playing' ? 'paused' : p));
+  }, [docked]);
 
   const placeFood = () => {
     const g = game.current;
@@ -248,14 +288,7 @@ function NeonSnake() {
         play('transition');
         setPhase('over');
         const final = g.eaten * 10;
-        if (final > readBest()) {
-          try {
-            window.localStorage.setItem(BEST_KEY, String(final));
-          } catch {
-            // Storage blocked: best score lasts this visit only.
-          }
-          setBest(final);
-        }
+        if (saveBest(BEST_KEY, 'Neon Snake', final)) setBest(final);
         draw();
         return;
       }
@@ -280,7 +313,7 @@ function NeonSnake() {
     if (!game.current.snake.length) reset();
     let raf = 0;
     const loop = () => {
-      draw();
+      if (!dockedRef.current) draw();
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);

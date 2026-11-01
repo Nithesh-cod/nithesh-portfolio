@@ -141,7 +141,16 @@ function buildTable() {
     y += h;
   });
 
-  // A real wall and a coffee surface: the camera looks down into this mug.
+  return {
+    top: new CylinderGeometry(TABLE.r, TABLE.r, 0.012, 72),
+    frame: solid([painted(new LatheGeometry(PEDESTAL.map(([r, h]) => new Vector2(r, h)), 48), STEM), painted(new TorusGeometry(TABLE.r, 0.008, 10, 96).rotateX(Math.PI / 2).translate(0, TABLE.h, 0), STEM)]),
+    glow: solid([new TorusGeometry(TABLE.r - 0.018, 0.0036, 8, 96).rotateX(Math.PI / 2).translate(0, TABLE.h - 0.012, 0), new TorusGeometry(0.2, 0.0034, 8, 64).rotateX(Math.PI / 2).translate(0, 0.016, 0)], { colour: false }),
+    books: solid(bookParts),
+  };
+}
+
+/** A real wall and a coffee surface, because a walking visitor looks down into it. */
+function buildMug() {
   const wall = [
     [0.0001, 0],
     [0.036, 0],
@@ -152,24 +161,32 @@ function buildTable() {
     [0.037, 0.082],
     [0.0001, 0.082],
   ].map(([r = 0, h = 0]) => new Vector2(r, h));
-  const mug = [
-    painted(new LatheGeometry(wall, 40), '#141a1c'),
-    painted(new TorusGeometry(0.024, 0.0062, 10, 22, Math.PI).rotateZ(-Math.PI / 2).translate(0.042, 0.05, 0), '#141a1c'),
-    post(0.0355, 0.0355, 0.001, 0, 0.0825, 0, '#1a0d06', 28),
-  ];
-
   return {
-    top: new CylinderGeometry(TABLE.r, TABLE.r, 0.012, 72),
-    frame: solid([painted(new LatheGeometry(PEDESTAL.map(([r, h]) => new Vector2(r, h)), 48), STEM), painted(new TorusGeometry(TABLE.r, 0.008, 10, 96).rotateX(Math.PI / 2).translate(0, TABLE.h, 0), STEM)]),
-    glow: solid([new TorusGeometry(TABLE.r - 0.018, 0.0036, 8, 96).rotateX(Math.PI / 2).translate(0, TABLE.h - 0.012, 0), new TorusGeometry(0.2, 0.0034, 8, 64).rotateX(Math.PI / 2).translate(0, 0.016, 0)], { colour: false }),
-    books: solid(bookParts),
-    mug: solid(mug),
+    mug: solid([
+      painted(new LatheGeometry(wall, 40), '#141a1c'),
+      painted(new TorusGeometry(0.024, 0.0062, 10, 22, Math.PI).rotateZ(-Math.PI / 2).translate(0.042, 0.05, 0), '#141a1c'),
+      post(0.0355, 0.0355, 0.001, 0, 0.0825, 0, '#1a0d06', 28),
+    ]),
   };
 }
 
-function SideTable({ position }: { position: Vec3 }) {
-  const { top, frame, glow, books, mug } = useGeometries(buildTable);
+export function Mug({ position, turn = 0 }: { position: Vec3; turn?: number }) {
+  const { mug } = useGeometries(buildMug);
   const logo = useCanvasTexture(256, 256, (ctx, w, h) => drawNR(ctx, w / 2, h / 2, 96), []);
+  return (
+    <group position={position} rotation={[0, turn, 0]}>
+      <mesh geometry={mug} material={MAT.painted} />
+      {/* The crest wraps the side of the mug. */}
+      <mesh position={[0, 0.05, 0]}>
+        <cylinderGeometry args={[0.0436, 0.0436, 0.06, 18, 1, true, -0.7, 1.4]} />
+        <meshBasicMaterial map={logo} transparent toneMapped={false} depthWrite={false} />
+      </mesh>
+    </group>
+  );
+}
+
+function SideTable({ position }: { position: Vec3 }) {
+  const { top, frame, glow, books } = useGeometries(buildTable);
   const titles = useCanvasTexture(
     512,
     180,
@@ -201,14 +218,7 @@ function SideTable({ position }: { position: Vec3 }) {
             <meshBasicMaterial map={titles} transparent toneMapped={false} depthWrite={false} />
           </mesh>
         </group>
-        <group position={[0.13, TABLE.h + 0.006, -0.1]} rotation={[0, -0.35, 0]}>
-          <mesh geometry={mug} material={MAT.painted} />
-          {/* The crest wraps the side of the mug. */}
-          <mesh position={[0, 0.05, 0]}>
-            <cylinderGeometry args={[0.0436, 0.0436, 0.06, 18, 1, true, -0.7, 1.4]} />
-            <meshBasicMaterial map={logo} transparent toneMapped={false} depthWrite={false} />
-          </mesh>
-        </group>
+        <Mug position={[0.13, TABLE.h + 0.006, -0.1]} turn={-0.35} />
       </Unmirrored>
     </group>
   );
