@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Nithesh Ramachandran — Résumé</title>
+<style>
+  @page { size: A4; margin: 0; }
+  :root {
+    --ink: #1b2433;
+    --soft: #4a5568;
+    --navy: #1f3a5f;
+    --gold: #b8913e;
+    --rule: #d9dee6;
+    --tint: #eef2f7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  /* Layout uses only static flow (no position/transform) so the PDF's text
+     order matches reading order for ATS parsers. */
+  body {
+    width: 210mm;
+    padding: 10mm 12.5mm 8mm;
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 8.8pt;
+    line-height: 1.28;
+    color: var(--ink);
+  }
+  a { color: inherit; text-decoration: none; }
+  sup { font-size: 70%; line-height: 0; }
+
+  header { display: flex; gap: 6mm; align-items: center; padding-bottom: 2.8mm; border-bottom: 1.6pt solid var(--navy); }
+  header .id { flex: 1; }
+  h1 { font-size: 21pt; font-weight: 600; letter-spacing: 0.06em; color: var(--navy); line-height: 1.05; }
+  .title { margin-top: 1.2mm; font-size: 9.2pt; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+  .contact { margin-top: 1.8mm; font-size: 8.2pt; color: var(--soft); }
+  .contact .sep { color: var(--gold); padding: 0 1.6mm; }
+  .contact a { color: var(--navy); }
+  .photo { width: 20mm; height: 25mm; border-radius: 2.5mm; overflow: hidden; flex: none; }
+  .photo img { width: 100%; height: 100%; object-fit: cover; object-position: center 12%; }
+
+  section { margin-top: 2.7mm; }
+  h2 {
+    font-size: 8.4pt; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--navy);
+    padding-bottom: 0.6mm; margin-bottom: 1.3mm; border-bottom: 0.6pt solid var(--rule);
+  }
+
+  .row { display: flex; justify-content: space-between; align-items: baseline; gap: 4mm; }
+  .row .when { flex: none; font-size: 8pt; font-style: italic; color: var(--soft); }
+  .entry + .entry { margin-top: 1.7mm; }
+  .entry h3 { font-size: 9.1pt; font-weight: 700; color: var(--navy); }
+  .entry h3 .tag { font-weight: 600; color: var(--gold); }
+  .meta { font-size: 7.9pt; color: var(--soft); }
+  .meta a { color: var(--navy); }
+  ul { margin-top: 0.5mm; padding-left: 3.6mm; list-style-type: '◆'; }
+  li { padding-left: 1.4mm; }
+  li::marker { color: var(--gold); font-size: 6.5pt; }
+  li + li { margin-top: 0.3mm; }
+  .also { margin-top: 1.7mm; font-size: 8.2pt; color: var(--soft); }
+  .also b { color: var(--ink); font-weight: 600; white-space: nowrap; }
+
+  .skills { display: grid; grid-template-columns: 28mm 1fr; gap: 0.4mm 3mm; }
+  .skills dt { font-weight: 700; color: var(--navy); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="id">
+    <h1>NITHESH RAMACHANDRAN</h1>
+    <div class="title">AI &amp; Full-Stack Developer · B.Tech AI &amp; Data Science</div>
+    <div class="contact">
+      +91 97863-59161<span class="sep">·</span><a href="mailto:nithesh.r.ciet@gmail.com">nithesh.r.ciet@gmail.com</a><span class="sep">·</span>Coimbatore, India<br>
+      <a href="https://linkedin.com/in/nithesh-r-ba349032b">linkedin.com/in/nithesh-r-ba349032b</a><span class="sep">·</span><a href="https://github.com/Nithesh-cod">github.com/Nithesh-cod</a><span class="sep">·</span><a href="https://nithesh-portfolio-amber.vercel.app">nithesh-portfolio-amber.vercel.app</a>
+    </div>
+  </div>
+  <div class="photo"><img src="photo.jpg" alt=""></div>
+</header>
+
+<section>
+  <h2>Summary</h2>
+  <p>
+    Second-year AI &amp; Data Science undergraduate who ships applied-AI products end to end: React and Next.js front-ends,
+    FastAPI and Node back-ends, PyTorch and scikit-learn models, delivered to the web, Android and the desktop. Built Qurious for
+    Smart India Hackathon 2026 and DeepGuard, an explainable AI-face detector. Seeking a Summer 2027 software or AI engineering internship.
+  </p>
+</section>
+
+<section>
+  <h2>Education</h2>
+  <div class="row">
+    <div><b>B.Tech, Artificial Intelligence and Data Science</b> — Coimbatore Institute of Engineering and Technology</div>
+    <div class="when">Expected May 2029</div>
+  </div>
+</section>
+
+<section>
+  <h2>Projects</h2>
+
+  <div class="entry">
+    <div class="row">
+      <h3>Qurious <span class="tag">· Smart India Hackathon 2026</span></h3>
+      <div class="when">2026</div>
+    </div>
+    <div class="meta">React · TypeScript · Three.js · Capacitor · Vitest ·
+      <a href="https://qurious-eight.vercel.app">qurious-eight.vercel.app</a> ·
+      <a href="https://github.com/Nithesh-cod/qurious">github.com/Nithesh-cod/qurious</a></div>
+    <ul>
+      <li>Built an in-browser quantum computing lab for problem statement SIH26140 with Team X FORCE: a 12-qubit statevector simulator with two-way circuit ↔ code sync for OpenQASM 3, Qiskit, Cirq and PennyLane.</li>
+      <li>Verified against Qiskit Aer on 22 circuits (max deviation 6.66 × 10<sup>−16</sup>); 448 Vitest tests assert every physics claim in the lessons.</li>
+      <li>Self-checking AI tutor runs its answers on the simulator and drops any that disagree; 1,090 offline topics; ships as an Android APK.</li>
+    </ul>
+  </div>
+
+  <div class="entry">
+    <div class="row">
+      <h3>DeepGuard <span class="tag">· Explainable AI-generated face detection</span></h3>
+      <div class="when">2026</div>
+    </div>
+    <div class="meta">Python · PyTorch · FastAPI · React · Capacitor ·
+      <a href="https://github.com/Nithesh-cod/Deep-Guard">github.com/Nithesh-cod/Deep-Guard</a></div>
+    <ul>
+      <li>Trained and evaluated two detectors: an EfficientNet-B0 + Grad-CAM baseline (ROC AUC 0.991 in-distribution) and a CLIP ViT-L/14 linear probe (ROC AUC 0.919 on a frozen 4,241-image out-of-distribution test).</li>
+      <li>One FastAPI engine serves a React web app, an Android app, a Telegram bot and signed, verifiable PDF reports.</li>
+    </ul>
+  </div>
+
+  <div class="entry">
+    <div class="row">
+      <h3>TestAI <span class="tag">· AI test-automation platform</span></h3>
+      <div class="when">2026</div>
+    </div>
+    <div class="meta">React · FastAPI · Supabase · GPT-4o · Playwright · scikit-learn ·
+      <a href="https://testai-orcin.vercel.app">testai-orcin.vercel.app</a> ·
+      <a href="https://github.com/Nithesh-cod/testai">github.com/Nithesh-cod/testai</a></div>
+    <ul>
+      <li>GPT-4o turns plain-language requirements into runnable Playwright, Cypress and Jest tests; human-approved self-healing selectors.</li>
+      <li>Statistical flaky-test scoring and a gradient-boosting failure predictor; Supabase Postgres with auth and row-level security.</li>
+    </ul>
+  </div>
+
+  <div class="entry">
+    <div class="row">
+      <h3>Ramji Electronics <span class="tag">· Offline-first Android inventory &amp; billing</span></h3>
+      <div class="when">2026</div>
+    </div>
+    <div class="meta">Kotlin · Jetpack Compose · Room · MVVM ·
+      <a href="https://github.com/Nithesh-cod/ramji-electronics">github.com/Nithesh-cod/ramji-electronics</a></div>
+    <ul>
+      <li>Voice commands in English, Hindi and Tamil become stock and billing actions via intent parsing and fuzzy product matching, fully offline; transactional billing, hashed PIN lock, PDF bill sharing and CSV export.</li>
+    </ul>
+  </div>
+
+  <div class="entry">
+    <div class="row">
+      <h3>TechFest Symposium <span class="tag">· College event platform</span></h3>
+      <div class="when">2026</div>
+    </div>
+    <div class="meta">React · Vite · Node.js · Express · Firebase ·
+      <a href="https://github.com/Nithesh-cod/techfest-symposium">github.com/Nithesh-cod/techfest-symposium</a></div>
+    <ul>
+      <li>Registration, QR entry passes scanned in the browser, auto-generated PDF certificates and Razorpay payments; Express API hardened with JWT auth, Helmet and rate limiting.</li>
+    </ul>
+  </div>
+
+  <p class="also">
+    <b>Also built:</b>
+    <a href="https://cropaicanopy.netlify.app"><b>CropAI</b></a> (crop / weed segmentation, live) ·
+    <a href="https://smart-canteen-tau.vercel.app"><b>FastBite</b></a> (canteen pre-orders, live) ·
+    <b>VoxelSpeak</b> (speech → 3D model in webcam AR) ·
+    <b>Stock Price Prediction</b> (Random Forest, LSTM) ·
+    <a href="https://nithesh-portfolio-amber.vercel.app"><b>3D portfolio</b></a> (Next.js, React Three Fiber).
+  </p>
+</section>
+
+<section>
+  <h2>Experience</h2>
+  <div class="entry">
+    <div class="row">
+      <h3>Front-End Web Development Intern <span class="tag">· CodeAlpha (Remote)</span></h3>
+      <div class="when">Nov 2025 – Dec 2025</div>
+    </div>
+    <ul>
+      <li>Built four HTML, CSS and JavaScript projects (image gallery, calculator, portfolio, music player), each reviewed against the spec.</li>
+      <li>Refactored static markup into reusable components to cut duplication; shipped every task through Git and GitHub.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>Achievements &amp; Certifications</h2>
+  <ul>
+    <li><b>Smart India Hackathon 2026</b> — built Qurious with Team X FORCE for problem statement SIH26140 (Smart Education).</li>
+    <li><b>12 Infosys Springboard certifications (2025–26)</b> — Applied Generative AI, AI-first Software Engineering, Prompt Engineering,
+      OpenAI GPT Models, GPT-3 for Developers, Front-End Web Developer, HTML5, CSS3, JavaScript, and three Python courses.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Skills</h2>
+  <dl class="skills">
+    <dt>Languages</dt><dd>TypeScript, JavaScript, Python, Kotlin, SQL, HTML / CSS</dd>
+    <dt>Front-end</dt><dd>React, Next.js, Vite, Tailwind CSS, Three.js / React Three Fiber, Framer Motion, GSAP</dd>
+    <dt>Back-end &amp; data</dt><dd>FastAPI, Node.js, Express, REST, JWT, Supabase (PostgreSQL), Firebase Firestore, Room</dd>
+    <dt>AI / ML</dt><dd>PyTorch, scikit-learn, TensorFlow, GPT-4o and other LLM APIs, Whisper, CLIP, prompt engineering</dd>
+    <dt>Mobile &amp; tooling</dt><dd>Jetpack Compose, Capacitor, Playwright, Vitest, Git / GitHub, Vercel, Netlify</dd>
+    <dt>Languages spoken</dt><dd>Tamil (native), English (professional working)</dd>
+  </dl>
+</section>
+
+</body>
+</html>

@@ -1,5 +1,4 @@
-import dynamic from 'next/dynamic';
-import { Loader } from '@/components/ui/Loader';
+import { Experience } from '@/components/Experience';
 import { Cursor } from '@/components/ui/Cursor';
 import { ProjectModal } from '@/components/ui/ProjectModal';
 import { AudioController } from '@/components/ui/AudioController';
@@ -12,31 +11,13 @@ import { AllCertsModal } from '@/components/ui/AllCertsModal';
 import { ContactModal } from '@/components/ui/ContactModal';
 import { ProjectsGalleryModal } from '@/components/ui/ProjectsGalleryModal';
 import { FullStackModal } from '@/components/ui/FullStackModal';
-import { TopBar } from '@/components/hud/Dashboard';
-import { CursorTrackerMount } from '@/components/hud/CursorTrackerMount';
-import { BottomTicker } from '@/components/ui/BottomTicker';
-import { MovementPad } from '@/components/ui/MovementPad';
-import { content } from '@/lib/content';
-
-const Scene = dynamic(() => import('@/components/canvas/Scene').then((m) => m.Scene), {
-  ssr: false,
-  loading: () => <Loader />,
-});
+import { content, otherProjects } from '@/lib/content';
 
 export default function Page() {
   return (
     <main className="hud-stage relative min-h-screen w-full overflow-hidden bg-bg-base text-text-prim">
-      {/* V9.0 — Canvas as the centerpiece. HUD overlay is DOM positioned
-          OVER the canvas at higher z-index. canvas-root keeps the cursor
-          style scoped. V9.3 — `hud-stage` adds the 3D perspective root. */}
-      <div className="fixed inset-0 z-0 canvas-root">
-        <Scene />
-      </div>
-
-      <CursorTrackerMount />
-      <TopBar />
-      <MovementPad />
-      <BottomTicker />
+      {/* Gaming room → JARVIS OS → museum. Pop-ups below are shared by all three. */}
+      <Experience />
 
       <Cursor />
       <ProjectModal />
@@ -98,6 +79,20 @@ function DomFallback() {
                 </p>
                 <p className="mt-3 text-text-muted">{p.summary}</p>
               </a>
+            </li>
+          ))}
+        </ul>
+      </Section>
+
+      <Section title="More projects">
+        <ul className="space-y-6 not-prose">
+          {otherProjects.map((p) => (
+            <li key={p.name}>
+              <a href={p.url ?? p.repo} target="_blank" rel="noopener noreferrer">
+                <h3>{p.status ? `${p.name} (${p.status})` : p.name}</h3>
+              </a>
+              <p>{p.tagline} · {p.stack.join(' · ')}</p>
+              <p>{p.summary}</p>
             </li>
           ))}
         </ul>

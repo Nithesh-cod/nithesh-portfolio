@@ -1,0 +1,80 @@
+/* Short, plain definitions of the technology around Nithesh's work, so JARVIS
+ * can explain a term and then point at where he used it. `seen` names real
+ * uses only: every entry must match a project or skill in content.ts. */
+
+export type Term = { aliases: string[]; name: string; meaning: string; seen?: string };
+
+export const GLOSSARY: readonly Term[] = [
+  // Quantum
+  { name: 'Quantum computing', aliases: ['quantum computing', 'quantum computer', 'quantum'], meaning: 'computing with qubits, which can hold combinations of 0 and 1 at once and become linked by entanglement, so certain problems can be solved in ways classical bits cannot.', seen: 'Nithesh built Qurious to teach it hands-on.' },
+  { name: 'Qubit', aliases: ['qubit', 'qubits'], meaning: 'the quantum version of a bit. Until it is measured, it can sit in a superposition of 0 and 1.', seen: 'The Qurious simulator handles up to 12 qubits.' },
+  { name: 'Statevector simulator', aliases: ['statevector', 'state vector', 'statevector simulator'], meaning: 'a program that tracks the full list of quantum amplitudes on a normal computer. The list doubles with every extra qubit.', seen: 'Qurious runs one on the visitor’s own device.' },
+  { name: 'Superposition', aliases: ['superposition'], meaning: 'a quantum state that combines several outcomes at once, until a measurement picks one.' },
+  { name: 'Entanglement', aliases: ['entanglement', 'entangled'], meaning: 'a link between qubits where measuring one tells you about the other, however far apart they are.' },
+  { name: 'Qiskit', aliases: ['qiskit', 'qiskit aer'], meaning: 'IBM’s open-source Python toolkit for quantum programs. Aer is its simulator.', seen: 'Qurious exports to Qiskit and was cross-checked against Qiskit Aer.' },
+  { name: 'OpenQASM', aliases: ['openqasm', 'qasm', 'openqasm 3'], meaning: 'a text language for describing quantum circuits.', seen: 'Qurious can export circuits to OpenQASM 3.' },
+
+  // AI and ML
+  { name: 'Artificial intelligence', aliases: ['artificial intelligence'], meaning: 'software that performs tasks we associate with human thinking, such as understanding language, recognising images or making decisions.', seen: 'It is the focus of Nithesh’s degree and most of his projects.' },
+  { name: 'Machine learning', aliases: ['machine learning'], meaning: 'building systems that learn patterns from data instead of following hand-written rules.', seen: 'TestAI, DeepGuard and Stock Price Prediction all use trained models.' },
+  { name: 'Deep learning', aliases: ['deep learning'], meaning: 'machine learning with many-layered neural networks, which is especially strong on images, speech and text.', seen: 'DeepGuard is built on it.' },
+  { name: 'Neural network', aliases: ['neural network', 'neural networks', 'neural net'], meaning: 'a model made of layers of simple connected units whose connection strengths are learned from data.' },
+  { name: 'LLM', aliases: ['large language model', 'language model'], meaning: 'a large language model: a neural network trained on huge amounts of text that can read and write language.', seen: 'TestAI uses GPT-4o, and VoxelSpeak uses an LLM to parse intent.' },
+  { name: 'Prompt engineering', aliases: ['prompt engineering'], meaning: 'writing and testing the instructions given to a language model so its output is reliable.', seen: 'Nithesh holds an Infosys Springboard certificate in it.' },
+  { name: 'Computer vision', aliases: ['computer vision'], meaning: 'teaching software to understand images and video.', seen: 'CropAI and DeepGuard are his computer vision projects.' },
+  { name: 'Image segmentation', aliases: ['segmentation', 'image segmentation', 'semantic segmentation'], meaning: 'labelling every pixel of an image with what it shows.', seen: 'CropAI classifies each pixel as crop, weed or soil.' },
+  { name: 'Deepfake', aliases: ['deepfake', 'deepfakes', 'ai generated face', 'ai generated faces'], meaning: 'a realistic image or video of a person created by AI.', seen: 'DeepGuard is his detector for AI-generated faces.' },
+  { name: 'Grad-CAM', aliases: ['grad cam', 'gradcam'], meaning: 'a technique that highlights which parts of an image most influenced a network’s decision.', seen: 'DeepGuard uses it for evidence heat maps.' },
+  { name: 'EfficientNet', aliases: ['efficientnet', 'efficientnet b0'], meaning: 'a family of image-recognition networks designed to get high accuracy from small models.', seen: 'DeepGuard’s baseline uses EfficientNet-B0.' },
+  { name: 'ROC AUC', aliases: ['roc auc', 'auc', 'roc'], meaning: 'a score from 0.5 (guessing) to 1.0 (perfect) for how well a model separates two classes.', seen: 'DeepGuard reports 0.991 in-distribution and 0.919 on a frozen out-of-distribution test.' },
+  { name: 'LSTM', aliases: ['lstm'], meaning: 'a neural network designed to remember patterns across long sequences.', seen: 'Stock Price Prediction compares one against Linear Regression and Random Forest.' },
+  { name: 'Random Forest', aliases: ['random forest'], meaning: 'a model that combines many decision trees and averages their answers.', seen: 'It is one of three models in Stock Price Prediction.' },
+  { name: 'Linear regression', aliases: ['linear regression'], meaning: 'fitting a straight-line relationship between inputs and a number you want to predict.', seen: 'It is one of three models in Stock Price Prediction.' },
+  { name: 'Gradient boosting', aliases: ['gradient boosting'], meaning: 'building a strong model from many small trees, each correcting the last one’s errors.', seen: 'TestAI uses it to predict which tests will fail.' },
+  { name: 'Transfer learning', aliases: ['transfer learning'], meaning: 'starting from a model trained on one task and adapting it to another, which needs far less data.' },
+  { name: 'Overfitting', aliases: ['overfitting', 'overfit'], meaning: 'when a model memorises its training data and then does poorly on new data.' },
+  { name: 'Whisper', aliases: ['whisper'], meaning: 'OpenAI’s speech-to-text model.', seen: 'VoxelSpeak uses it to transcribe speech.' },
+  { name: 'CLIP', aliases: ['clip', 'clip vit'], meaning: 'a model that maps images and text into the same space so they can be compared.', seen: 'DeepGuard uses a CLIP ViT-L/14 linear probe, and VoxelSpeak uses it for matching.' },
+  { name: 'PyTorch', aliases: ['pytorch', 'torch'], meaning: 'a popular Python library for building and training neural networks.' },
+  { name: 'scikit-learn', aliases: ['scikit learn', 'sklearn', 'scikit'], meaning: 'a Python library of classic machine learning methods.' },
+  { name: 'Streamlit', aliases: ['streamlit'], meaning: 'a Python framework for turning data scripts into web apps.', seen: 'Stock Price Prediction is a Streamlit app.' },
+  { name: 'TripoSR', aliases: ['triposr'], meaning: 'a model that turns a single image into a 3D mesh.', seen: 'VoxelSpeak uses it in its speech-to-3D pipeline.' },
+
+  // Web
+  { name: 'React', aliases: ['react', 'reactjs', 'react js'], meaning: 'a JavaScript library for building user interfaces from reusable components.' },
+  { name: 'Next.js', aliases: ['next js', 'nextjs', 'next'], meaning: 'a React framework that adds routing, server rendering and API routes.' },
+  { name: 'Vite', aliases: ['vite'], meaning: 'a fast build tool and dev server for front-end projects.' },
+  { name: 'TypeScript', aliases: ['typescript', 'ts'], meaning: 'JavaScript with types, so many mistakes are caught before the code runs.' },
+  { name: 'JavaScript', aliases: ['javascript', 'js'], meaning: 'the programming language of the web.' },
+  { name: 'Tailwind CSS', aliases: ['tailwind css', 'tailwind'], meaning: 'a CSS framework where you style elements with small utility classes.' },
+  { name: 'Three.js', aliases: ['three js', 'threejs'], meaning: 'a JavaScript library for 3D graphics in the browser.', seen: 'This gaming room and the museum are built with it.' },
+  { name: 'WebGL', aliases: ['webgl'], meaning: 'the browser technology that lets web pages draw 3D graphics using the GPU.' },
+  { name: 'Framer Motion', aliases: ['framer motion', 'framer'], meaning: 'an animation library for React.' },
+  { name: 'FastAPI', aliases: ['fastapi', 'fast api'], meaning: 'a fast Python framework for building APIs.', seen: 'DeepGuard and TestAI use it.' },
+  { name: 'Node.js', aliases: ['node js', 'nodejs', 'node'], meaning: 'a runtime that runs JavaScript on servers.' },
+  { name: 'Express', aliases: ['express', 'expressjs', 'express js'], meaning: 'a minimal web framework for Node.js.', seen: 'TechFest Symposium’s API uses it.' },
+  { name: 'REST API', aliases: ['rest api', 'rest apis', 'rest'], meaning: 'a common style of web API where clients read and change resources over HTTP.' },
+  { name: 'API', aliases: ['api', 'apis'], meaning: 'a defined way for two pieces of software to talk to each other.' },
+  { name: 'JWT', aliases: ['jwt', 'json web token'], meaning: 'a signed token that proves who a user is between requests.', seen: 'TechFest Symposium uses JWT auth.' },
+  { name: 'Supabase', aliases: ['supabase'], meaning: 'an open-source backend built on Postgres, with auth and storage.', seen: 'TestAI stores its data in Supabase.' },
+  { name: 'Firebase', aliases: ['firebase'], meaning: 'Google’s app platform, with a realtime database, auth and hosting.' },
+  { name: 'Firestore', aliases: ['firestore'], meaning: 'Google’s cloud document database.', seen: 'TechFest Symposium stores its data there.' },
+  { name: 'PostgreSQL', aliases: ['postgres', 'postgresql'], meaning: 'a powerful open-source relational database.' },
+  { name: 'SQL', aliases: ['sql'], meaning: 'the standard language for querying relational databases.' },
+  { name: 'Vercel', aliases: ['vercel'], meaning: 'a hosting platform built for front-end and Next.js apps.' },
+  { name: 'Git', aliases: ['git'], meaning: 'the version control system most developers use to track code changes.' },
+  { name: 'Docker', aliases: ['docker'], meaning: 'a tool that packages an app and everything it needs into a portable container.' },
+
+  // Mobile and testing
+  { name: 'Kotlin', aliases: ['kotlin'], meaning: 'a modern language for Android apps.', seen: 'Ramji Electronics is written in it.' },
+  { name: 'Jetpack Compose', aliases: ['jetpack compose', 'compose', 'jetpack'], meaning: 'Android’s modern toolkit for building native interfaces in Kotlin.', seen: 'Ramji Electronics uses it.' },
+  { name: 'Capacitor', aliases: ['capacitor'], meaning: 'a tool that packages a web app as a native mobile app.', seen: 'Qurious ships as an Android APK with it.' },
+  { name: 'MVVM', aliases: ['mvvm'], meaning: 'an app structure that separates data, business logic and the screen.', seen: 'Ramji Electronics follows it.' },
+  { name: 'Playwright', aliases: ['playwright'], meaning: 'a tool for automating browsers to test web apps.', seen: 'TestAI generates Playwright tests.' },
+  { name: 'Vitest', aliases: ['vitest'], meaning: 'a fast unit-testing framework for Vite projects.', seen: 'Qurious has 448 automated tests.' },
+  { name: 'Python', aliases: ['python'], meaning: 'a readable programming language used widely in AI and data work.' },
+  { name: 'HTML', aliases: ['html', 'html5'], meaning: 'the language that structures web pages.' },
+  { name: 'CSS', aliases: ['css', 'css3'], meaning: 'the language that styles web pages.' },
+  { name: 'Full-stack development', aliases: ['full stack', 'fullstack', 'full stack development'], meaning: 'building both the part users see and the server and data behind it.' },
+  { name: 'Augmented reality', aliases: ['augmented reality', 'ar'], meaning: 'overlaying digital objects on a live view of the real world.', seen: 'VoxelSpeak anchors 3D models to a printed marker in the webcam feed.' },
+];

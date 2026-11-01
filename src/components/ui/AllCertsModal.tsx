@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect } from 'react';
-import { certificateGroups } from '@/lib/content';
+import { certificateGroups, certSubtitle } from '@/lib/content';
 import { usePortfolioStore } from '@/lib/store';
 import { play } from '@/lib/audio';
 
@@ -103,7 +103,7 @@ export function AllCertsModal() {
                 [ ALL CERTIFICATIONS ]
               </h2>
               <p className="text-center font-mono text-[10px] uppercase tracking-[0.22em] text-text-sec">
-                {certs.length} / {certs.length} VERIFIED · CONTINUOUSLY GROWING
+                {certSubtitle}
               </p>
             </div>
 

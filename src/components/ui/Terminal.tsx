@@ -4,6 +4,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { content } from '@/lib/content';
 import { play } from '@/lib/audio';
+import { APPS } from '@/components/jarvis/apps/registry';
+import { useOS } from '@/lib/jarvis/osStore';
 import { usePortfolioStore } from '@/lib/store';
 
 type Line = { id: number; text: string; kind: 'in' | 'out' | 'err' };
@@ -75,6 +77,15 @@ export function Terminal() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.code === 'Backquote' && !e.repeat) {
+        // Outside the museum the shortcut opens the JARVIS Terminal window instead.
+        if (usePortfolioStore.getState().world !== 'museum') {
+          const el = e.target as HTMLElement | null;
+          if (el?.closest('input, textarea, [contenteditable="true"]')) return;
+          e.preventDefault();
+          usePortfolioStore.getState().setWorld('jarvis');
+          useOS.getState().open('terminal', APPS.terminal.size);
+          return;
+        }
         e.preventDefault();
         // If we're about to OPEN, capture focus to restore later.
         if (!open) {

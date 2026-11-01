@@ -1,28 +1,30 @@
 'use client';
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowUpRight, X } from 'lucide-react';
-import { useEffect, useMemo, useRef } from 'react';
-import { content, type Project } from '@/lib/content';
+import { ArrowUpRight, ChevronLeft, ChevronRight, FileText, X } from 'lucide-react';
+import Image from 'next/image';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { GitHubIcon } from '@/components/ui/BrandIcons';
+import { FeatureIconView, ProjectIcon } from '@/components/ui/ProjectIcons';
+import { projectById, type ShowcaseProject } from '@/lib/content';
 import { play } from '@/lib/audio';
 import { usePortfolioStore } from '@/lib/store';
 
-/* V12.2 — refresh of the project detail modal to the V11.2 palette
- * + reference-style layout. Uses the shared .detail-modal CSS class
- * (defined in globals.css under FIX 9). Single column body so the
- * existing project content (caption, stack, summary) reads cleanly
- * without inventing fields that don't exist in content.ts. */
+/* Two-column project detail: info + actions on the left, screenshot
+ * carousel + three feature tiles on the right. Works for every project in
+ * content.allProjects; projects without a deployment get a placeholder
+ * stage instead of screenshots. */
 
 const BACKDROP = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 0.20, ease: 'easeOut' } },
+  visible: { opacity: 1, transition: { duration: 0.2, ease: 'easeOut' } },
   exit: { opacity: 0, transition: { duration: 0.15, ease: 'easeIn' } },
 } as const;
 
 const CARD = {
-  hidden: { opacity: 0, scale: 0.95, y: 20 },
-  visible: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.30, ease: [0.16, 1, 0.3, 1] as const } },
-  exit: { opacity: 0, scale: 0.95, y: 20, transition: { duration: 0.18, ease: 'easeIn' } },
+  hidden: { opacity: 0, scale: 0.96, y: 18 },
+  visible: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] as const } },
+  exit: { opacity: 0, scale: 0.96, y: 18, transition: { duration: 0.18, ease: 'easeIn' } },
 } as const;
 
 export function ProjectModal() {
@@ -30,10 +32,7 @@ export function ProjectModal() {
   const close = usePortfolioStore((s) => s.closeProject);
   const lastProxyFocus = usePortfolioStore((s) => s.lastProxyFocus);
 
-  const project = useMemo<Project | null>(
-    () => (activeProject ? (content.projects.find((p) => p.slug === activeProject) ?? null) : null),
-    [activeProject],
-  );
+  const project = useMemo(() => (activeProject ? projectById(activeProject) : null), [activeProject]);
 
   const closeWithSound = () => {
     play('click_secondary');
@@ -55,17 +54,17 @@ export function ProjectModal() {
 
   return (
     <AnimatePresence>
-      {project ? <ProjectShell project={project} onClose={closeWithSound} /> : null}
+      {project ? <ProjectShell key={project.id} project={project} onClose={closeWithSound} /> : null}
     </AnimatePresence>
   );
 }
 
-function ProjectShell({ project, onClose }: { project: Project; onClose: () => void }) {
+function ProjectShell({ project, onClose }: { project: ShowcaseProject; onClose: () => void }) {
   const cardRef = useRef<HTMLDivElement>(null);
-  const visitRef = useRef<HTMLAnchorElement>(null);
+  const firstActionRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
-    visitRef.current?.focus();
+    firstActionRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault();
@@ -73,9 +72,7 @@ function ProjectShell({ project, onClose }: { project: Project; onClose: () => v
         return;
       }
       if (e.key !== 'Tab' || !cardRef.current) return;
-      const focusables = cardRef.current.querySelectorAll<HTMLElement>(
-        'a[href], button:not([disabled])',
-      );
+      const focusables = cardRef.current.querySelectorAll<HTMLElement>('a[href], button:not([disabled])');
       if (focusables.length === 0) return;
       const first = focusables[0]!;
       const last = focusables[focusables.length - 1]!;
@@ -93,7 +90,7 @@ function ProjectShell({ project, onClose }: { project: Project; onClose: () => v
 
   return (
     <motion.div
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/72 backdrop-blur-md"
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/72 p-4 backdrop-blur-md"
       variants={BACKDROP}
       initial="hidden"
       animate="visible"
@@ -103,83 +100,156 @@ function ProjectShell({ project, onClose }: { project: Project; onClose: () => v
       aria-labelledby="project-modal-title"
       onClick={onClose}
     >
-      <motion.div
-        ref={cardRef}
-        className="detail-modal"
-        variants={CARD}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Corner L-brackets. */}
+      <motion.div ref={cardRef} className="pd-modal" variants={CARD} onClick={(e) => e.stopPropagation()}>
         <span aria-hidden className="detail-modal-bracket detail-modal-bracket--tl" />
         <span aria-hidden className="detail-modal-bracket detail-modal-bracket--tr" />
         <span aria-hidden className="detail-modal-bracket detail-modal-bracket--bl" />
         <span aria-hidden className="detail-modal-bracket detail-modal-bracket--br" />
 
-        {/* Close button. */}
-        <button
-          type="button"
-          onClick={onClose}
-          className="detail-modal-close"
-          aria-label="Close"
-        >
+        <button type="button" onClick={onClose} className="pd-close" aria-label="Close">
           <X size={16} />
         </button>
 
-        {/* Eyebrow. */}
-        <p className="detail-modal-eyebrow">{'>> PROJECT :: DETAIL'}</p>
+        <div className="pd-grid">
+          <div className="pd-info">
+            <div className="pd-head">
+              <span className="pd-icon"><ProjectIcon id={project.id} size={26} /></span>
+              <div>
+                <p className="pd-eyebrow">{'>> PROJECT  >> DETAIL'}</p>
+                <h2 id="project-modal-title" className="pd-title">
+                  {project.name}
+                  {project.status && <span className="projects-gallery-status">{project.status.toUpperCase()}</span>}
+                </h2>
+              </div>
+            </div>
+            <p className="pd-tagline">{project.tagline}</p>
 
-        {/* Title. */}
-        <h2 id="project-modal-title" className="detail-modal-title">
-          {project.name}
-        </h2>
+            <div className="pd-pills">
+              {project.stack.map((s) => (
+                <span key={s} className="detail-modal-pill">{s}</span>
+              ))}
+            </div>
 
-        {/* Caption. */}
-        <p className="detail-modal-caption">{project.caption}</p>
+            <h3 className="pd-section"><FileText size={14} /> OVERVIEW</h3>
+            <p className="pd-body">{project.summary}</p>
 
-        {/* Tech stack pills. */}
-        <div className="detail-modal-section">
-          <PanelHeader>TECH STACK</PanelHeader>
-          <div className="detail-modal-pills">
-            {project.stack.map((s) => (
-              <span key={s} className="detail-modal-pill">{s}</span>
-            ))}
+            <div className="pd-actions">
+              {project.url && (
+                <a
+                  ref={firstActionRef}
+                  href={project.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="pd-cta pd-cta--primary"
+                  onClick={() => play('click_primary')}
+                >
+                  VIEW LIVE <ArrowUpRight size={15} />
+                </a>
+              )}
+              {project.repo && (
+                <a
+                  ref={project.url ? undefined : firstActionRef}
+                  href={project.repo}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="pd-cta"
+                  onClick={() => play('click_secondary')}
+                >
+                  VIEW CODE <GitHubIcon size={15} />
+                </a>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Summary. */}
-        <div className="detail-modal-section">
-          <PanelHeader>OVERVIEW</PanelHeader>
-          <p className="detail-modal-body">{project.summary}</p>
-        </div>
-
-        {/* Actions row. */}
-        <div className="detail-modal-actions">
-          <a
-            ref={visitRef}
-            href={project.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="detail-modal-cta"
-            onClick={() => play('click_primary')}
-          >
-            VIEW LIVE
-            <ArrowUpRight size={14} />
-          </a>
+          <div className="pd-media">
+            {project.screenshots.length > 0 ? (
+              <Screens project={project} />
+            ) : (
+              <div className="pd-stage pd-stage--empty">
+                <span className="pd-stage-icon"><ProjectIcon id={project.id} size={54} /></span>
+                <p>No public deployment yet — the full source is on GitHub.</p>
+              </div>
+            )}
+            <div className="pd-features">
+              {project.features.map((f) => (
+                <div key={f.label} className="pd-feature">
+                  <FeatureIconView icon={f.icon} />
+                  <span>{f.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </motion.div>
     </motion.div>
   );
 }
 
-/* Inline panel-header (extracted as a shared helper here; see also
- * RoomPanels.tsx where the same visual bracket-pair is rendered by
- * v11-card-header CSS class). */
-function PanelHeader({ children }: { children: React.ReactNode }) {
+/** Slide 0 composes the desktop shot in a browser frame with the phone shot
+ *  overlaid; the next slides show each capture on its own. */
+function Screens({ project }: { project: ShowcaseProject }) {
+  const desktop = project.screenshots.find((s) => s.includes('desktop')) ?? project.screenshots[0]!;
+  const mobile = project.screenshots.find((s) => s.includes('mobile'));
+  const slides = mobile ? (['combo', 'desktop', 'mobile'] as const) : (['desktop'] as const);
+  const [index, setIndex] = useState(0);
+  const slide = slides[index] ?? 'desktop';
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') setIndex((i) => (i + 1) % slides.length);
+      if (e.key === 'ArrowLeft') setIndex((i) => (i - 1 + slides.length) % slides.length);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [slides.length]);
+
+  const go = (d: number) => {
+    play('click_secondary');
+    setIndex((i) => (i + d + slides.length) % slides.length);
+  };
+
   return (
-    <div className="detail-modal-section-header">
-      <span className="bracket">[</span>
-      <span>{children}</span>
-      <span className="bracket">]</span>
+    <div className="pd-stage">
+      {slide !== 'mobile' && (
+        <div className={slide === 'combo' ? 'pd-browser pd-browser--combo' : 'pd-browser'}>
+          <div className="pd-browser-bar" aria-hidden>
+            <i /><i /><i />
+            <span>{project.url?.replace(/^https?:\/\//, '')}</span>
+          </div>
+          <div className="pd-browser-view">
+            <Image src={desktop} alt={`${project.name} — desktop view`} fill sizes="(max-width: 900px) 90vw, 520px" className="object-cover object-top" />
+          </div>
+        </div>
+      )}
+      {mobile && slide !== 'desktop' && (
+        <div className={slide === 'combo' ? 'pd-phone pd-phone--combo' : 'pd-phone'}>
+          <Image src={mobile} alt={`${project.name} — phone view`} fill sizes="200px" className="object-cover object-top" />
+        </div>
+      )}
+
+      {slides.length > 1 && (
+        <>
+          <button type="button" className="pd-arrow pd-arrow--l" aria-label="Previous screenshot" onClick={() => go(-1)}>
+            <ChevronLeft size={18} />
+          </button>
+          <button type="button" className="pd-arrow pd-arrow--r" aria-label="Next screenshot" onClick={() => go(1)}>
+            <ChevronRight size={18} />
+          </button>
+          <div className="pd-dots" role="tablist" aria-label="Screenshots">
+            {slides.map((s, i) => (
+              <button
+                key={s}
+                type="button"
+                role="tab"
+                aria-selected={i === index}
+                aria-label={`Screenshot ${i + 1}`}
+                className={i === index ? 'is-active' : undefined}
+                onClick={() => setIndex(i)}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

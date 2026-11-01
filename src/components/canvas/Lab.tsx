@@ -4,12 +4,7 @@ import { useMemo } from 'react';
 import { BackSide, Color } from 'three';
 import { palette } from '@/lib/palette';
 
-/**
- * V9.0 — Lab is now just the deep-space sky sphere. The hex floor lives
- * in HexFloor.tsx, the central capsule + project pedestals are direct
- * Scene children. No FogParticles either — V9 uses drei <Sparkles> + the
- * FloatingDataGlyphs layer instead.
- */
+/** Deep-space sky sphere behind the oval hall and its city skyline. */
 export function Lab() {
   return <Sky />;
 }

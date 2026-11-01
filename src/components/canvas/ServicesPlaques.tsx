@@ -7,31 +7,22 @@ import { type Group, type MeshStandardMaterial } from 'three';
 import { palette } from '@/lib/palette';
 import { disableRaycast, noRaycast } from '@/lib/three-utils';
 import { play } from '@/lib/audio';
+import { services as SERVICES, type ServiceIconKind } from '@/lib/content';
 import { usePortfolioStore } from '@/lib/store';
 
 /* V11.1 — 6 thin glass plaques laid out across the front of the room,
  * tilted slightly toward the camera. Replaces V10.2's hex tiles
  * which read as buttons rather than reference-style floor plaques. */
 
-const TILT = -Math.PI / 2 + 0.20; // ~80° from horizontal, slight lean back
-const ROW_Z = 8.0; // V12.11 — moved forward, clear of project pedestals at z=4-6
-const ROW_Y = 0.10;
+// Front row of the oval, leaning back toward the camera like a showroom
+// plaque line; in front of the centre pedestal.
+const TILT = -Math.PI / 2 + 0.80;
+const ROW_Z = 6.6;
+const ROW_Y = 0.32;
+const PLAQUE_SCALE = 0.86;
 
-const SERVICES: ReadonlyArray<{
-  title: string;
-  sub: string;
-  icon: 'brain' | 'code' | 'cloud' | 'bars' | 'shield' | 'palette';
-}> = [
-  { title: 'AI SOLUTIONS',     sub: 'INTELLIGENT SYSTEMS',  icon: 'brain' },
-  { title: 'WEB DEVELOPMENT',  sub: 'FULL STACK SITES',     icon: 'code' },
-  { title: 'CLOUD & DEVOPS',   sub: 'SCALABLE INFRA',       icon: 'cloud' },
-  { title: 'DATA & ANALYTICS', sub: 'INSIGHTS · METRICS',   icon: 'bars' },
-  { title: 'CYBER SECURITY',   sub: 'SECURE BY DESIGN',     icon: 'shield' },
-  { title: 'UI / UX DESIGN',   sub: 'CRAFTED EXPERIENCES',  icon: 'palette' },
-];
-
-const X_BASE = -5.0;
-const X_STEP = 2.0;
+const X_STEP = 1.5;
+const X_BASE = -2.5 * X_STEP;
 
 export function ServicesPlaques() {
   return (
@@ -58,7 +49,7 @@ function ServicePlaque({
   x: number;
   title: string;
   sub: string;
-  iconKind: 'brain' | 'code' | 'cloud' | 'bars' | 'shield' | 'palette';
+  iconKind: ServiceIconKind;
 }) {
   const groupRef = useRef<Group | null>(null);
   const frameMatRef = useRef<MeshStandardMaterial | null>(null);
@@ -84,6 +75,7 @@ function ServicePlaque({
       ref={groupRef}
       position={[x, ROW_Y, ROW_Z]}
       rotation={[TILT, 0, 0]}
+      scale={PLAQUE_SCALE}
       onPointerOver={(e) => {
         e.stopPropagation();
         setHovered(true);
@@ -206,11 +198,7 @@ function PlaqueFrame({
 }
 
 /** Minimal procedural icon — wireframe primitive per service. */
-function ServiceIcon({
-  kind,
-}: {
-  kind: 'brain' | 'code' | 'cloud' | 'bars' | 'shield' | 'palette';
-}) {
+function ServiceIcon({ kind }: { kind: ServiceIconKind }) {
   const m = (
     <meshStandardMaterial
       color={palette.neonBright}
@@ -236,22 +224,26 @@ function ServiceIcon({
       </mesh>
     );
   }
-  if (kind === 'cloud') {
+  if (kind === 'phone') {
     return (
       <group>
-        <mesh position={[-0.06, 0, 0]}>
-          <sphereGeometry args={[0.06, 12, 8]} />
+        <mesh>
+          <boxGeometry args={[0.09, 0.16, 0.015]} />
           {m}
         </mesh>
-        <mesh position={[0.04, 0.02, 0]}>
-          <sphereGeometry args={[0.08, 12, 8]} />
-          {m}
-        </mesh>
-        <mesh position={[0.10, -0.02, 0]}>
-          <sphereGeometry args={[0.06, 12, 8]} />
+        <mesh position={[0, -0.062, 0.01]}>
+          <circleGeometry args={[0.008, 10]} />
           {m}
         </mesh>
       </group>
+    );
+  }
+  if (kind === 'cube') {
+    return (
+      <mesh rotation={[0.5, 0.6, 0]}>
+        <boxGeometry args={[0.11, 0.11, 0.11]} />
+        {m}
+      </mesh>
     );
   }
   if (kind === 'bars') {
@@ -264,14 +256,6 @@ function ServiceIcon({
           </mesh>
         ))}
       </group>
-    );
-  }
-  if (kind === 'shield') {
-    return (
-      <mesh>
-        <cylinderGeometry args={[0.10, 0.04, 0.02, 5]} />
-        {m}
-      </mesh>
     );
   }
   // palette

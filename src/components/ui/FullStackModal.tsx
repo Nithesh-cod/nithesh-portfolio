@@ -3,14 +3,15 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   BrainCircuit,
-  Cloud,
   Database,
   Layout,
+  Smartphone,
   TerminalSquare,
   X,
 } from 'lucide-react';
 import { useEffect } from 'react';
 import { play } from '@/lib/audio';
+import { expertiseAreas } from '@/lib/content';
 import { usePortfolioStore } from '@/lib/store';
 
 /* V13.1 — Full-stack expertise modal.
@@ -34,49 +35,13 @@ const PANEL = {
   exit: { opacity: 0, scale: 0.95, y: 20, transition: { duration: 0.18, ease: 'easeIn' } },
 } as const;
 
-type Area = {
-  title: string;
-  // Lucide forwardRef components don't fit a plain ComponentType<{size}> — use any.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Icon: any;
-  blurb: string;
-  items: readonly string[];
-  accent?: 'warm' | 'cool';
-};
-
-const AREAS: readonly Area[] = [
-  {
-    title: 'FRONTEND',
-    Icon: Layout,
-    blurb: 'Production React applications with strong type safety + a11y baseline.',
-    items: ['React', 'Next.js', 'TypeScript', 'Tailwind CSS', 'Framer Motion', 'WCAG AA'],
-  },
-  {
-    title: 'BACKEND',
-    Icon: TerminalSquare,
-    blurb: 'API-first services + serverless functions on Vercel / Netlify.',
-    items: ['Node.js', 'Express', 'Python', 'REST APIs', 'JWT Auth', 'Vercel Functions'],
-  },
-  {
-    title: 'DATABASE',
-    Icon: Database,
-    blurb: 'Schema design + integrations. Mongo for flex docs, Postgres for relations.',
-    items: ['MongoDB', 'PostgreSQL', 'Prisma', 'Mongoose'],
-  },
-  {
-    title: 'CLOUD & DEVOPS',
-    Icon: Cloud,
-    blurb: 'Build → deploy → observe loops on cloud platforms.',
-    items: ['AWS', 'Docker', 'Vercel', 'Netlify', 'GitHub Actions', 'Git'],
-  },
-  {
-    title: 'AI & AUTOMATION',
-    Icon: BrainCircuit,
-    blurb: 'LLM-powered features + agentic workflows.',
-    items: ['OpenAI API', 'LangChain', 'Prompt Engineering', 'RAG', 'n8n', 'Embeddings'],
-    accent: 'warm',
-  },
-];
+const ICONS = {
+  frontend: Layout,
+  backend: TerminalSquare,
+  data: Database,
+  mobile: Smartphone,
+  ai: BrainCircuit,
+} as const;
 
 export function FullStackModal() {
   const open = usePortfolioStore((s) => s.fullStackOpen);
@@ -137,21 +102,17 @@ export function FullStackModal() {
             <p className="detail-modal-eyebrow">{'>> EXPERTISE :: FULL STACK'}</p>
             <h2 className="detail-modal-title">[ MY FULL STACK ]</h2>
             <p className="contact-intro">
-              Five focus areas I ship in. Each area lists the libraries + tools I&apos;ve actually used in production.
+              Five focus areas I ship in. Each one lists only libraries and tools used in projects on my GitHub.
             </p>
 
             <div className="full-stack-grid">
-              {AREAS.map(({ title, Icon, blurb, items, accent }) => (
-                <article key={title} className="full-stack-card">
+              {expertiseAreas.map(({ id, title, blurb, items }) => {
+                const Icon = ICONS[id];
+                return (
+                <article key={id} className="full-stack-card">
                   <header className="full-stack-card-head">
                     <span
-                      className={
-                        accent === 'warm'
-                          ? 'v11-row-icon v11-row-icon--warm'
-                          : accent === 'cool'
-                          ? 'v11-row-icon v11-row-icon--cool'
-                          : 'v11-row-icon'
-                      }
+                      className={id === 'ai' ? 'v11-row-icon v11-row-icon--warm' : 'v11-row-icon'}
                       aria-hidden
                     >
                       <Icon size={16} />
@@ -165,7 +126,8 @@ export function FullStackModal() {
                     ))}
                   </div>
                 </article>
-              ))}
+                );
+              })}
             </div>
           </motion.div>
         </motion.div>

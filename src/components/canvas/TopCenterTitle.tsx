@@ -33,20 +33,20 @@ export function TopCenterTitle() {
 
   return (
     <Billboard position={[0, TITLE_Y, TITLE_Z]} follow lockX={false} lockY={false} lockZ={false}>
-      {/* Badge — [ WELCOME TO MY WORLD ]. */}
-      <group position={[0, 0.30, 0]}>
+      {/* Eyebrow — ENGINEER / DEVELOPER / INNOVATOR. */}
+      <group position={[0, 0.34, 0]}>
         <Text
           raycast={noRaycast}
           ref={disableRaycast}
-          fontSize={0.06}
+          fontSize={0.075}
           color={palette.neonBright}
           anchorX="center"
           anchorY="middle"
-          letterSpacing={0.30}
+          letterSpacing={0.32}
           outlineWidth={0.002}
           outlineColor={palette.neonGreen}
         >
-          [  WELCOME  TO  MY  WORLD  ]
+          ENGINEER   /   DEVELOPER   /   INNOVATOR
         </Text>
       </group>
 
@@ -55,18 +55,31 @@ export function TopCenterTitle() {
         <Text
           raycast={noRaycast}
           ref={disableRaycast}
-          fontSize={0.18}
+          fontSize={0.24}
           color={palette.neonGreen}
           anchorX="center"
           anchorY="middle"
-          letterSpacing={0.18}
+          letterSpacing={0.16}
           outlineWidth={0.004}
           outlineColor={palette.neonBright}
         >
           DIGITAL IDENTITY ENGINE
         </Text>
+        {/* Arrow rails flanking the title. */}
+        {[-1, 1].map((s) => (
+          <group key={s} position={[s * 3.05, 0, 0]}>
+            <mesh raycast={noRaycast}>
+              <planeGeometry args={[0.7, 0.012]} />
+              <meshBasicMaterial color={palette.neonGreen} transparent opacity={0.7} toneMapped={false} />
+            </mesh>
+            <mesh raycast={noRaycast} position={[s * 0.38, 0, 0]} rotation={[0, 0, s > 0 ? -Math.PI / 2 : Math.PI / 2]}>
+              <circleGeometry args={[0.05, 3]} />
+              <meshBasicMaterial color={palette.neonBright} toneMapped={false} />
+            </mesh>
+          </group>
+        ))}
         {/* Two pulsing dot accents flanking the title for definition. */}
-        <mesh position={[-2.3, 0, 0]}>
+        <mesh position={[-2.6, 0, 0]}>
           <circleGeometry args={[0.04, 24]} />
           <meshStandardMaterial
             ref={dotLeftRef}
@@ -76,7 +89,7 @@ export function TopCenterTitle() {
             toneMapped={false}
           />
         </mesh>
-        <mesh position={[2.3, 0, 0]}>
+        <mesh position={[2.6, 0, 0]}>
           <circleGeometry args={[0.04, 24]} />
           <meshStandardMaterial
             ref={dotRightRef}
@@ -88,24 +101,9 @@ export function TopCenterTitle() {
         </mesh>
       </group>
 
-      {/* Subtitle — Crafting Experiences. Building Future. */}
-      <group position={[0, -0.08, 0]}>
-        <Text
-          raycast={noRaycast}
-          ref={disableRaycast}
-          fontSize={0.05}
-          color={palette.textSecondary}
-          anchorX="center"
-          anchorY="middle"
-          letterSpacing={0.14}
-        >
-          Crafting Experiences. Building Future.
-        </Text>
-      </group>
-
-      {/* Hair-thin emissive accent line under subtitle. */}
-      <mesh position={[0, -0.28, 0]} raycast={noRaycast}>
-        <planeGeometry args={[2.6, 0.006]} />
+      {/* Hair-thin emissive accent line under the title. */}
+      <mesh position={[0, -0.14, 0]} raycast={noRaycast}>
+        <planeGeometry args={[3.2, 0.006]} />
         <meshBasicMaterial
           ref={lineRef}
           color={palette.neonGreen}

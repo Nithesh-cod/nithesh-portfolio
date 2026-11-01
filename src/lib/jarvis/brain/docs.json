@@ -1,0 +1,266 @@
+{
+ "projects": {
+  "cropai": {
+   "resume": [],
+   "readme": []
+  },
+  "smart-canteen": {
+   "resume": [],
+   "readme": []
+  },
+  "testai": {
+   "resume": [
+    "GPT-4o turns plain-language requirements into runnable Playwright, Cypress and Jest tests; human-approved self-healing selectors.",
+    "Statistical flaky-test scoring and a gradient-boosting failure predictor; Supabase Postgres with auth and row-level security."
+   ],
+   "readme": [
+    {
+     "heading": "TestAI — AI-Powered Testing Automation System",
+     "text": "A production-grade testing automation platform with AI test generation, self-healing selectors, flaky test detection, and ML failure prediction."
+    },
+    {
+     "heading": "Tech Stack",
+     "text": "Layer: Technology. Frontend: React 18 + Vite + Tailwind CSS (Glassmorphism UI + Parallax). Backend: FastAPI (Python 3.12) + Uvicorn. Database: Supabase (PostgreSQL + Auth + RLS). AI: OpenAI GPT-4o for test generation. ML: scikit-learn GradientBoosting failure predictor. Testing: Playwright, Cypress, Jest, Appium."
+    },
+    {
+     "heading": "Features",
+     "text": "Feature: Description. AI Test Generation: Paste requirements → GPT-4o generates Playwright/Cypress/Jest tests. Self-Healing: Auto-repairs broken selectors using CSS / ARIA / text strategies. Flaky Detection: Statistical analysis ranks tests by flakiness score (0–100%). ML Prediction: GradientBoosting predicts failure probability before each run. Live Execution: WebSocket-streamed real-time test execution logs. Glassmorphism UI: Dark-native design with parallax hero and neon accents."
+    },
+    {
+     "heading": "API Reference",
+     "text": "Method: Endpoint, Description. POST: /api/auth/register, Register user. POST: /api/auth/login, Login + JWT. POST: /api/generator/from-requirements, AI test generation. GET: /api/generator/test-cases/{projectid}, List test cases. POST: /api/executor/run, Start test run. WS: /api/executor/ws/{runid}, Live execution logs. GET: /api/healing/events/{projectid}, Self-healing events. GET: /api/flaky/list/{projectid}, Ranked flaky tests. GET: /api/predictions/{projectid}, ML failure predictions. GET: /api/reports/summary/{projectid}, Executive summary."
+    },
+    {
+     "heading": "Supabase Project",
+     "text": "Project ID: rvvqwqbuwelpdwhnimll. URL: https://rvvqwqbuwelpdwhnimll.supabase.co."
+    }
+   ]
+  },
+  "qurious": {
+   "resume": [
+    "Built an in-browser quantum computing lab for problem statement SIH26140 with Team X FORCE: a 12-qubit statevector simulator with two-way circuit ↔ code sync for OpenQASM 3, Qiskit, Cirq and PennyLane.",
+    "Verified against Qiskit Aer on 22 circuits (max deviation 6.66 × 10^−16); 448 Vitest tests assert every physics claim in the lessons.",
+    "Self-checking AI tutor runs its answers on the simulator and drops any that disagree; 1,090 offline topics; ships as an Android APK."
+   ],
+   "readme": [
+    {
+     "heading": "Overview",
+     "text": "Qurious Learn quantum computing by building it. Smart India Hackathon 2026 SIH26140 Team X FORCE AI-Based Interactive Quantum Algorithm Learning Platform Smart Education. A quantum lab, a self-checking AI tutor and a real-machine noise simulator in one app. It runs in a browser and installs as an offline Android APK."
+    },
+    {
+     "heading": "What it does",
+     "text": "Build circuits and watch the state. Drag or tap gates onto a canvas. A full statevector simulator runs on the device — up to 12 qubits, no server, no account. Amplitudes, Bloch spheres, measurement outcomes and a probability table update as you go. Write it as code, either way round. The same circuit exports to OpenQASM 3, Qiskit, Cirq and PennyLane. Edit the code and the canvas rebuilds; edit the canvas and the code follows. Both write the same object, so they cannot drift apart. A tutor that checks itself. It proposes an answer, runs it on the simulator, and throws the answer away if the output disagrees with the claim. With no network it answers from 1,090 topics: 193 written by hand, and 897 that it computes on the spot by running the circuit in question, so they cannot contradict the simulator. It labels which of the three — written, computed, or a configured language model — produced the answer. The Noise Lab. Run your circuit the way a real machine would — depolarising Pauli errors, amplitude damping, dephasing and readout flips, as Monte Carlo trajectories. A Bell state at today's superconducting error rates produces |01⟩ and |10⟩, outcomes ideal physics forbids. Four presets: Ideal, Trapped ion, Today's superconducting, Early hardware. Graded on physics, not on string matching. Challenges compare the state your circuit produces against the target with a global-phase-in"
+    },
+    {
+     "heading": "Correctness",
+     "text": "The simulator is cross-checked against Qiskit Aer over 22 circuits. Worst disagreement: 6.66 × 10⁻¹⁶. Lesson content is held to the same standard: tests/algorithms.test.ts asserts every physics claim the algorithm lessons make against the simulator, so prose that lies about its own circuit fails the build. Phase estimation gets a second, independent check — its bit ordering is confirmed against Qiskit rather than against our own engine, because a shared misunderstanding between simulator and test would otherwise go unnoticed."
+    }
+   ]
+  },
+  "deepguard": {
+   "resume": [
+    "Trained and evaluated two detectors: an EfficientNet-B0 + Grad-CAM baseline (ROC AUC 0.991 in-distribution) and a CLIP ViT-L/14 linear probe (ROC AUC 0.919 on a frozen 4,241-image out-of-distribution test).",
+    "One FastAPI engine serves a React web app, an Android app, a Telegram bot and signed, verifiable PDF reports."
+   ],
+   "readme": [
+    {
+     "heading": "DeepGuard",
+     "text": "DeepGuard looks at the faces in a photo or a video and tells you whether they show signs of being AI-generated. It does not just give a verdict: it shows the evidence (where in the face the signal sits, how the check was made) and explains it in plain language. The answer is a statistical signal, not proof. One Python engine and one API serve every client: the website, a Windows desktop app, an Android app, an iPhone home-screen app, a Telegram bot, and signed PDF reports that anyone can verify."
+    },
+    {
+     "heading": "What it can and cannot do",
+     "text": "Read this before relying on a verdict. Two detector profiles are registered in models/registry.json. The default is still legacy-v1 (EfficientNet-B0 texture CNN with Grad-CAM, card models/modelcard.json). Profile v2 (a frozen CLIP ViT-L/14 image encoder with a linear probe, heat map by occlusion sensitivity, card models/modelcardv2.json) is switched on with DFXPROFILE=v2 or \"default\": \"v2\" in the registry. It is not the default: it fails the promotion gate in ml/README.md (false alarms on real faces, see below). The website's Model screen (GET /api/model) shows the card of the active profile. Measured on: legacy-v1 (default), v2 (opt-in). 702 held-out faces from the training families (real FFHQ, StyleGAN, SD-Turbo): accuracy 95.3%, ROC AUC 0.991, calibration error 1.3%, not run on this set. Broader benchmark of generator families (testid: 2145 images; v1 run on 2,009): ROC AUC 0.736, ROC AUC 0.993 (0.991-0.995). Newer generators (Flux.2, Midjourney, GPT-image, Veo, Sora and others; devood, 1,965 images): ROC AUC 0.471, chance level, ROC AUC 0.992 (0.989-0.995) (thresholds were chosen on this split). Frozen final test (testood, 4,241 images, new real sources), first read, before the size guard: not run, ROC AUC 0.919 (0.909-0.930); 94.4% of AI faces flagged FAKE. Same test, second read with the size guard (see the card: thresholds and guard were chosen after the first read): not"
+    },
+    {
+     "heading": "The one-click demo",
+     "text": "rundemo.cmd starts the engine on 0.0.0.0:8000, waits until it is ready (20 to 60 seconds the first time, the models load), opens a free cloudflared quick tunnel (no account needed) and prints the public https://....trycloudflare.com address with a QR code. The browser opens the \"Connect your phone\" screen with the same QR code. Ctrl+C stops everything the launcher started. Options: rundemo.cmd --port 8001, --tunnel ngrok (needs a free ngrok account and its token set once), --tunnel none. (this PC and the same Wi-Fi only), --host 127.0.0.1, --no-browser. The public address changes every run. A new address can take from a few seconds to a couple of minutes before it opens;. the window says when it does. Measured here: the API answers through the tunnel in about 0.3 to 1 s per request, a photo upload and quick answer in about 0.5 to 0.8 s. A 30 MB body passed the tunnel without trouble. A dead tunnel is replaced automatically and the new address is shown. The address is also written to. server/runtime.json, which the server reads, so the Connect screen and the QR code always show the current one. If %USERPROFILE%\\.cloudflared\\config.yml exists, cloudflared refuses quick tunnels. The launcher then starts it with an. empty home folder (your file is not touched) and tells you. Windows may ask once whether Python may accept connections on your network. That is only needed for the \"sam"
+    },
+    {
+     "heading": "What is in the box",
+     "text": "Part: Where. Engine: face detection and alignment, detectors, evidence maps, fusion, video tracking, PDF reports, signing: core/dfxcore/. API (FastAPI) that also serves the built website: server/app/. Website (React, Vite) and Android shell (Capacitor): app/, app/android/. Desktop app (native window around a local engine): desktop/. Telegram bot: bot/. Training and evaluation code, data tools: ml/, tools/. Launchers and checks: rundemo.cmd, runwebsite.cmd, connectphone.cmd, scripts/launch.py, scripts/preflight.py. Models and model cards: models/. Contract between the parts (pipeline, result schema, API): docs/ARCHITECTURE.md. Tests: tests/. The API (all under /api): POST /analyze (photo upload), POST /analyze/url (a link to a photo; fetched safely: http/https only, public addresses only, redirects re-checked, 12 MB and 8 s limits, pictures only), POST /analyze/video, GET /analyses/{id} (poll; no streaming, so it works through the free tunnel), history and stats per X-Client-Id, evidence images, GET /analyses/{id}/report.pdf (signed), GET /verify and /pubkey, GET /connect (public address, Wi-Fi addresses and a QR code for the Connect screen), GET /health, /ready, /model, /samples. Limits: photos 12 MB and 40 megapixels, videos 50 MB (long clips are trimmed and the result says so), uploads and results are deleted after 24 hours. Settings by environment variable: DFXPROFILE, DFXST"
+    },
+    {
+     "heading": "Tests",
+     "text": "Covers the engine, video, reports and signing, the API (tests/testapiv2.py), and the ops side: the safe URL fetch, the Connect screen and QR code, and the launcher with fake tunnel agents plus one real start and stop (tests/testops.py). The suite runs the real engine and takes a few minutes. tests/legacy/ holds the retired v1 API script and is not collected."
+    },
+    {
+     "heading": "Rebuild the apps",
+     "text": "Website and Android: cd app && npx vite build && npx cap sync android, then cd android && gradlew assembleDebug (JAVAHOME = Android Studio's jbr). The server serves app/dist. Reproduce the registered model: ml/fetchfaces.py -> ml/gensdturbo.py -> ml/cropsd.py -> ml/train.py -> ml/evaluate.py -> ml/exportonnx.py."
+    },
+    {
+     "heading": "Limitations",
+     "text": "Faces only: other content is reported as such. Accuracy falls on generators, edits and compression the model has not seen (see the table above). The output is a statistical signal, not proof, and a signed report proves what the report said, not that the verdict is right. v2 reads its CLIP backbone from the Hugging Face cache (not in the repository) and falls back to legacy-v1 if it is missing. Training data of legacy-v1: 140k Real and Fake Faces (FFHQ / StyleGAN, via Hugging Face) plus faces generated locally with SD-Turbo."
+    }
+   ]
+  },
+  "ramji-electronics": {
+   "resume": [
+    "Voice commands in English, Hindi and Tamil become stock and billing actions via intent parsing and fuzzy product matching, fully offline; transactional billing, hashed PIN lock, PDF bill sharing and CSV export."
+   ],
+   "readme": [
+    {
+     "heading": "Ramji Electronics — Inventory & Billing Manager",
+     "text": "An offline-first Android app (Kotlin + Jetpack Compose + Room, MVVM) for managing an electronics shop's products, stock, and customer billing — with multilingual voice input (English / Hindi / Tamil), a PIN lock, and PDF + image bill sharing. No internet or server required."
+    },
+    {
+     "heading": "Tech stack",
+     "text": "Area: Choice. Language: Kotlin. UI: Jetpack Compose (Material 3). Architecture: MVVM (ViewModel + StateFlow) + manual DI. Database: Room (fully offline). Settings/PIN: SharedPreferences (hashed PIN). Voice: Android RecognizerIntent (built-in, no paid API). PDF: android.graphics.pdf.PdfDocument. Image bill: Rendered to Bitmap. Min SDK: 24 (Android 7.0) · Target/Compile SDK, 37. Build: AGP 9.2.1 · Gradle 9.4.1 · Kotlin 2.2.10 · KSP · Compose BOM 2026.06. Note on the toolchain: AGP 9 has built-in Kotlin support, so there is no org.jetbrains.kotlin.android plugin — only the Compose compiler plugin and KSP are applied. Kotlin/Compose/KSP versions are pinned to AGP's built-in Kotlin (2.2.10)."
+    },
+    {
+     "heading": "Key design decisions",
+     "text": "Negotiated discount: you edit the final total; each printed line item is scaled. proportionally so the customer bill adds up exactly (no \"discount\" line is shown to the customer). Internally the bill still stores original total, final total, and discount. Voice never auto-saves: every spoken command is parsed and shown in a confirmation. dialog (with editable quantity / product / tier) before anything changes. Customer bill hides internal prices: the PDF/image show only item, qty, and final. price — never the dealer/technician tiers. Prices are all-inclusive (no GST/tax line), per requirements."
+    },
+    {
+     "heading": "Open the project in Android Studio (Windows)",
+     "text": "Launch Android Studio. File → Open → select the folder N:\\MY PROJECTS\\Ramji Electronics → OK. Android Studio detects the Gradle project and starts the first Gradle Sync. (The bundled JDK is used automatically — you do not need to change JAVAHOME.). Wait for \"Gradle sync finished\" in the status bar."
+    },
+    {
+     "heading": "Manual steps / things to know",
+     "text": "SDK components: the project compiles against Android SDK Platform 37 and. Build-Tools 37. These are already installed on this machine. On another machine, Android Studio will prompt to install them on first sync — accept. local.properties points Gradle to the SDK. It is machine-specific and git-ignored;. Android Studio regenerates it if missing. Voice recognition relies on the device's Google speech service. Emulators without Google. APIs may not have it — a physical phone is best for testing voice. Hindi/Tamil recognition quality depends on the on-device language packs (Settings → Google → Voice → offline languages). Command line build (optional): your PATH java is JDK 26, which AGP rejects. To build. from a terminal, point JAVAHOME at Android Studio's bundled JBR first: Inside Android Studio this is automatic. Release signing: not configured (R8/minify is off for a clean offline build). Before. publishing, create a keystore via Build → Generate Signed Bundle / APK and enable optimization { enable = true } in app/build.gradle.kts."
+    },
+    {
+     "heading": "Voice command examples",
+     "text": "Say (Products/Stock/Billing): Result. \"add 10 units of LED bulb\": Stock: +10 to the matched \"LED Bulb\" (after you confirm). \"reduce 5 fan\": Stock: −5 from \"Fan\". \"दस एलईडी बल्ब जोड़ो\": Stock: +10 \"LED Bulb\". \"பத்து ஃபேன்\": Billing: adds 10 × Fan to the cart. Set the preferred voice language in Settings → Voice input language."
+    }
+   ]
+  },
+  "techfest-symposium": {
+   "resume": [
+    "Registration, QR entry passes scanned in the browser, auto-generated PDF certificates and Razorpay payments; Express API hardened with JWT auth, Helmet and rate limiting."
+   ],
+   "readme": [
+    {
+     "heading": "Techfest Symposium",
+     "text": "A modular event-management platform for a college technical symposium: participant registration, QR-coded entry passes, certificate generation, live event tracking, and organizer dashboards. React + Vite frontend, Express API, Firebase Firestore data store."
+    },
+    {
+     "heading": "Features",
+     "text": "Registration — participants sign up for events; data stored in Firestore. QR passes — each registration generates a scannable QR entry pass (qrcode / qrcode.react), verified at the venue with an in-browser scanner (jsqr). Certificates — auto-generated participation/winner certificates rendered to PDF (jspdf, jspdf-autotable, html2canvas) from templates. Email — confirmations and certificates sent via EmailJS. Dashboards & analytics — event stats and charts (chart.js / react-chartjs-2). Data export — export registrations/attendance to CSV and Excel (papaparse, xlsx, file-saver). Payments — Razorpay integration for paid events."
+    },
+    {
+     "heading": "Tech stack",
+     "text": "Frontend — React 18, Vite, Tailwind CSS, Lucide icons, React Hot Toast, react-confetti, Chart.js, jsPDF, QR generate/scan, xlsx/CSV export. Backend — Node.js + Express, Firebase Admin (Firestore), JWT auth, bcryptjs, Multer uploads, express-validator, Razorpay. Hardened with Helmet, CORS, compression, and rate limiting. Data — Firebase Firestore (rules in firestore.rules)."
+    },
+    {
+     "heading": "Configuration & secrets",
+     "text": "These files are gitignored and must never be committed — provide your own locally: backend/serviceAccountKey.json — Firebase admin private key. backend/.env and frontend/.env — API keys, JWT secret, EmailJS/Razorpay keys. Firebase web config (the AIza… client key) is safe to expose; access is controlled by firestore.rules, not by hiding that key."
+    }
+   ]
+  },
+  "voxelspeak": {
+   "resume": [],
+   "readme": [
+    {
+     "heading": "VoxelSpeak",
+     "text": "Speech-driven 3D content generation for desktop Augmented Reality. Speak a description — \"a red wooden chair\" — and a generated 3D model appears anchored to a printed marker in your webcam feed."
+    },
+    {
+     "heading": "Layout",
+     "text": "Path: Purpose. backend/: FastAPI service: ASR, intent parsing, retrieve-or-generate. client/: Webcam AR viewer, camera calibration, gesture control. assets/: Printable markers, generated mesh cache, calibration data. scripts/: Setup and utility scripts. docs/: Report outline, evaluation notes."
+    }
+   ]
+  },
+  "stock-price-prediction": {
+   "resume": [],
+   "readme": [
+    {
+     "heading": "📈 Stock Price Prediction Using Machine Learning",
+     "text": "An interactive Streamlit web app that predicts stock closing prices using Linear Regression, Random Forest, and an LSTM neural network, with engineered technical indicators (MA5, MA20, RSI, MACD). Golden-green themed UI with interactive Plotly charts. This implements the system described in the project report: data collection → preprocessing → feature engineering → model training → evaluation → deployment."
+    },
+    {
+     "heading": "Features",
+     "text": "Data — historical OHLCV from Yahoo Finance (yfinance), with an offline. synthetic-data fallback so the app is always demoable. Indicators — Moving Averages (MA5, MA20), RSI(14), MACD(12,26,9). Models — Linear Regression, Random Forest (next-day close from features),. and a 2-layer stacked LSTM (sliding-window sequence model). Evaluation — RMSE, MAE, R² on a chronological 80:20 split. UI — candlestick + indicator panels, actual-vs-predicted charts, a. \"compare all models\" mode, feature importance, and CSV export."
+    },
+    {
+     "heading": "Notes",
+     "text": "Educational project — not financial advice. Model predictions are estimates, not guarantees. Indian tickers use the .NS (NSE) suffix, e.g. TCS.NS. #\u0000 \u0000s\u0000t\u0000o\u0000c\u0000k\u0000-\u0000p\u0000r\u0000i\u0000c\u0000e\u0000-\u0000p\u0000r\u0000e\u0000d\u0000i\u0000c\u0000t\u0000i\u0000o\u0000n\u0000 \u0000 \u0000."
+    }
+   ]
+  },
+  "jarvis": {
+   "resume": [],
+   "readme": []
+  },
+  "portfolio": {
+   "resume": [],
+   "readme": []
+  },
+  "thozhan": {
+   "resume": [],
+   "readme": [
+    {
+     "heading": "Thozhan",
+     "text": "A self-hosted voice assistant that speaks Tanglish — Tamil-English code-mixed speech — and drives a lip-synced 3D avatar. Everything runs on your own machine. No cloud APIs, no telemetry, no account. Status: scaffold. The model calls are stubbed and nothing speaks yet. The architecture, algorithms and instrumentation are written and tested; the four model backends are not. See Current status before you invest time in this."
+    },
+    {
+     "heading": "What it is",
+     "text": "Six stages in a loop: Capture microphone audio, segmented into utterances by a voice activity. detector and a semantic endpointer. Transcribe with Whisper.cpp, streaming, while the user is still talking. Generate a reply with Llama 3.1 8B Instruct via llama.cpp. Synthesise speech with XTTS-v2, using a cloned voice. Extract visemes — mouth shapes — from the synthesised audio. Stream those to a browser page that applies them as morph-target weights on a. GLB avatar. The stages are streamed and overlapped: the LLM's first clause goes to TTS while it is still writing the second, so the avatar starts speaking before the reply is finished."
+    },
+    {
+     "heading": "Why Tanglish",
+     "text": "Bilingual Tamil speakers do not speak Tamil or English. They speak both in the same sentence — \"naan meeting ku poren\", \"call panniten\", \"adhu configure panna mudiyala\". Assistants force a choice: pick a language, get a monolingual response. Answering in either pure Tamil or pure English sounds equally unnatural to someone who talks like that. This turns out to be hard, and the difficulty is not evenly spread: Whisper has no code-mixed training data. It returns the same utterance as. Tamil script one time and romanised the next, and occasionally translates. Llama 3.1 has some Tamil in its pretraining mix, but not much. It drifts. back to English after a few turns. XTTS-v2 takes one language code per call and applies one phonemiser to the. whole string. There is no Tanglish setting. Three answers are implemented, and one is not: thozhan/phonemes.py removes the XTTS problem by. phonemising Tamil and English separately into one shared IPA inventory, so there is no language left to declare. Includes Tamil's positional voicing — the plosive series க ச ட த ப has four surface realisations depending on context, and getting that wrong is most of what makes Indian TTS sound flat. thozhan/codemix.py makes mixing measurable and. controllable: per-token language identification for romanised Tamil, the Gambäck & Das Code-Mixing Index, and a controller that steers generation towards a target "
+    },
+    {
+     "heading": "Why offline",
+     "text": "Latency. A round trip to a cloud API is 200-800 ms before the model does. any work. In a voice loop with four model calls, that is the difference between a conversation and a walkie-talkie. Privacy. Everything a voice assistant hears is by definition ambient audio. from your home. That should not leave the machine. Cost. Four models per turn against metered APIs adds up fast, and the. usage pattern — bursty, conversational — is the worst case for per-token billing. It keeps working. No API deprecations, no rate limits, no service going. away. The cost is that you need a GPU and about 8 GB of disk for weights."
+    },
+    {
+     "heading": "Latency is the metric",
+     "text": "A voice assistant that answers correctly in four seconds feels broken. The number that matters is time to first audio: the gap between you finishing your sentence and the avatar starting to speak. Everything after that overlaps with playback. pipeline.py records per-stage timings for every turn and writes them to logs/latency.jsonl. Stage: Naive, With what is implemented. End-of-turn detection: ~700 ms fixed VAD tail, ~150-300 ms, semantic. Whisper large-v3, 3 s utterance: ~300 ms, ~50 ms, streamed during speech. Llama time-to-first-token: ~150 ms, ~150 ms. First speakable chunk generated: ~400 ms sentence, ~200 ms clause. XTTS-v2 first audio chunk: ~400 ms, ~400 ms. Visemes for first chunk: ~50 ms, ~50 ms. Time to first audio: ~2000 ms, ~1000 ms. None of these have been measured. The left column is taken from published benchmarks of the individual components; the right column is what the architecture should manage once the model backends exist. Finding out how wrong both are is what bench/harness.py is for — it enforces declared budgets and exits non-zero when one is exceeded."
+    },
+    {
+     "heading": "Current status",
+     "text": "Scaffold. Structure, algorithms, orchestration and instrumentation are written and tested. Every model call is stubbed."
+    },
+    {
+     "heading": "Implemented and tested",
+     "text": "Component: File. Config, .env loading, cross-field validation: config.py. Pipeline orchestration, async wiring, barge-in task cancellation: pipeline.py. Latency instrumentation and percentiles: pipeline.py. LocalAgreement-2 streaming policy and buffer management: streaming.py. Semantic endpointing, Tanglish-aware: turndetect.py. Sentence and clause chunking: llm.py. Language tagging, CMI, switch-point fraction, bias controller: codemix.py. Tamil G2P with positional voicing; unified Tamil+English inventory: phonemes.py. WER, CER, script-blind phoneme error rate, latency, lip-sync metrics: metrics.py. ARKit blendshapes, dominance coarticulation, mel features: blendshapes.py. Episodic and semantic memory, hashing embedder, vector search: memory.py. Tool registry, schema generation, risk gating: tools.py. VRAM budgeting, residency planning, GPU probing: residency.py. Barge-in detection and conversation state machine: aec.py. Viseme data model and wire format: visemes.py. Corpus manifest, validation, speaker-disjoint splits: bench/datasets.py. Benchmark harness with budgets and baseline comparison: bench/harness.py. Browser avatar: morph targets, audio clock, procedural life: web/main.js."
+    },
+    {
+     "heading": "Stubbed",
+     "text": "Component: File. Microphone capture and VAD: stt.py. Whisper.cpp transcription: stt.py, streaming.py. llama.cpp generation, speculative prefill: llm.py. XTTS-v2 synthesis and playback: tts.py. Viseme extraction, both backends: visemes.py. Websocket server: visemes.py. Neural blendshape inference: blendshapes.py. Echo cancellation: aec.py. Fact extraction, tool implementations: memory.py, tools.py. CUDA auto-detection: config.py."
+    },
+    {
+     "heading": "Does not exist",
+     "text": "The Tanglish speech corpus. Tooling is written; the recordings are not. Every trained checkpoint — the Whisper LoRA, the LLM LoRA, the turn. detector, the blendshape model. Training scripts are in scripts/; none has been run. Stubs raise NotImplementedError rather than returning plausible-looking values. Running python -m thozhan.pipeline today gets as far as building the stage objects and then stops on the first stub it hits. That is the intended behaviour for a scaffold: a stage that fakes its output makes the whole system look like it works. Every stub carries TODO comments describing the intended approach, including the parts that are still open questions."
+    },
+    {
+     "heading": "Requirements",
+     "text": "Python 3.11+. An NVIDIA GPU with 12 GB VRAM, or patience. ~8 GB disk for model weights. A working microphone and speakers."
+    },
+    {
+     "heading": "Check the VRAM budget first",
+     "text": "This is worth doing before downloading 8 GB of weights. On an 8 GB card the default stack does not fit, and the planner says so along with what to change."
+    },
+    {
+     "heading": "Models",
+     "text": "The script downloads nothing by default — every command in it is commented out. Read it, uncomment what you want, and run it. It covers Whisper ggml weights, the Llama 3.1 8B GGUF, and the XTTS-v2 checkpoint, with notes on quantisation choices and licences. Two licences to be aware of before you build on this: Llama 3.1 is under the Meta Llama 3.1 Community License, not a standard. open-source licence. XTTS-v2 is under the Coqui Public Model License, which restricts. commercial use."
+    },
+    {
+     "heading": "Configure",
+     "text": "Then edit the model paths. .env.example documents every variable, including the streaming, endpointing, code-mix, memory, tools and barge-in settings. Verify:"
+    },
+    {
+     "heading": "Avatar",
+     "text": "Put a GLB with Oculus-style viseme or ARKit blendshape morph targets at web/assets/avatar.glb — a Ready Player Me export with \"Oculus Visemes\" enabled has both. See web/assets/README.md. Without one, the page falls back to a grey sphere with a box for a jaw, which verifies the viseme path but is not an avatar. Serve web/ over HTTP — file:// will not work, the GLB loader needs a real origin:"
+    },
+    {
+     "heading": "Tests",
+     "text": "477 tests, covering everything implemented. The pipeline tests run the full orchestration against fake stages, so they pass on a machine with no GPU and no weights. Stubs are asserted to raise rather than to return anything."
+    },
+    {
+     "heading": "Benchmarks",
+     "text": "--endpointing-only needs no models and produces real numbers today, given a manifest. Everything else waits on the model backends."
+    },
+    {
+     "heading": "Hardware",
+     "text": "Development target — Lenovo LOQ, RTX 4070 Laptop (8 GB VRAM), 16 GB RAM. VRAM is the binding constraint. thozhan/residency.py does this arithmetic properly, including activation memory, which back-of-envelope budgets routinely forget: Llama 3.1 8B Q4KM @ 8k ctx, with KV cache: ~5.9 GB. Whisper large-v3, with activations: ~2.5 GB. XTTS-v2, with activations: ~2.2 GB. Total: ~10.6 GB. That does not fit in 8 GB, and it does not fit after moving Whisper to the CPU either. The planner will tell you a plan \"fits\" while having pushed the LLM off the GPU — check plan.viable, not plan.fits, because a 15× slower LLM is not an assistant. suggestalternatives() lists the real options: smaller Whisper, lower LLAMANCTX, or a harsher quant, with the quality cost of each noted. Some 4070 Laptop configurations ship 12 GB, in which case everything fits. Stretch goal — run a quantised build on cheap hardware. Not attempted. See ROADMAP.md phase 8."
+    },
+    {
+     "heading": "Roadmap",
+     "text": "See ROADMAP.md for the full sequencing, with the prerequisites and open questions for each phase. The short version: One turn, end to end. Nothing else matters until this works. The avatar moves — websocket server plus the crude viseme path. Latency — semantic endpointing, streaming STT, clause chunking. All three. implemented, none measured. The corpus. The highest-value missing piece, and the one thing that. cannot be shortcut with more code. Tanglish quality — the fine-tunes and the controllable mixing ratio. Blocked. on 3. Real lip sync. Data problem is easy here; worth doing early. Barge-in. Blocked on echo cancellation. Memory and tools. Cheap hardware."
+    }
+   ]
+  }
+ }
+}

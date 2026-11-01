@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowUpRight, X } from 'lucide-react';
 import { useEffect } from 'react';
-import { content } from '@/lib/content';
+import { content, otherProjects } from '@/lib/content';
 import { play } from '@/lib/audio';
 import { usePortfolioStore } from '@/lib/store';
 
@@ -94,16 +94,80 @@ export function ProjectsGalleryModal() {
                     ))}
                   </div>
 
-                  <a
-                    href={p.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="detail-modal-cta projects-gallery-cta"
-                    onClick={() => play('click_primary')}
-                  >
-                    VIEW LIVE
-                    <ArrowUpRight size={14} />
-                  </a>
+                  <div className="projects-gallery-actions">
+                    <a
+                      href={p.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="detail-modal-cta"
+                      onClick={() => play('click_primary')}
+                    >
+                      VIEW LIVE
+                      <ArrowUpRight size={14} />
+                    </a>
+                    {p.repo && (
+                      <a
+                        href={p.repo}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="detail-modal-cta detail-modal-cta--ghost"
+                        onClick={() => play('click_secondary')}
+                      >
+                        CODE
+                        <ArrowUpRight size={14} />
+                      </a>
+                    )}
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <div className="projects-gallery-section">
+              <h3>MORE WORK</h3>
+              {content.contact.github && (
+                <a href={content.contact.github} target="_blank" rel="noopener noreferrer">
+                  ALL REPOS ON GITHUB ↗
+                </a>
+              )}
+            </div>
+            <div className="projects-gallery-grid projects-gallery-grid--compact">
+              {otherProjects.map((p) => (
+                <article key={p.name} className="projects-gallery-card">
+                  <h3 className="projects-gallery-name">
+                    {p.name}
+                    {p.status && <span className="projects-gallery-status">{p.status.toUpperCase()}</span>}
+                  </h3>
+                  <p className="projects-gallery-caption">{p.tagline}</p>
+                  <p className="projects-gallery-body">{p.summary}</p>
+                  <div className="projects-gallery-pills">
+                    {p.stack.map((s) => (
+                      <span key={s} className="detail-modal-pill">{s}</span>
+                    ))}
+                  </div>
+                  <div className="projects-gallery-actions">
+                    {p.url && (
+                      <a
+                        href={p.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="detail-modal-cta"
+                        onClick={() => play('click_primary')}
+                      >
+                        VIEW LIVE
+                        <ArrowUpRight size={14} />
+                      </a>
+                    )}
+                    <a
+                      href={p.repo}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="detail-modal-cta detail-modal-cta--ghost"
+                      onClick={() => play('click_secondary')}
+                    >
+                      CODE
+                      <ArrowUpRight size={14} />
+                    </a>
+                  </div>
                 </article>
               ))}
             </div>

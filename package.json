@@ -14,9 +14,15 @@
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,md}\"",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "resume": "node scripts/build-resume.mjs",
+    "model:optimize": "gltf-transform optimize --compress meshopt --texture-compress webp --texture-size 1024",
+    "jarvis:sync": "node --no-warnings --import ./scripts/jarvis/ts-alias.mjs scripts/jarvis/sync-knowledge.mjs",
+    "jarvis:train": "node --no-warnings --import ./scripts/jarvis/ts-alias.mjs scripts/jarvis/train.mjs",
+    "jarvis:chat": "node --no-warnings --import ./scripts/jarvis/ts-alias.mjs scripts/jarvis/converse.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.3.0",
     "@emailjs/browser": "^4.4.1",
     "@react-three/drei": "^9.114.0",
     "@react-three/fiber": "^8.17.10",
@@ -33,6 +39,7 @@
     "zustand": "^5.0.0"
   },
   "devDependencies": {
+    "@gltf-transform/cli": "^4.5.1",
     "@types/howler": "^2.2.12",
     "@types/node": "^20.16.11",
     "@types/react": "^18.3.11",

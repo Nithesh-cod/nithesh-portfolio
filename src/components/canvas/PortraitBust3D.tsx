@@ -11,17 +11,14 @@ import {
   Vector3,
 } from 'three';
 
-/* V12.8 — render /portait.glb AS-IS, no fallback, no gate.
- *
- * Earlier rounds tried to gate rendering on a `loaded` boolean which
- * left a FallbackBust wireframe humanoid visible during the first
- * render pass. That wireframe was what users were seeing instead of
- * the actual avatar. We now:
- *
- *   • Render <primitive object={gltf.scene} /> unconditionally.
- *   • Apply scale + recentre via useLayoutEffect so the transform
- *     lands before paint.
- *   • Log size + bounds for diagnosis. */
+/* Avatar centrepiece. The model is meshopt-compressed with WebP textures
+ * (built from the original 68 MB scan with gltf-transform; ~3 MB). The
+ * parent wraps this in its own <Suspense> so the room renders while the
+ * model downloads, then the avatar fades in. */
+
+export const AVATAR_URL = '/models/avatar-v2.glb';
+
+const FADE_SECONDS = 0.8;
 
 type Props = {
   position?: [number, number, number];
@@ -32,36 +29,20 @@ export function PortraitBust3D({
   position = [0, 0, 0],
   targetHeight = 3.3,
 }: Props) {
-  const gltf = useGLTF('/portait.glb');
-  const scene = gltf.scene;
+  const { scene } = useGLTF(AVATAR_URL);
   const groupRef = useRef<Group | null>(null);
+  const materials = useRef<MeshStandardMaterial[]>([]);
+  const fade = useRef(1);
 
   useLayoutEffect(() => {
-    if (!scene) {
-      // eslint-disable-next-line no-console
-      console.error('[V12.8] portait.glb NOT loaded');
-      return;
-    }
-
-    // eslint-disable-next-line no-console
-    console.log('[V12.8] portait.glb loaded successfully');
-
     const box = new Box3().setFromObject(scene);
     const size = new Vector3();
     const centre = new Vector3();
     box.getSize(size);
     box.getCenter(centre);
-    // eslint-disable-next-line no-console
-    console.log('[V12.8] GLB raw size:', size.toArray());
-    // eslint-disable-next-line no-console
-    console.log('[V12.8] GLB raw bounds: min', box.min.toArray(), 'max', box.max.toArray());
 
-    const tallest = Math.max(size.y, 0.0001);
-    if (!Number.isFinite(tallest) || tallest < 0.001) {
-      // eslint-disable-next-line no-console
-      console.warn('[V12.8] GLB has degenerate size; skipping transform');
-      return;
-    }
+    const tallest = size.y;
+    if (!Number.isFinite(tallest) || tallest < 0.001) return;
 
     const scale = targetHeight / tallest;
     scene.scale.setScalar(scale);
@@ -69,34 +50,44 @@ export function PortraitBust3D({
     scene.position.z = -centre.z * scale;
     scene.position.y = -box.min.y * scale; // pedestal bottom flush to y=0
 
-    // V12.10 — preserve original PBR textures but soften reflectivity
-    // so the suit + skin don't blow out under the scene's lighting.
-    //   envMapIntensity 1.5 → 0.6  (softer IBL reflections)
-    //   roughness floor 0.4         (less specular highlights)
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    fade.current = reduceMotion ? 1 : 0;
+    materials.current = [];
+
+    // Keep the scan's PBR textures but soften reflectivity so the suit and
+    // skin don't blow out under the scene's lighting.
     scene.traverse((obj) => {
       const m = obj as Mesh;
-      if (m.isMesh) {
-        const mat = m.material as MeshStandardMaterial | MeshStandardMaterial[] | undefined;
-        const adjust = (mm: MeshStandardMaterial | undefined) => {
-          if (!mm) return;
-          if ('envMapIntensity' in mm) mm.envMapIntensity = 0.6;
-          if ('roughness' in mm) mm.roughness = Math.max(mm.roughness ?? 0, 0.40);
-          mm.needsUpdate = true;
-        };
-        if (Array.isArray(mat)) {
-          mat.forEach(adjust);
-        } else {
-          adjust(mat);
-        }
-        m.castShadow = true;
-        m.receiveShadow = true;
-        m.frustumCulled = false;
+      if (!m.isMesh) return;
+      const mats = (Array.isArray(m.material) ? m.material : [m.material]) as MeshStandardMaterial[];
+      for (const mm of mats) {
+        if (!mm) continue;
+        mm.envMapIntensity = 0.6;
+        mm.roughness = Math.max(mm.roughness ?? 0, 0.40);
+        mm.transparent = fade.current < 1;
+        mm.opacity = fade.current;
+        mm.needsUpdate = true;
+        materials.current.push(mm);
       }
+      m.castShadow = true;
+      m.receiveShadow = true;
+      m.frustumCulled = false;
     });
   }, [scene, targetHeight]);
 
-  // Subtle idle motion.
-  useFrame((state) => {
+  useFrame((state, dt) => {
+    if (fade.current < 1) {
+      fade.current = Math.min(1, fade.current + dt / FADE_SECONDS);
+      for (const mm of materials.current) {
+        mm.opacity = fade.current;
+        if (fade.current >= 1) {
+          // Back to opaque so the avatar sorts and shades like before.
+          mm.transparent = false;
+          mm.needsUpdate = true;
+        }
+      }
+    }
+
     if (!groupRef.current) return;
     const t = state.clock.elapsedTime;
     groupRef.current.position.y = position[1] + Math.sin(t * 0.5) * 0.020;
@@ -105,9 +96,9 @@ export function PortraitBust3D({
 
   return (
     <group ref={groupRef} position={position}>
-      {scene ? <primitive object={scene} /> : null}
+      <primitive object={scene} />
     </group>
   );
 }
 
-useGLTF.preload('/portait.glb');
+useGLTF.preload(AVATAR_URL);

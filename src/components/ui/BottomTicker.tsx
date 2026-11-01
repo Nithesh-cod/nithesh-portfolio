@@ -1,15 +1,10 @@
 'use client';
 
 import { ArrowRight } from 'lucide-react';
+import { tickerLines } from '@/lib/content';
 
 /* V13.0 — GET IN TOUCH now opens WhatsApp with a pre-filled message
  * to Nithesh's number instead of a mailto link. */
-
-const LINES = [
-  'Building the future, one line of code at a time',
-  'Open for opportunities and collaborations',
-  "Let's build something amazing together",
-] as const;
 
 const WHATSAPP_NUMBER = '919786359161'; // 91 + 9786359161
 const WHATSAPP_MESSAGE =
@@ -22,7 +17,7 @@ function handleGetInTouch() {
 }
 
 export function BottomTicker() {
-  const stream = [...LINES, ...LINES, ...LINES];
+  const stream = [...tickerLines, ...tickerLines, ...tickerLines];
 
   return (
     <div className="v11-ticker">

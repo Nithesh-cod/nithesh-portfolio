@@ -25,6 +25,14 @@ next-env.d.ts
 .vercel
 .turbo
 
+# JARVIS review queue in local development (real visitor questions)
+.jarvis-learning.json
+
 # original asset sources kept at repo root for convenience; the live copies live in public/
 /ChatGPT Image*.png
 /Nithesh_Ramachandran_Resume.pdf
+
+# design references and working files kept at the repo root
+/*.png
+/*.zip
+desktop.ini
